@@ -23,7 +23,7 @@ export default function LabFeed() {
           return (
             <figure key={f.name} className="w-[260px] shrink-0 snap-start sm:w-[300px]">
               <MemoryCanvas style={style} photos={f.photos} playing
-                info={{ title: f.input.analysis.title, caption: f.input.analysis.caption, date: f.input.date, dayNumber: i + 1, songLabel: f.song }} className="rounded-sm shadow-lg" />
+                info={{ title: f.input.analysis.title, caption: f.input.analysis.caption, date: f.input.date, dayNumber: i + 1, songLabel: f.song, notes: f.input.analysis.sensory }} className="rounded-sm shadow-lg" />
               <figcaption className="mt-2 font-mono text-[11px] text-muted">{TECHNIQUE_NAMES[style.techniques.primary]}{style.techniques.secondary ? ` + ${TECHNIQUE_NAMES[style.techniques.secondary]}` : ''}</figcaption>
             </figure>
           );

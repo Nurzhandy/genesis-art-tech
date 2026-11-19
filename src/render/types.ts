@@ -11,6 +11,7 @@ export interface DayInfo {
   date: string;           // yyyy-mm-dd
   dayNumber?: number;
   songLabel?: string;
+  notes?: string[];       // детали из записи для заметок на полях (ресерч R2)
 }
 
 export interface RenderCtx {

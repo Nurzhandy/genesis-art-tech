@@ -55,7 +55,7 @@ export function MemoryPlayer({ day }: { day: DayRecord }) {
       <div className="relative mx-auto w-full max-w-[420px]">
         <MemoryCanvas style={day.style} photos={photos} playing={open} onReady={onReady}
           liveEnergy={() => meter.current?.() ?? null}
-          info={{ title: day.title ?? '', caption: day.analysis?.caption ?? '', date: day.date, dayNumber: day.dayNumber, songLabel: songLabel(day) }}
+          info={{ title: day.title ?? '', caption: day.analysis?.caption ?? '', date: day.date, dayNumber: day.dayNumber, songLabel: songLabel(day), notes: day.analysis?.sensory }}
           className="rounded-sm shadow-2xl" />
         {!open && (
           <button type="button" onClick={start}

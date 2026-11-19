@@ -2,6 +2,7 @@
 import type { StyleParams, Technique } from '@/lib/types';
 import { LAYOUT } from '@/lib/style/constants';
 import { createAtmosphere } from './atmosphere';
+import { drawNotes, placeNotes } from './notes';
 import { clamp } from './draw';
 import { drawGrain, drawVignette, makeGrainTile } from './fx';
 import { drawConstants, makePaper, zoneOf } from './layout';
@@ -100,6 +101,8 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
   const paper = makePaper(style, W, H);
   const grain = makeGrainTile(style.seed);
   const atmosphere = createAtmosphere(style, W, H);
+  const notes = (opts.info.notes ?? []).map((n) => n.trim()).filter(Boolean).slice(0, 4).map((n) => (n.length > 34 ? n.slice(0, 33) + '…' : n));
+  const notePlaces = placeNotes(notes.length, style.seed, W, H, LAYOUT.margin, rc.zone, style.typography.captionTilt);
   // Доля второй техники заметна, но не спорит с основной.
   const secondaryAlpha = clamp(style.techniques.mix * 2.2, 0.25, 0.75);
 
@@ -119,6 +122,7 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
     if (secondary) secondary.drawOverlay(rc, pt, secondaryAlpha);
     atmosphere.draw(rc, pt);   // слой 3.5: между оверлеем и текстом
     drawConstants(ctx, W, H, style, opts.info, fonts);
+    drawNotes(ctx, notes, notePlaces, style, fonts, pt, photos.length, !realtime);
     drawGrain(ctx, grain, W, H, style, frame++);
     drawVignette(ctx, W, H, 0.12 + 0.2 * style.texture.grain);
   }

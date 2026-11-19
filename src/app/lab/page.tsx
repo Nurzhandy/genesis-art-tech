@@ -36,7 +36,7 @@ export default function Lab() {
     <main className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 lg:grid-cols-[minmax(0,420px)_1fr]">
       <div>
         <MemoryCanvas style={style} photos={f.photos} playing={playing} onReady={setEngine}
-          info={{ title: f.input.analysis.title, caption: f.input.analysis.caption, date: f.input.date, dayNumber: FIXTURES.indexOf(f) + 1, songLabel: f.song }}
+          info={{ title: f.input.analysis.title, caption: f.input.analysis.caption, date: f.input.date, dayNumber: FIXTURES.indexOf(f) + 1, songLabel: f.song, notes: f.input.analysis.sensory }}
           overrideTechnique={tech === 'auto' ? undefined : { primary: tech, secondary: null }} className="rounded-sm shadow-xl" />
         <div className="mt-3 flex gap-2 font-mono text-xs">
           <button className="rounded-full border border-foreground/30 px-3 py-1.5" onClick={() => setPlaying((p) => !p)}>{playing ? '❚❚ пауза' : '▶ играть'}</button>
