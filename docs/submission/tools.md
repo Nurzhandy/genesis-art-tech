@@ -5,7 +5,7 @@
 | Next.js 16, React 19, TypeScript, Tailwind CSS 4 | веб-приложение, API-роуты |
 | Supabase (Postgres + Storage) | дневники, дни, приватные папки дней |
 | Vercel | хостинг |
-| Claude API (`claude-opus-5-5`, structured outputs) | анализ текста и фото дня, название папки, подпись, оценка песни (темп, лад, жанр, год) |
+| Gemini API (`gemini-3.8-flash`, ответ JSON по схеме), Google Gen AI SDK | анализ текста и фото дня, название папки, подпись, оценка песни (темп, лад, жанр, год) |
 | OpenAI TTS `gpt-4o-mini-tts` (опционально) / Web Speech API | озвучка записи голосом по правилам системы |
 | Deezer API | BPM, год и официальное 30-секундное превью трека |
 | oEmbed Spotify / YouTube | исполнитель и название по ссылке |

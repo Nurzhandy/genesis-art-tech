@@ -25,7 +25,7 @@
 ## Как устроено
 
 1. Форма: текст, 1–5 фото, песня (ссылка или файл). Браузер считает цвета фото и темп/энергию файла.
-2. `POST /api/days/:id/generate`: Claude читает день → `DayAnalysis`; Deezer даёт BPM; движок правил
+2. `POST /api/days/:id/generate`: Gemini читает день → `DayAnalysis`; Deezer даёт BPM; движок правил
    `src/lib/style/buildStyle.ts` → `StyleParams` с причинами; файлы переезжают в папку `дата-название`.
 3. Страница дня рисует воспоминание на Canvas (`src/render/`) под песню, сохраняет постер, озвучивает запись.
 4. Архив `/diary/:id` (сетка и лента), лаборатория стиля `/lab`, проверка лентой `/lab/feed`.
@@ -34,4 +34,4 @@
 
 ## Стек
 
-Next.js + TypeScript, Supabase, Claude API, Canvas 2D (свой движок рендера вместо p5.js), Vercel. Подробности в обзоре плана.
+Next.js + TypeScript, Supabase, Gemini API, Canvas 2D (свой движок рендера вместо p5.js), Vercel. Подробности в обзоре плана.

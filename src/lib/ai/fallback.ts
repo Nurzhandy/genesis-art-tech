@@ -1,4 +1,4 @@
-// Анализ дня без AI: словарь + дата + цвета фото. Используется, если Claude недоступен (A3).
+// Анализ дня без AI: словарь + дата + цвета фото. Используется, если модель недоступна (A3).
 import type { DayAnalysis, PhotoFeatures } from '@/lib/types';
 
 type Season = DayAnalysis['season'];

@@ -30,7 +30,7 @@
 | Фреймворк | **Next.js 16 (App Router) + TypeScript**. Перед кодом читать `node_modules/next/dist/docs/` (см. `AGENTS.md`) | Фронт и бэк в одном репо, деплой на Vercel в один клик |
 | Стили UI | Tailwind CSS | Быстро, без своего CSS-фреймворка |
 | БД и файлы | **Supabase** (Postgres + Storage, приватный bucket `days`) | Бесплатный тариф, signed URLs для загрузки напрямую из браузера |
-| AI-анализ | **Claude API**, `@anthropic-ai/sdk`, модель `claude-opus-5-5` (через env `CLAUDE_MODEL`) | Мультимодальный разбор текста и фото за один вызов, structured output по zod-схеме |
+| AI-анализ | **Gemini API**, `@google/genai`, модель `gemini-3.8-flash` (через env `GEMINI_MODEL`); решение от 19.11: Gemini вместо Claude | Мультимодальный разбор текста и фото за один вызов, structured output по zod-схеме |
 | Музыка | oEmbed Spotify/YouTube (название, исполнитель) + **Deezer API** (`bpm`, официальный 30-сек `preview`) + анализ файла в браузере (`web-audio-beat-detector`, `meyda`) | Песня влияет на картинку, а целиком чужие треки мы не храним |
 | Озвучка (плюс) | OpenAI TTS `gpt-4o-mini-tts` (голос и `instructions` под настроение), запасной вариант: Web Speech API в браузере | Управляемая интонация, хороший русский |
 | Рендер | **p5.js** (instance mode) + один GLSL-шейдер для зерна и виньетки | Легко писать генеративную графику, есть WebGL |
@@ -298,8 +298,8 @@ Garamond, рукописная подпись Caveat внизу, окно для
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=      # для загрузки файлов по signed URL из браузера
 SUPABASE_SERVICE_ROLE_KEY=          # только сервер
-ANTHROPIC_API_KEY=
-CLAUDE_MODEL=claude-opus-5-5
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.8-flash
 OPENAI_API_KEY=                     # озвучка, необязательно
 DEMO_DIARY_ID=demo
 GENERATE_LIMIT_PER_DAY=30

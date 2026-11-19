@@ -1,4 +1,4 @@
-// Реальные зависимости generateDay: Supabase, Claude, Deezer, движок стиля.
+// Реальные зависимости generateDay: Supabase, Gemini, Deezer, движок стиля.
 import { analyzeDay } from './ai/analyzeDay';
 import { getDayRow, updateDay } from './db';
 import type { GenerateDeps } from './generateDay';

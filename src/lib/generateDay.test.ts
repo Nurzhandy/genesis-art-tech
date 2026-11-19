@@ -10,7 +10,7 @@ const draft = (o: Partial<DayRecord> = {}): DayRecord => ({
   music: null, analysis: null, style: null, voice: null, posterPath: null, status: 'draft', error: null, createdAt: 'x', ...o,
 });
 const features = [{ index: 0, width: 10, height: 10, palette: ['#c8892b'], brightness: 0.6, warmth: 0.5, saturation: 0.5 }];
-const analysis = (title = 'Осенний парк и какао'): DayAnalysis => ({ ...fallbackAnalysis('парк', '2026-10-18', features), title, source: 'claude' });
+const analysis = (title = 'Осенний парк и какао'): DayAnalysis => ({ ...fallbackAnalysis('парк', '2026-10-18', features), title, source: 'ai' });
 
 function fakeDeps(day: DayRecord, o: Partial<GenerateDeps> = {}) {
   const log = { statuses: [] as string[], moves: [] as [string, string][], puts: [] as string[], styleInput: null as StyleInput | null, final: null as DayRecord | null };

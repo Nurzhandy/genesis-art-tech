@@ -1,4 +1,4 @@
-// Схема ответа Claude (structured output). Границы чисел не задаём в схеме — прижимаем после.
+// Схема ответа модели (JSON по схеме). Границы чисел не задаём в схеме — прижимаем после.
 import { z } from 'zod';
 
 export const DayAnalysisSchema = z.object({

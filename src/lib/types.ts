@@ -29,7 +29,7 @@ export interface MusicFeatures {
   year?: number;
 }
 
-// ── Анализ дня (выход Claude или fallback) ──────────────
+// ── Анализ дня (выход модели или fallback) ──────────────
 export interface Mood {
   valence: number;     // -1..1  (грусть ↔ радость)
   arousal: number;     //  0..1  (покой ↔ возбуждение)
@@ -49,7 +49,7 @@ export interface DayAnalysis {
   title: string;                       // 3–7 слов, см. правила названий
   caption: string;                     // рукописная подпись, ≤ 60 символов
   songGuess: { bpm: number; energy: number; mode: 'major' | 'minor'; genre: string; year: number } | null;
-  source: 'claude' | 'fallback';
+  source: 'ai' | 'fallback';
 }
 
 // ── Визуальная система ──────────────────────────────────
