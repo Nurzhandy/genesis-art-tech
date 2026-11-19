@@ -11,7 +11,7 @@ export function folderFiles(day: DayRecord): FolderFile[] {
   ];
   if (day.song.kind === 'file' && day.song.path) files.push({ name: `song.${day.song.path.split('.').pop()}`, kind: 'audio', url: day.songUrl });
   files.push({ name: 'song.json', kind: 'data', text: JSON.stringify(day.song, null, 2) });
-  if (day.posterUrl) files.push({ name: 'memory.png', kind: 'image', url: day.posterUrl });
+  if (day.posterUrl) files.push({ name: 'memory.jpg', kind: 'image', url: day.posterUrl });
   if (day.voice?.url) files.push({ name: 'voice.mp3', kind: 'audio', url: day.voice.url });
   if (day.analysis) files.push({ name: 'analysis.json', kind: 'data', text: JSON.stringify(day.analysis, null, 2) });
   if (day.style) files.push({ name: 'style.json', kind: 'data', text: JSON.stringify(day.style, null, 2) });

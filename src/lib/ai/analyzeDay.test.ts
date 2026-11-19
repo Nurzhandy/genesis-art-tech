@@ -77,3 +77,29 @@ describe('toGeminiRequest', () => {
     expect(r.config).toMatchObject({ systemInstruction: 'S', responseMimeType: 'application/json', responseJsonSchema: { type: 'object' } });
   });
 });
+
+import { withModelFallback } from './gemini';
+
+describe('withModelFallback', () => {
+  const overloaded = () => Object.assign(new Error('{"error":{"code":503,"status":"UNAVAILABLE"}}'), { status: 503 });
+  it('перегружена первая модель → пробует следующую', async () => {
+    const tried: string[] = [];
+    const out = await withModelFallback(['a', 'b', 'c'], async (m) => { tried.push(m); if (m === 'a') throw overloaded(); return `ok:${m}`; }, { budgetMs: 5000, perTryMs: 1000 });
+    expect(out).toBe('ok:b');
+    expect(tried).toEqual(['a', 'b']);
+  });
+  it('таймаут попытки → следующая модель', async () => {
+    const out = await withModelFallback(['slow', 'fast'], (m, signal) => m === 'slow'
+      ? new Promise((_, rej) => signal.addEventListener('abort', () => rej(new Error('This operation was aborted'))))
+      : Promise.resolve('fast'), { budgetMs: 5000, perTryMs: 50 });
+    expect(out).toBe('fast');
+  });
+  it('ошибка не про нагрузку (например 400 схемы) — сразу наружу', async () => {
+    const tried: string[] = [];
+    await expect(withModelFallback(['a', 'b'], async (m) => { tried.push(m); throw Object.assign(new Error('bad schema'), { status: 400 }); }, { budgetMs: 5000, perTryMs: 1000 })).rejects.toThrow('bad schema');
+    expect(tried).toEqual(['a']);
+  });
+  it('все модели перегружены → ошибка', async () => {
+    await expect(withModelFallback(['a', 'b'], async () => { throw overloaded(); }, { budgetMs: 5000, perTryMs: 1000 })).rejects.toThrow();
+  });
+});

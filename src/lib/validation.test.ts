@@ -37,7 +37,7 @@ describe('UploadRequest', () => {
   it('принимает фото, превью, аудио и постер с допустимыми расширениями', () => {
     const r = UploadRequest.safeParse({ files: [
       { kind: 'photo', index: 0, ext: 'jpg' }, { kind: 'thumb', index: 0, ext: 'jpg' },
-      { kind: 'audio', ext: 'mp3' }, { kind: 'poster', ext: 'png' },
+      { kind: 'audio', ext: 'mp3' }, { kind: 'poster', ext: 'jpg' },
     ] });
     expect(r.success).toBe(true);
   });

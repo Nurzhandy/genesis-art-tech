@@ -12,7 +12,7 @@ export function dayFiles(folder: string) {
     photo: (i: number, ext = 'jpg') => `${folder}/photos/${pad(i)}.${ext}`,
     thumb: (i: number) => `${folder}/photos/thumb/${pad(i)}.jpg`,
     audio: (ext: string) => `${folder}/song.${ext}`,
-    poster: `${folder}/memory.png`,
+    poster: `${folder}/memory.jpg`,
     voice: `${folder}/voice.mp3`,
     text: `${folder}/text.md`,
     json: (name: 'analysis' | 'style' | 'song') => `${folder}/${name}.json`,

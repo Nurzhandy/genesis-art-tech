@@ -16,7 +16,7 @@ describe('dayFiles', () => {
     expect(f.photo(0, 'jpg')).toBe('d1/2026-11-03-park/photos/01.jpg');
     expect(f.thumb(1)).toBe('d1/2026-11-03-park/photos/thumb/02.jpg');
     expect(f.audio('mp3')).toBe('d1/2026-11-03-park/song.mp3');
-    expect(f.poster).toBe('d1/2026-11-03-park/memory.png');
+    expect(f.poster).toBe('d1/2026-11-03-park/memory.jpg');
     expect(f.voice).toBe('d1/2026-11-03-park/voice.mp3');
     expect(f.json('analysis')).toBe('d1/2026-11-03-park/analysis.json');
     expect(f.text).toBe('d1/2026-11-03-park/text.md');

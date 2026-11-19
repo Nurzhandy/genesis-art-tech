@@ -27,7 +27,7 @@ export function MemoryPlayer({ day }: { day: DayRecord }) {
     posterDone.current = true;
     try {
       const blob = await exportPoster(engine);
-      const { uploads } = await api.requestUploads(day.id, [{ kind: 'poster', ext: 'png' }]);
+      const { uploads } = await api.requestUploads(day.id, [{ kind: 'poster', ext: 'jpg' }]);
       await api.uploadFile(uploads[0], blob);
     } catch { /* постер — приятный бонус, не критично */ }
   }, [day.id]);

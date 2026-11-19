@@ -39,7 +39,7 @@ export const UploadFile = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('photo'), index: z.number().int().min(0).max(4), ext: z.enum(PHOTO_EXT) }),
   z.object({ kind: z.literal('thumb'), index: z.number().int().min(0).max(4), ext: z.enum(['jpg', 'jpeg']) }),
   z.object({ kind: z.literal('audio'), ext: z.enum(AUDIO_EXT) }),
-  z.object({ kind: z.literal('poster'), ext: z.literal('png') }),
+  z.object({ kind: z.literal('poster'), ext: z.literal('jpg') }),
 ]);
 export const UploadRequest = z.object({ files: z.array(UploadFile).min(1).max(12) });
 export type UploadFile = z.infer<typeof UploadFile>;

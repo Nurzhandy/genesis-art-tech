@@ -44,7 +44,7 @@ export default function Lab() {
             if (!engine) return;
             const blob = await exportPoster(engine);
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob); a.download = `${fixture}.png`; a.click();
+            a.href = URL.createObjectURL(blob); a.download = `${fixture}.jpg`; a.click();
             if (playing) engine.play();
           }}>↓ постер</button>
           <Link className="rounded-full border border-foreground/30 px-3 py-1.5" href="/lab/feed">лента →</Link>
