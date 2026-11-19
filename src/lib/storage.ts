@@ -53,17 +53,26 @@ export async function moveFile(from: string, to: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function fileSizes(paths: string[]): Promise<Record<string, number>> {
-  const byDir = new Map<string, string[]>();
-  for (const p of paths) {
-    const i = p.lastIndexOf('/');
-    const dir = p.slice(0, i);
-    byDir.set(dir, [...(byDir.get(dir) ?? []), p.slice(i + 1)]);
-  }
-  const out: Record<string, number> = {};
-  for (const [dir, names] of byDir) {
-    const { data } = await supabaseAdmin().storage.from(BUCKET).list(dir, { limit: 100 });
-    for (const f of data ?? []) if (names.includes(f.name)) out[`${dir}/${f.name}`] = (f.metadata?.size as number) ?? 0;
+export interface StoredFile { path: string; size: number }
+
+/** Все файлы папки дня с размерами, рекурсивно (photos/, photos/thumb/). */
+export async function listFolder(folder: string, depth = 3): Promise<StoredFile[]> {
+  const { data, error } = await supabaseAdmin().storage.from(BUCKET).list(folder, { limit: 200, sortBy: { column: 'name', order: 'asc' } });
+  if (error) throw error;
+  const out: StoredFile[] = [];
+  for (const item of data ?? []) {
+    const path = `${folder}/${item.name}`;
+    // У подпапок нет id и metadata — это «префиксы», заходим внутрь.
+    if (!item.id) { if (depth > 0) out.push(...(await listFolder(path, depth - 1))); continue; }
+    if (item.name === '.emptyFolderPlaceholder') continue;
+    out.push({ path, size: Number(item.metadata?.size ?? 0) });
   }
   return out;
+}
+
+export async function removeFiles(paths: string[]): Promise<void> {
+  for (let i = 0; i < paths.length; i += 100) {
+    const { error } = await supabaseAdmin().storage.from(BUCKET).remove(paths.slice(i, i + 100));
+    if (error) throw error;
+  }
 }

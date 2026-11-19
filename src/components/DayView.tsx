@@ -6,6 +6,7 @@ import { buildStyle } from '@/lib/style/buildStyle';
 import type { DayRecord, MoodOverride } from '@/lib/types';
 import { FolderPanel } from './FolderPanel';
 import { GenerateProgress } from './GenerateProgress';
+import { useIsMyDiary } from '@/lib/client/diaryKey';
 import { MemoryPlayer } from './MemoryPlayer';
 import { MoodTuner } from './MoodTuner';
 import { VoiceButton } from './VoiceButton';
@@ -35,6 +36,8 @@ export function DayView({ dayId }: { dayId: string }) {
       moodOverride: settled,
     });
   }, [day, settled]);
+  // Поправлять, переименовывать и удалять может только владелец дневника (ключ на этом устройстве).
+  const mine = useIsMyDiary(day?.diaryId ?? '');
 
   const load = useCallback(() => api.getDay(dayId).then(
     (d) => { setDay(d); setError(null); },
@@ -77,7 +80,8 @@ export function DayView({ dayId }: { dayId: string }) {
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,440px)_1fr]">
-      <MemoryPlayer day={day} styleOverride={preview} />
+      {/* После сохранения поправки плеер собирается заново и сохраняет новый постер (старый сброшен на сервере). */}
+      <MemoryPlayer key={`${day.moodOverride?.warmth ?? 0}:${day.moodOverride?.energy ?? 0}`} day={day} styleOverride={preview} />
       <div className="flex flex-col gap-6">
         <header>
           <Link href={`/diary/${day.diaryId}`} className="font-mono text-xs uppercase tracking-[0.2em] text-muted hover:text-foreground">← дневник</Link>
@@ -86,12 +90,12 @@ export function DayView({ dayId }: { dayId: string }) {
         </header>
         <p className="whitespace-pre-line text-xl leading-relaxed">{day.text}</p>
         <VoiceButton day={day} />
-        {day.analysis && day.style && (
+        {mine && day.analysis && day.style && (
           <MoodTuner day={day} value={override === undefined ? day.moodOverride ?? null : override}
             onChange={setOverride} onSaved={(d) => { setDay(d); setOverride(undefined); setSettled(undefined); }} />
         )}
         {(preview ?? day.style) && <WhyPanel style={(preview ?? day.style)!} />}
-        <FolderPanel day={day} />
+        <FolderPanel day={day} onChange={setDay} />
         {day.analysis?.source === 'fallback' && <p className="text-xs text-muted">Настроение записи определено по словам и цветам — без AI-анализа.</p>}
       </div>
     </div>

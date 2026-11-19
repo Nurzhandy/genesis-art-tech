@@ -39,13 +39,13 @@
   - RLS включён, политик нет: всё идёт только через наши API-роуты с service role
   - `insert into diaries(id) values ('demo')`
 - [x] Bucket `days`, **private**, лимит файла 15 MB (создаётся той же миграцией)
-- [ ] Тест `dayFolder`:
+- [x] Тест `dayFolder`:
   ```ts
   expect(dayFolder('d1', '2026-11-03', 'osenniy-park-i-kakao', 'x')).toBe('d1/2026-11-03-osenniy-park-i-kakao')
   expect(dayFolder('d1', '2026-11-03', null, 'abc')).toBe('d1/_draft-abc')
   ```
-- [ ] `npm test -- storage` → PASS
-- [ ] Коммит `feat(db): schema, storage helpers`
+- [x] `npm test -- storage` → PASS
+- [x] Коммит `feat(db): schema, storage helpers` (сделан как `feat(db): storage helpers for day folders`)
 
 ### A2. API дневника и дня
 
@@ -61,7 +61,7 @@
 - `POST /api/days/[dayId]/uploads` body `{ files: { kind: 'photo'|'thumb'|'audio'|'poster'; index?: number; ext: string }[] }` → `{ uploads: { kind; index?; path; token; signedUrl }[] }`
 - Клиент: `api.createDay()`, `api.requestUploads()`, `api.uploadFile(signedUrl, token, blob)` (через `supabase.storage.from('days').uploadToSignedUrl` с anon-клиентом), `api.generate()`, `api.getDay()`, `api.listDays()`, `api.voice()`; `getOrCreateDiaryId(): Promise<string>` (localStorage `diaryId`)
 
-- [ ] Тесты zod-схемы `NewDayInput = { date: 'yyyy-mm-dd', text: 1..5000 симв., photoCount: 1..5, song: SongRef }`:
+- [x] Тесты zod-схемы `NewDayInput = { date: 'yyyy-mm-dd', text: 1..5000 симв., photoCount: 1..5, song: SongRef }`:
   ```ts
   expect(NewDayInput.safeParse({ ...ok, text: '' }).success).toBe(false)
   expect(NewDayInput.safeParse({ ...ok, photoCount: 0 }).success).toBe(false)
@@ -69,10 +69,10 @@
   expect(NewDayInput.safeParse({ ...ok, song: { kind: 'link', url: 'not a url', provider: 'other' } }).success).toBe(false)
   expect(NewDayInput.safeParse(ok).success).toBe(true)
   ```
-- [ ] Тест: upload-запрос с `ext` не из `jpg|jpeg|png|webp|mp3|m4a|wav|ogg` отклоняется
-- [ ] Реализовать роуты. Дневник `demo` **только для чтения**: POST в него → 403
+- [x] Тест: upload-запрос с `ext` не из `jpg|jpeg|png|webp|mp3|m4a|wav|ogg` отклоняется
+- [x] Реализовать роуты. Дневник `demo` **только для чтения**: POST в него → 403
 - [ ] Проверка curl-ом: создать дневник → черновик → upload URLs → `GET` дня возвращает `status: 'draft'`
-- [ ] Коммит `feat(api): diaries, days, signed uploads`
+- [x] Коммит `feat(api): diaries, days, signed uploads`
 
 ### A3. Claude-анализ дня и fallback
 
@@ -86,7 +86,7 @@
   `validateTitle(t: string): { ok: true; title: string } | { ok: false; reason: string }`;
   `slugify(title: string): string` (транслит, lower-case, дефисы)
 
-- [ ] Тесты `validateTitle`:
+- [x] Тесты `validateTitle`:
   ```ts
   expect(validateTitle('Осенний парк и какао')).toEqual({ ok: true, title: 'Осенний парк и какао' })
   expect(validateTitle('Ночь в офисе перед сдачей').ok).toBe(true)
@@ -95,7 +95,7 @@
   expect(validateTitle('«Осенний парк и какао».')).toEqual({ ok: true, title: 'Осенний парк и какао' }) // чистит кавычки, точку, эмодзи
   expect(slugify('Осенний парк и какао')).toBe('osenniy-park-i-kakao')
   ```
-- [ ] Тесты fallback (раздел 8 обзора, п. 2):
+- [x] Тесты fallback (раздел 8 обзора, п. 2):
   ```ts
   const a = fallbackAnalysis('норм день', '2026-11-19', [photo({ warmth: 0.1, brightness: 0.5 })])
   expect(a.source).toBe('fallback')
@@ -104,8 +104,8 @@
   expect(a.mood.valence).toBeGreaterThanOrEqual(-1); expect(a.mood.valence).toBeLessThanOrEqual(1)
   ```
   Fallback: сезон по дате, время суток по словам («ночь», «утро», «вечер»), valence и arousal по маленькому словарю (≈40 слов: «устал», «дедлайн», «смеялись», «тихо» …) и средней яркости и теплоте фото. Название собирается по шаблону `[Сезонное прилагательное] [время суток / место] …`.
-- [ ] Схема `DayAnalysisSchema` (zod) один в один повторяет `DayAnalysis`, только без `source`. Числа ограничены через `.min().max()`
-- [ ] `analyzeDay`: **один** вызов
+- [x] Схема `DayAnalysisSchema` (zod) один в один повторяет `DayAnalysis`, только без `source`. Числа ограничены через `.min().max()`. Отступление: границы чисел не в схеме (Gemini их не любит), а прижимаются после разбора в `normalize`
+- [x] `analyzeDay`: **один** вызов. Отступление: вместо Claude — Gemini (`src/lib/ai/gemini.ts`), JSON по схеме, перегрузка 503 → запасные модели, всё в пределах 42 с, иначе fallback
   ```ts
   client.messages.parse({
     model: process.env.CLAUDE_MODEL ?? 'claude-opus-5-5',
@@ -116,16 +116,16 @@
   })
   ```
   Перед чтением проверяем `stop_reason`: если `'refusal'` или `parsed_output === null`, уходим в fallback. Таймаут клиента 45 с, `maxRetries: 1`, при любой ошибке тоже fallback. Server-side fallbacks (`betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default'`) подключаем, только если `client.beta.messages.parse` их нормально типизирует. Если нет, хватает нашего локального fallback.
-- [ ] `SYSTEM_PROMPT` (в `prompts.ts`) задаёт:
+- [x] `SYSTEM_PROMPT` (в `prompts.ts`) задаёт:
   - роль: «редактор личного дневника, переводишь день в параметры настроения, а не ставишь диагноз»;
   - шкалы `Mood` с якорями: «дедлайн ночью: tension 0.8, arousal 0.7»; «тихий вечер с какао: valence 0.6, arousal 0.2»;
   - **правила названия:** 3–7 слов, по-русски, именная фраза без глагола, без кавычек и эмодзи, шаблон «время/сезон + место + одна живая деталь»; примеры: «Осенний парк и какао», «Ночь в офисе перед сдачей», «Первый снег у бабушки»;
   - правило подписи: ≤ 60 символов, от первого лица, как рукой на полях;
   - `songGuess`: оценка по исполнителю и названию (BPM, энергия, лад, жанр латиницей, год). Если песня неизвестна, `null`.
-- [ ] Если название из Claude не проходит `validateTitle`, берём `fallbackAnalysis(...).title` (повторный вызов ради названия не делаем: экономим время)
-- [ ] Тест `analyzeDay` с замоканным SDK, который возвращает `stop_reason: 'refusal'` → результат `source: 'fallback'` (раздел 8, п. 4)
+- [x] Если название из Claude не проходит `validateTitle`, берём `fallbackAnalysis(...).title` (повторный вызов ради названия не делаем: экономим время)
+- [x] Тест `analyzeDay` с замоканным SDK, который возвращает `stop_reason: 'refusal'` → результат `source: 'fallback'` (раздел 8, п. 4)
 - [ ] Ручная проверка на 3 фикстурах из `fixtures/demo`. Анализ кладём в `fixtures/analysis-samples/*.json`, чтобы B видел реальные данные
-- [ ] Коммит `feat(ai): day analysis with fallback, title rules`
+- [x] Коммит `feat(ai): day analysis with fallback, title rules`
 
 ### A4. Форма записи дня: фото и песня в браузере
 
@@ -138,7 +138,7 @@
   `computeFeatures(pixels: Uint8ClampedArray, w: number, h: number, index: number): PhotoFeatures` (чистая функция, её и тестируем);
   `analyzeAudioFile(file: File): Promise<MusicFeatures>` (`source: 'audio'`)
 
-- [ ] Тесты `computeFeatures` на синтетических пикселях:
+- [x] Тесты `computeFeatures` на синтетических пикселях: (`src/lib/client/photoFeatures.test.ts`)
   ```ts
   const orange = solid(255, 140, 0), blue = solid(30, 60, 200), black = solid(0, 0, 0)
   expect(computeFeatures(orange, 10, 10, 0).warmth).toBeGreaterThan(0.5)
@@ -147,15 +147,15 @@
   expect(computeFeatures(orange, 10, 10, 0).palette[0]).toBe('#ff8c00')
   ```
   Палитра: k-means на 5 кластеров по выборке ~2000 пикселей в Lab, сортировка по размеру кластера. Теплота: `(a* + b*) / норма` в Lab, клампим в [-1, 1].
-- [ ] `processPhoto`: если HEIC, конвертируем через `heic2any`, при ошибке бросаем `Error('Не получилось открыть фото HEIC — сохраните его как JPEG')`. Затем ресайз через canvas: full 1600px по длинной стороне (JPEG 0.85), thumb 768px (JPEG 0.8). Учитываем EXIF-ориентацию (`createImageBitmap(file, { imageOrientation: 'from-image' })`)
-- [ ] `analyzeAudioFile`: `decodeAudioData` → `guess()` из `web-audio-beat-detector` даёт BPM (при ошибке 90). Energy считаем через Meyda `rms` по окнам 60-секундного куска из середины трека, нормируем: `clamp(rms / 0.25)`. Brightness: `spectralCentroid / (sampleRate / 2)`. `mode: 'unknown'`
-- [ ] Форма:
+- [x] `processPhoto`: если HEIC, конвертируем через `heic2any`, при ошибке бросаем `Error('Не получилось открыть фото HEIC — сохраните его как JPEG')`. Затем ресайз через canvas: full 1600px по длинной стороне (JPEG 0.85), thumb 768px (JPEG 0.8). Учитываем EXIF-ориентацию (`createImageBitmap(file, { imageOrientation: 'from-image' })`)
+- [x] `analyzeAudioFile`: `decodeAudioData` → `guess()` из `web-audio-beat-detector` даёт BPM (при ошибке 90). Energy считаем через Meyda `rms` по окнам 60-секундного куска из середины трека, нормируем: `clamp(rms / 0.25)`. Brightness: `spectralCentroid / (sampleRate / 2)`. `mode: 'unknown'`
+- [x] Форма:
   - дата (по умолчанию сегодня);
   - textarea с подсказкой «Расскажите как другу: погода, свет, запахи, звуки, кто был рядом, мелочи, которые запомнились»;
   - PhotoPicker на 1–5 фото: превью, удаление, перестановка, а пока идёт обработка, кнопка «Собрать день» отключена;
   - SongInput с вкладками «Ссылка» / «Файл». По ссылке сразу вызываем `/api/music/resolve` и показываем карточку «Frank Sinatra — Autumn Leaves ✓». Под вкладкой «Файл» мелкий текст «файл виден только вам».
 - [ ] Ручная проверка: HEIC с iPhone, вертикальное фото, PNG 12 MB, ссылка Spotify, ссылка YouTube, mp3
-- [ ] Коммит `feat(form): day entry with photo and audio analysis`
+- [x] Коммит `feat(form): day entry with photo and audio analysis`
 
 ### A5. Музыка: распознавание ссылки, Deezer, прокси превью
 
@@ -169,7 +169,7 @@
   `mergeMusic(audio: MusicFeatures | null, deezer: MusicFeatures | null, guess: DayAnalysis['songGuess']): MusicFeatures`;
   `GET /api/music/preview?id=<deezerTrackId>` стримит mp3 (берём свежий `preview` через `api.deezer.com/track/{id}`, потому что подпись ссылки истекает)
 
-- [ ] Тесты `parseSongUrl`:
+- [x] Тесты `parseSongUrl`:
   ```ts
   expect(parseSongUrl('https://open.spotify.com/track/3n3Ppam7vgaVa1iaRUc9Lp?si=x')).toMatchObject({ provider: 'spotify', id: '3n3Ppam7vgaVa1iaRUc9Lp', embedUrl: 'https://open.spotify.com/embed/track/3n3Ppam7vgaVa1iaRUc9Lp' })
   expect(parseSongUrl('https://youtu.be/dQw4w9WgXcQ')).toMatchObject({ provider: 'youtube', id: 'dQw4w9WgXcQ' })
@@ -178,20 +178,20 @@
   expect(parseSongUrl('https://www.deezer.com/track/3135556')).toMatchObject({ provider: 'deezer', id: '3135556' })
   expect(parseSongUrl('просто текст')).toBeNull()
   ```
-- [ ] Тесты `mergeMusic` (раздел 8, п. 3):
+- [x] Тесты `mergeMusic` (раздел 8, п. 3):
   ```ts
   expect(mergeMusic(null, null, null)).toEqual({ source: 'llm', bpm: 90, energy: 0.5, mode: 'unknown' })
   expect(mergeMusic(audioF, deezerF, guess).source).toBe('audio')      // audio приоритетнее
   expect(mergeMusic(null, { ...deezerF, bpm: 0 }, guess).bpm).toBe(guess.bpm)  // у Deezer bpm=0 означает «нет данных»
   ```
   Лад (`mode`) и жанр всегда берём из `songGuess`, если в источнике выше их нет.
-- [ ] `resolveSong`:
+- [x] `resolveSong`:
   1. Название и исполнитель через oEmbed: Spotify `https://open.spotify.com/oembed?url=`, YouTube `https://www.youtube.com/oembed?url=&format=json`.
   2. Поиск на Deezer `https://api.deezer.com/search?q=artist:"…" track:"…"`, затем `/track/{id}`, откуда берём `bpm`, `preview`, `release_date`.
   3. `previewUrl` = наш `/api/music/preview?id=…`.
   4. Таймаут каждого запроса 5 с. Любой сбой означает «нет данных», а не ошибку.
 - [ ] **Спайк в первый час задачи:** проверить, что Deezer API отвечает с сервера Vercel и что mp3 превью проигрывается через прокси в `<audio>` с `crossOrigin="anonymous"`. Если нет, музыка для ссылок идёт только из `songGuess` и embed-плеера, и мы сообщаем B, что аудиореактивность будет только для файлов
-- [ ] Коммит `feat(music): link parsing, deezer bpm and preview proxy`
+- [x] Коммит `feat(music): link parsing, deezer bpm and preview proxy`
 
 ### A6. Генерация: оркестрация `/generate`
 
@@ -204,11 +204,11 @@
 - Consumes: `analyzeDay`, `resolveSong`, `mergeMusic`, `buildStyle` (от B), `validateTitle`, `slugify`
 - Produces: `generateDay(dayId: string, body): Promise<DayRecord>`, зависимости передаются аргументом, чтобы тест мог их замокать
 
-- [ ] `export const maxDuration = 60` в роуте
-- [ ] Тест с моками: статус меняется `draft → generating → ready`; в `buildStyle` уходит `seed = hash(dayId)`; итоговая папка `days/{diary}/{date}-{slug}/`. Если slug совпадает с уже существующим в дневнике, добавляется `-2`
-- [ ] Тест: если день уже `generating`, повторный вызов → 409; если `ready`, возвращаем как есть (идемпотентность)
-- [ ] Лимит `GENERATE_LIMIT_PER_DAY` генераций на дневник в сутки (считаем по `days` за последние 24 часа) → 429 с текстом «Лимит на сегодня исчерпан»
-- [ ] Шаги внутри:
+- [x] `export const maxDuration = 60` в роуте
+- [x] Тест с моками: статус меняется `draft → generating → ready`; в `buildStyle` уходит `seed = hash(dayId)`; итоговая папка `days/{diary}/{date}-{slug}/`. Если slug совпадает с уже существующим в дневнике, добавляется `-2`
+- [x] Тест: если день уже `generating`, повторный вызов → 409; если `ready`, возвращаем как есть (идемпотентность)
+- [x] Лимит `GENERATE_LIMIT_PER_DAY` генераций на дневник в сутки (считаем по `days` за последние 24 часа) → 429 с текстом «Лимит на сегодня исчерпан»
+- [x] Шаги внутри:
   1. Скачать thumbs → base64.
   2. Если `song.kind === 'link'`, вызвать `resolveSong`.
   3. `analyzeDay`.
@@ -220,7 +220,7 @@
   9. Обновить строку.
   10. При исключении: `status='error'`, `error=<короткий текст>`.
 - [ ] Ручная проверка end-to-end на прод-ссылке: **интеграция №1**
-- [ ] Коммит `feat(generate): full day pipeline`
+- [x] Коммит `feat(generate): full day pipeline`
 
 ### A7. Озвучка
 
@@ -232,7 +232,7 @@
 - Produces: `pickVoice(analysis: DayAnalysis, music: MusicFeatures): VoicePreset`;
   `POST /api/days/[dayId]/voice` → `{ url, preset }` (кэш: если `voice.mp3` уже есть, просто отдаём ссылку). Если нет `OPENAI_API_KEY`, ответ `{ url: null, preset }`, и B озвучивает через Web Speech API с `rate = preset.speed`
 
-- [ ] Правила голоса, системные, а не случайные:
+- [x] Правила голоса, системные, а не случайные:
 
   | Условие (проверяем сверху вниз) | voice | speed | instructions |
   |---|---|---|---|
@@ -243,9 +243,9 @@
   | иначе | `nova` | 1.0 | «Спокойно и тепло, как запись в дневнике» |
 
   Если `mode === 'minor'`, speed дополнительно −0.05. Поле `because` повторяет сработавшее условие человеческими словами.
-- [ ] Тесты: каждая строка таблицы + проверка минора
-- [ ] `tts.ts`: OpenAI `audio.speech.create({ model: 'gpt-4o-mini-tts', voice, input: text, instructions, response_format: 'mp3' })` с `speed` в теле запроса. Результат кладём в `voice.mp3` в папку дня. Текст длиннее 1500 символов обрезаем по последнему предложению
-- [ ] Коммит `feat(voice): mood-based voice presets and tts`
+- [x] Тесты: каждая строка таблицы + проверка минора
+- [x] `tts.ts`: OpenAI `audio.speech.create({ model: 'gpt-4o-mini-tts', voice, input: text, instructions, response_format: 'mp3' })` с `speed` в теле запроса. Результат кладём в `voice.mp3` в папку дня. Текст длиннее 1500 символов обрезаем по последнему предложению
+- [x] Коммит `feat(voice): mood-based voice presets and tts`
 
 ### A8. Архив, лента, папка дня, ZIP
 
@@ -256,29 +256,29 @@
 - Produces для B: `<FolderPanel day={DayRecord} />`, панель «Папка дня», которую B вставляет на страницу дня;
   `downloadDayZip(day: DayRecord): Promise<void>` собирает ZIP «{title}.zip» из signed URLs через JSZip
 
-- [ ] Лендинг:
+- [x] Лендинг:
   - заголовок и одна фраза о продукте;
   - кнопка «Мой дневник»: `getOrCreateDiaryId()` и переход в него;
   - кнопка «Демо-дневник» ведёт в `/diary/demo`.
-- [ ] Архив:
+- [x] Архив:
   - сетка постеров 9:16 по месяцам («Ноябрь 2026»), на карточке дата и название;
   - поиск по названию и тексту (`?q=`, debounce 300 мс);
   - переключатель «Сетка / Лента». Лента: горизонтальная полоса 5–7 постеров подряд, крупно (это «проверка лентой» из ТЗ);
   - пустое состояние «Запишите первый день» со ссылкой на форму;
   - в демо-дневнике кнопки записи нет.
-- [ ] FolderPanel: иконка папки с названием и список файлов (`text.md`, `photos/…`, `song.json` / `song.mp3`, `memory.png`, `voice.mp3`, `analysis.json`, `style.json`) с размерами. Кнопка «Скачать папку»
+- [x] FolderPanel: иконка папки с названием и список файлов (`text.md`, `photos/…`, `song.json` / `song.mp3`, `memory.png`, `voice.mp3`, `analysis.json`, `style.json`) с размерами. Кнопка «Скачать папку». Размеры приходят из `GET /api/days/[dayId]/files`
 - [ ] Ручная проверка на телефоне (375px): сетка в 2 колонки, лента листается свайпом
-- [ ] Коммит `feat(archive): diary grid, feed, day folder zip`
+- [x] Коммит `feat(archive): diary grid, feed, day folder zip` (сделан вместе со страницей дня: `feat(day,archive): ...`)
 
 ### A9. Деплой, сид демо-дневника, материалы для сдачи
 
 **Files:**
 - Create: `scripts/seed-demo.ts`, `README.md` (дополнить), `docs/submission/tools.md`, `docs/submission/description.md` (вместе с B)
 
-- [ ] `scripts/seed-demo.ts`: для каждой папки `fixtures/demo/<slug>/` (`text.md`, `photos/*.jpg`, `song.json` = `SongRef`, `date.txt`) выполняет тот же путь, что и браузер (features считаем через `sharp` по той же формуле, что `computeFeatures`), в дневник `demo`. Запуск: `npx tsx scripts/seed-demo.ts`
+- [x] `scripts/seed-demo.ts`: для каждой папки `fixtures/demo/<slug>/` (`text.md`, `photos/*.jpg`, `song.json` = `SongRef`, `date.txt`) выполняет тот же путь, что и браузер (features считаем через `sharp` по той же формуле, что `computeFeatures`), в дневник `demo`. Запуск: `npx tsx scripts/seed-demo.ts`
 - [ ] Постеры демо-дней: B открывает каждый день один раз, и постер загружается сам (или запускаем `?exportPoster=1`)
-- [ ] README: что это; ссылка на прод; как запустить локально (`cp .env.example .env.local`, `npm i`, `npm run dev`); как устроена генерация (5 строк); где правила визуальной системы
-- [ ] `tools.md`: Next.js, Supabase, Claude API (`claude-opus-5-5`: анализ текста и фото, названия), OpenAI TTS, Deezer API, oEmbed Spotify/YouTube, p5.js, Meyda, web-audio-beat-detector, heic2any, JSZip, шрифты Google Fonts. Плюс честная строка: какие части писали с помощью AI-ассистентов
+- [x] README: что это; ссылка на прод; как запустить локально (`cp .env.example .env.local`, `npm i`, `npm run dev`); как устроена генерация (5 строк); где правила визуальной системы
+- [x] `tools.md`: Next.js, Supabase, Claude API (`claude-opus-5-5`: анализ текста и фото, названия), OpenAI TTS, Deezer API, oEmbed Spotify/YouTube, p5.js, Meyda, web-audio-beat-detector, heic2any, JSZip, шрифты Google Fonts. Плюс честная строка: какие части писали с помощью AI-ассистентов (по факту Gemini вместо Claude, Canvas 2D вместо p5.js)
 - [ ] Финальная проверка по чек-листу сдачи из раздела 7 обзора
 
 ### A10. Доработки по ресерчу пользователей
@@ -286,14 +286,14 @@
 Зачем и откуда: [docs/research/user-needs.md](../research/user-needs.md). P0 встраиваем в
 задачи выше по ходу (в скобках куда), P1 делаем после интеграции №2, если есть запас.
 
-- [ ] **R1 (в A3, P0):** в `SYSTEM_PROMPT` подпись `caption` ближе к дословной цитате из записи; `sensory` это 2–4 фрагмента ≤ 4 слов **дословно из текста**. В fallback `sensory` = 2–3 существительных из текста по словарю
-- [ ] **R6 (в A4, P0):** чипы под textarea «погода · свет · запах · звук · кто рядом · мелочь», клик дописывает начало фразы («Пахло…», «Рядом был(а)…»)
-- [ ] **R8 (в A4, P0):** кнопка «Заполнить примером»: наш текст, 3 своих фото из `public/sample/`, ссылка на песню
-- [ ] **R9 (в A4, P0):** текст приватности под формой (формулировка в ресерче, раздел 3)
-- [ ] **R7 (в A8, P0):** «Сохранить ссылку на дневник» в шапке и одноразовая плашка «это единственный ключ к дневнику»
-- [ ] **R10 (P1, вместе с B):** `POST /api/days/[dayId]/restyle { warmth, energy }` в диапазоне −0.4..0.4 → `buildStyle({ ...input, moodOverride })` без Claude → сохраняем `style` и `mood_override`, сбрасываем постер. Нужна правка `types.ts` и миграция `0002_mood_override.sql` (ресерч, раздел 4)
-- [ ] **R11 (P1):** `PATCH /api/days/[dayId] { title }` через `validateTitle`. Папку в Storage не переносим, меняем только `title` и `slug` в БД, а ZIP называется по новому `title`
-- [ ] **R12 (P1):** в архиве режим «Календарь» (клетка дня = `style.palette.accents[0]`), блок «В этот день» (тот же день и месяц, другой год), кнопка «Случайный день»
-- [ ] **R13 (P1):** диктовка 🎙 через `webkitSpeechRecognition` / `SpeechRecognition` (`ru-RU`, `interimResults`), кнопка скрыта, если API нет
-- [ ] **R14 (P1):** `DELETE /api/days/[dayId]` удаляет строку и папку в Storage, в UI с подтверждением. В `demo` → 403
+- [x] **R1 (в A3, P0):** в `SYSTEM_PROMPT` подпись `caption` ближе к дословной цитате из записи; `sensory` это 2–4 фрагмента ≤ 4 слов **дословно из текста**. В fallback `sensory` = 2–3 существительных из текста по словарю → `src/lib/ai/userWords.ts`: выдуманное моделью отбрасывается, подпись-пересказ заменяется фразой автора
+- [x] **R6 (в A4, P0):** чипы под textarea «погода · свет · запах · звук · кто рядом · мелочь», клик дописывает начало фразы («Пахло…», «Рядом был(а)…») → `src/components/DayTextInput.tsx`
+- [x] **R8 (в A4, P0):** кнопка «Заполнить примером»: наш текст, 3 своих фото из `public/sample/`, ссылка на песню → `src/lib/client/sample.ts`. В `public/sample/` пока заглушки из фикстур: заменить на настоящие фото любимого дня
+- [x] **R9 (в A4, P0):** текст приватности под формой (формулировка в ресерче, раздел 3)
+- [x] **R7 (в A8, P0):** «Сохранить ссылку на дневник» в шапке и одноразовая плашка «это единственный ключ к дневнику» → `src/components/DiaryKey.tsx`. Открыли ссылку на устройстве без дневника — она запоминается; правки дня проверяют ключ в заголовке `x-diary-key`
+- [x] **R10 (P1, вместе с B):** `POST /api/days/[dayId]/restyle { warmth, energy }` в диапазоне −0.4..0.4 → `buildStyle({ ...input, moodOverride })` без Claude → сохраняем `style` и `mood_override`, сбрасываем постер. Нужна правка `types.ts` и миграция `0002_mood_override.sql` (ресерч, раздел 4) → эндпоинт `src/app/api/days/[dayId]/restyle`, логика `restyle` в `src/lib/dayEdits.ts`; поправку применяет движок B (`StyleInput.moodOverride`), так что сохранённое совпадает с живым превью. Ползунки только у владельца дневника. **Миграцию 0002 применить в Supabase**
+- [x] **R11 (P1):** `PATCH /api/days/[dayId] { title }` через `validateTitle`. Папку в Storage не переносим, меняем только `title` и `slug` в БД, а ZIP называется по новому `title`. Отступление: папка в Storage переезжает целиком, иначе постер и озвучка записались бы в старую папку
+- [x] **R12 (P1):** в архиве режим «Календарь» (клетка дня = `style.palette.accents[0]`), блок «В этот день» (тот же день и месяц, другой год), кнопка «Случайный день» → `src/lib/archive.ts`, `src/components/Archive.tsx`
+- [x] **R13 (P1):** диктовка 🎙 через `webkitSpeechRecognition` / `SpeechRecognition` (`ru-RU`, `interimResults`), кнопка скрыта, если API нет
+- [x] **R14 (P1):** `DELETE /api/days/[dayId]` удаляет строку и папку в Storage, в UI с подтверждением. В `demo` → 403. Кнопка в панели «Папка дня», только владельцу
 - [ ] Коммит на каждый пункт: `feat(form): ...`, `feat(archive): ...`

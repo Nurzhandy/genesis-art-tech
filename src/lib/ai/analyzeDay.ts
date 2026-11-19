@@ -6,6 +6,7 @@ import { fallbackAnalysis } from './fallback';
 import { createGemini, DEFAULT_GEMINI_MODEL } from './gemini';
 import { SYSTEM_PROMPT, userBlock } from './prompts';
 import { DayAnalysisSchema, type DayAnalysisRaw } from './schemas';
+import { captionFromText, cutAtWord, isFromText, overlap, sensoryFromText } from './userWords';
 
 export interface AnalyzeInput {
   text: string;
@@ -42,6 +43,22 @@ export function parseModelJson(text: string): unknown {
   return JSON.parse((fenced ? fenced[1] : text).trim());
 }
 
+/** Сенсорика только дословно из записи: выдуманное моделью отбрасываем, пусто → берём из текста сами. */
+export function userSensory(fromModel: string[], text: string): string[] {
+  const seen = new Set<string>();
+  const kept = fromModel
+    .map((s) => s.replace(/[«»"“”.,!?;:]+/g, ' ').replace(/\s+/g, ' ').trim().toLocaleLowerCase('ru'))
+    .filter((s) => isFromText(s, text) && !seen.has(s) && seen.add(s))
+    .slice(0, 4);
+  return kept.length >= 2 ? kept : [...new Set([...kept, ...sensoryFromText(text)])].slice(0, 4);
+}
+
+/** Подпись — словами автора: если модель пересказала своими словами, берём фразу из записи. */
+export function userCaption(fromModel: string, text: string): string {
+  const c = cutAtWord(fromModel.replace(/[«»"“”]/g, ''), 60).replace(/[.]+$/u, '').toLocaleLowerCase('ru');
+  return c.length > 3 && overlap(c, text) >= 0.6 ? c : captionFromText(text);
+}
+
 export function normalize(raw: DayAnalysisRaw, input: AnalyzeInput): DayAnalysis {
   const fb = () => fallbackAnalysis(input.text, input.date, input.photoFeatures);
   const title = validateTitle(raw.title);
@@ -57,10 +74,10 @@ export function normalize(raw: DayAnalysisRaw, input: AnalyzeInput): DayAnalysis
     timeOfDay: raw.timeOfDay,
     setting: raw.setting,
     people: raw.people,
-    sensory: raw.sensory.slice(0, 6),
+    sensory: userSensory(raw.sensory, input.text),
     photoScenes: raw.photoScenes.filter((s) => s.index >= 0 && s.index < Math.max(1, input.photos.length)),
     title: title.ok ? title.title : fb().title,
-    caption: raw.caption.trim().slice(0, 60) || fb().caption,
+    caption: userCaption(raw.caption, input.text),
     songGuess: raw.songGuess
       ? {
           bpm: clamp(raw.songGuess.bpm, 50, 200),

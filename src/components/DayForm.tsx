@@ -3,6 +3,9 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api, type NewSong } from '@/lib/client/api';
 import type { UploadFile } from '@/lib/validation';
+import { processPhoto } from '@/lib/client/imageProcess';
+import { SAMPLE, samplePhotoFiles } from '@/lib/client/sample';
+import { DayTextInput } from './DayTextInput';
 import { GenerateProgress } from './GenerateProgress';
 import { PhotoPicker, type PickedPhoto } from './PhotoPicker';
 import { SongInput, type SongState } from './SongInput';
@@ -21,6 +24,26 @@ export function DayForm({ diaryId }: { diaryId: string }) {
   const [song, setSong] = useState<SongState>({ kind: 'none' });
   const [stage, setStage] = useState<'form' | 'upload' | 'generate'>('form');
   const [error, setError] = useState<string | null>(null);
+  const [songKey, setSongKey] = useState(0);
+  const [sampleBusy, setSampleBusy] = useState(false);
+
+  async function fillSample() {
+    setSampleBusy(true); setPhotosBusy(true); setError(null);
+    try {
+      setText(SAMPLE.text);
+      const files = await samplePhotoFiles();
+      const picked: PickedPhoto[] = [];
+      for (const [i, f] of files.entries()) picked.push({ ...(await processPhoto(f, i)), id: crypto.randomUUID(), name: f.name });
+      setPhotos(picked);
+      // SongInput сам распознает ссылку: монтируем его заново с готовым адресом.
+      setSong({ kind: 'link', url: SAMPLE.songUrl, status: 'checking', music: null });
+      setSongKey((k) => k + 1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Не получилось подставить пример');
+    } finally {
+      setSampleBusy(false); setPhotosBusy(false);
+    }
+  }
 
   const songReady = (song.kind === 'link' && song.status !== 'checking') || (song.kind === 'file' && song.status === 'ok');
   const canSubmit = text.trim().length > 0 && photos.length > 0 && !photosBusy && songReady && stage === 'form';
@@ -68,6 +91,14 @@ export function DayForm({ diaryId }: { diaryId: string }) {
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-10">
+      <div className="-mb-4 flex flex-wrap items-center gap-3 rounded-sm border border-dashed border-foreground/20 px-4 py-3">
+        <p className="flex-1 text-base text-muted">Хотите сначала посмотреть, как это работает? Подставим осенний день с песней Синатры.</p>
+        <button type="button" onClick={fillSample} disabled={sampleBusy || photosBusy}
+          className="rounded-full border border-foreground/30 px-4 py-2 font-mono text-xs uppercase tracking-wider transition hover:bg-foreground hover:text-background disabled:opacity-40">
+          {sampleBusy ? 'подставляю…' : 'Заполнить примером'}
+        </button>
+      </div>
+
       <section>
         <label className="mb-2 block font-mono text-xs uppercase tracking-[0.2em] text-muted" htmlFor="date">дата</label>
         <input id="date" type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value)}
@@ -76,10 +107,7 @@ export function DayForm({ diaryId }: { diaryId: string }) {
 
       <section>
         <label className="mb-2 block font-mono text-xs uppercase tracking-[0.2em] text-muted" htmlFor="text">как прошёл день</label>
-        <textarea id="text" value={text} onChange={(e) => setText(e.target.value)} rows={7} maxLength={5000}
-          placeholder="Расскажите как другу: погода, свет, запахи, звуки, кто был рядом, мелочи, которые запомнились…"
-          className="w-full resize-y rounded-sm border border-foreground/15 bg-white/40 p-4 text-xl leading-relaxed outline-none placeholder:text-muted/70 focus:border-foreground/40 dark:bg-white/5" />
-        <p className="mt-1 text-right font-mono text-[11px] text-muted">{text.length}/5000</p>
+        <DayTextInput value={text} onChange={setText} />
       </section>
 
       <section>
@@ -89,7 +117,7 @@ export function DayForm({ diaryId }: { diaryId: string }) {
 
       <section>
         <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-muted">песня дня</p>
-        <SongInput value={song} onChange={setSong} />
+        <SongInput key={songKey} value={song} onChange={setSong} />
       </section>
 
       {error && <p className="rounded-sm bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950/40 dark:text-red-300">{error}</p>}
@@ -102,6 +130,12 @@ export function DayForm({ diaryId }: { diaryId: string }) {
         {missing.length > 0 && <p className="text-sm text-muted">Осталось: {missing.join(', ')}</p>}
         {photosBusy && <p className="text-sm text-muted">Обрабатываю фото…</p>}
       </div>
+
+      <p className="border-t border-foreground/10 pt-5 text-sm leading-relaxed text-muted">
+        Дневник открывается только по вашей ссылке. Текст и фото анализирует AI (Gemini), чтобы подобрать оформление;
+        это настроение записи, а не оценка вашего состояния. Песню мы храним ссылкой; свой аудиофайл лежит в закрытой
+        папке дня. Любой день можно скачать или удалить.
+      </p>
     </form>
   );
 }

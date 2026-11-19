@@ -1,5 +1,6 @@
 // Анализ дня без AI: словарь + дата + цвета фото. Используется, если модель недоступна (A3).
 import type { DayAnalysis, PhotoFeatures } from '@/lib/types';
+import { captionFromText, sensoryFromText } from './userWords';
 
 type Season = DayAnalysis['season'];
 type TimeOfDay = DayAnalysis['timeOfDay'];
@@ -96,14 +97,13 @@ export function fallbackAnalysis(rawText: string, date: string, photos: PhotoFea
     tension > 0.5 ? 'напряжённый' : 'спокойный',
   ];
 
-  const firstSentence = rawText.split(/[.!?\n]/)[0]?.trim() ?? '';
-  const caption = (firstSentence.length > 3 ? firstSentence : 'просто день').toLocaleLowerCase('ru').slice(0, 60);
+  const caption = captionFromText(rawText);
 
   return {
     mood: { valence, arousal, tension, nostalgia },
     moodWords,
     season, timeOfDay, setting, people,
-    sensory: [],
+    sensory: sensoryFromText(rawText),
     photoScenes: photos.map((p) => ({
       index: p.index,
       subject: 'фото дня',

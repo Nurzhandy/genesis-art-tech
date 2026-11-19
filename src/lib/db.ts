@@ -1,5 +1,6 @@
 // Доступ к таблице days и превращение строк в DayRecord с signed URLs.
 import type { DayRecord, DayStatus } from './types';
+import { HttpError } from './http';
 import { signRead } from './storage';
 import { supabaseAdmin } from './supabase/server';
 
@@ -8,6 +9,7 @@ export interface DayRow {
   photos: DayRecord['photos']; song: DayRecord['song']; music: DayRecord['music'];
   analysis: DayRecord['analysis']; style: DayRecord['style']; voice: DayRecord['voice'];
   poster_path: string | null; status: DayStatus; error: string | null; created_at: string;
+  mood_override?: DayRecord['moodOverride'];   // колонка из миграции 0002
 }
 
 export function rowToDay(r: DayRow): DayRecord {
@@ -15,7 +17,22 @@ export function rowToDay(r: DayRow): DayRecord {
     id: r.id, diaryId: r.diary_id, date: r.date, title: r.title, slug: r.slug, text: r.text,
     photos: r.photos ?? [], song: r.song, music: r.music, analysis: r.analysis, style: r.style, voice: r.voice,
     posterPath: r.poster_path, status: r.status, error: r.error, createdAt: r.created_at,
+    moodOverride: r.mood_override ?? null,
   };
+}
+
+export const demoDiaryId = () => process.env.DEMO_DIARY_ID ?? 'demo';
+
+/** Заголовок, которым браузер доказывает, что это его дневник (diaryId из localStorage). */
+export const DIARY_KEY_HEADER = 'x-diary-key';
+
+/**
+ * Менять и удалять день может только владелец дневника: ключ дневника приходит в заголовке.
+ * Демо-дневник только для просмотра.
+ */
+export function assertCanEdit(req: Request, day: DayRecord): void {
+  if (day.diaryId === demoDiaryId() && process.env.ALLOW_DEMO_WRITES !== '1') throw new HttpError(403, 'Демо-дневник только для просмотра');
+  if (req.headers.get(DIARY_KEY_HEADER) !== day.diaryId) throw new HttpError(403, 'Менять день может только владелец дневника');
 }
 
 export function urlPaths(d: DayRecord): string[] {
@@ -60,4 +77,4 @@ export async function diaryExists(id: string): Promise<boolean> {
 }
 
 export const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
-export const isDiaryId = (s: string) => s === (process.env.DEMO_DIARY_ID ?? 'demo') || isUuid(s);
+export const isDiaryId = (s: string) => s === demoDiaryId() || isUuid(s);
