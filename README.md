@@ -34,4 +34,4 @@
 
 ## Стек
 
-Next.js + TypeScript, Supabase, Claude API, p5.js, Vercel. Подробности в обзоре плана.
+Next.js + TypeScript, Supabase, Claude API, Canvas 2D (свой движок рендера вместо p5.js), Vercel. Подробности в обзоре плана.
