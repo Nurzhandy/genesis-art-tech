@@ -28,8 +28,9 @@ export interface PaletteResult { palette: StyleParams['palette']; warmShift: num
 
 export function buildPalette(input: StyleInput): PaletteResult {
   const s = signals(input);
-  const warmShift = clamp01(0.25 * s.vPos + 0.15 * (s.warmLight ? 1 : 0));
-  const coolShift = clamp01(0.3 * s.tension + 0.2 * (s.night ? 1 : 0));
+  // Поправка «теплее/холоднее» от человека двигает тон напрямую.
+  const warmShift = clamp01(0.25 * s.vPos + 0.15 * (s.warmLight ? 1 : 0) + Math.max(0, s.warmthOverride));
+  const coolShift = clamp01(0.3 * s.tension + 0.2 * (s.night ? 1 : 0) + Math.max(0, -s.warmthOverride) - Math.max(0, s.warmthOverride) * 0.5);
   const chromaK = (0.55 + 0.45 * s.arousal) * (s.minor ? 0.75 : 1);
   const tint = SEASON_TINT[input.analysis.season] ?? null;
 

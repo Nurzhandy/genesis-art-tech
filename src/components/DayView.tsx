@@ -1,11 +1,13 @@
 'use client';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/client/api';
-import type { DayRecord } from '@/lib/types';
+import { buildStyle } from '@/lib/style/buildStyle';
+import type { DayRecord, MoodOverride } from '@/lib/types';
 import { FolderPanel } from './FolderPanel';
 import { GenerateProgress } from './GenerateProgress';
 import { MemoryPlayer } from './MemoryPlayer';
+import { MoodTuner } from './MoodTuner';
 import { VoiceButton } from './VoiceButton';
 import { WhyPanel } from './WhyPanel';
 
@@ -13,6 +15,26 @@ export function DayView({ dayId }: { dayId: string }) {
   const [day, setDay] = useState<DayRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
+  const [override, setOverride] = useState<MoodOverride | null | undefined>(undefined);
+  // Холст пересобирается не на каждый шаг ползунка, а после паузы 300 мс.
+  const [settled, setSettled] = useState<MoodOverride | null | undefined>(undefined);
+  useEffect(() => {
+    const t = setTimeout(() => setSettled(override), 300);
+    return () => clearTimeout(t);
+  }, [override]);
+
+  // Живое превью поправки: тот же движок правил прямо в браузере.
+  const preview = useMemo(() => {
+    if (!day?.analysis || !day.style || settled === undefined) return null;
+    return buildStyle({
+      analysis: day.analysis,
+      photos: day.photos.map((p) => p.features),
+      music: day.music ?? { source: 'llm', bpm: 90, energy: 0.5, mode: 'unknown' },
+      date: day.date,
+      seed: day.style.seed,
+      moodOverride: settled,
+    });
+  }, [day, settled]);
 
   const load = useCallback(() => api.getDay(dayId).then(
     (d) => { setDay(d); setError(null); },
@@ -55,7 +77,7 @@ export function DayView({ dayId }: { dayId: string }) {
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,440px)_1fr]">
-      <MemoryPlayer day={day} />
+      <MemoryPlayer day={day} styleOverride={preview} />
       <div className="flex flex-col gap-6">
         <header>
           <Link href={`/diary/${day.diaryId}`} className="font-mono text-xs uppercase tracking-[0.2em] text-muted hover:text-foreground">← дневник</Link>
@@ -64,7 +86,11 @@ export function DayView({ dayId }: { dayId: string }) {
         </header>
         <p className="whitespace-pre-line text-xl leading-relaxed">{day.text}</p>
         <VoiceButton day={day} />
-        {day.style && <WhyPanel style={day.style} />}
+        {day.analysis && day.style && (
+          <MoodTuner day={day} value={override === undefined ? day.moodOverride ?? null : override}
+            onChange={setOverride} onSaved={(d) => { setDay(d); setOverride(undefined); setSettled(undefined); }} />
+        )}
+        {(preview ?? day.style) && <WhyPanel style={(preview ?? day.style)!} />}
         <FolderPanel day={day} />
         {day.analysis?.source === 'fallback' && <p className="text-xs text-muted">Настроение записи определено по словам и цветам — без AI-анализа.</p>}
       </div>

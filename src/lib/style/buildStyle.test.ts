@@ -177,3 +177,24 @@ describe('buildStyle: та же запись, другая песня (R5)', () 
     expect(withSong('autumn-park', 'techno').reasons.find((r) => r.param === 'motion')?.because).toMatch(/песн/);
   });
 });
+
+describe('buildStyle: поправка человека «Не совсем так?» (R10)', () => {
+  const over = (name: Name, warmth: number, energy: number) => buildStyle({ ...input(name), moodOverride: { warmth, energy } });
+  it('без поправки (null) — как решила система', () => {
+    expect(buildStyle({ ...input('autumn-park'), moodOverride: null })).toEqual(s('autumn-park'));
+  });
+  it('«теплее» сдвигает палитру к теплу', () => {
+    expect(warmthOf(over('office-night', 0.4, 0).palette.accents)).toBeGreaterThan(warmthOf(s('office-night').palette.accents));
+  });
+  it('«живее» ускоряет ритм', () => {
+    expect(over('autumn-park', 0, 0.4).motion.beatsPerPhoto).toBeLessThan(s('autumn-park').motion.beatsPerPhoto);
+  });
+  it('поправка ограничена ±0.4', () => {
+    expect(over('autumn-park', 5, -5)).toEqual(over('autumn-park', 0.4, -0.4));
+  });
+  it('в «Почему так» видно, что сделал человек', () => {
+    const r = over('autumn-park', 0.2, -0.1).reasons.find((x) => x.param === 'override')?.because ?? '';
+    expect(r).toMatch(/теплее на 0\.2/);
+    expect(r).toMatch(/спокойнее на 0\.1/);
+  });
+});

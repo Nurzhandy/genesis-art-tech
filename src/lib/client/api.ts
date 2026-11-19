@@ -1,7 +1,7 @@
 'use client';
 // Обёртки над нашим API для браузера.
 import { createClient } from '@supabase/supabase-js';
-import type { DayRecord, MusicFeatures, PhotoFeatures, SongRef, VoicePreset } from '@/lib/types';
+import type { DayRecord, MoodOverride, MusicFeatures, PhotoFeatures, SongRef, VoicePreset } from '@/lib/types';
 import type { UploadFile } from '@/lib/validation';
 
 export interface SignedUpload { kind: UploadFile['kind']; index?: number; path: string; token: string; signedUrl: string }
@@ -38,6 +38,9 @@ export const api = {
   },
   generate: (dayId: string, body: { photoFeatures: PhotoFeatures[]; music: MusicFeatures | null }) =>
     call<DayRecord>(`/api/days/${dayId}/generate`, { method: 'POST', body: JSON.stringify(body) }),
+  // Эндпоинт — часть A (ресерч R10): сохраняет поправку и пересчитанный style, сбрасывает постер.
+  restyle: (dayId: string, moodOverride: MoodOverride) =>
+    call<DayRecord>(`/api/days/${dayId}/restyle`, { method: 'POST', body: JSON.stringify(moodOverride) }),
   voice: (dayId: string) => call<{ url: string | null; preset: VoicePreset }>(`/api/days/${dayId}/voice`, { method: 'POST' }),
   resolveSong: (url: string) =>
     call<{ song: SongRef; music: MusicFeatures | null }>(`/api/music/resolve?url=${encodeURIComponent(url)}`),

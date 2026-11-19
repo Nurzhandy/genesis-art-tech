@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/client/api';
 import { fadeVolume, VOICE_DUCK, VOICE_EVENT } from '@/lib/client/fade';
-import type { DayRecord } from '@/lib/types';
+import type { DayRecord, StyleParams } from '@/lib/types';
 import type { Engine } from '@/render/engine';
 import { exportPoster } from '@/render/poster';
 import { createEnergyMeter } from '@/render/audioReactive';
@@ -16,7 +16,7 @@ export function songLabel(day: DayRecord): string {
   return parts.length ? parts.join(' — ') : s.kind === 'file' ? 'своя песня' : '';
 }
 
-export function MemoryPlayer({ day }: { day: DayRecord }) {
+export function MemoryPlayer({ day, styleOverride }: { day: DayRecord; styleOverride?: StyleParams | null }) {
   const [open, setOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const meter = useRef<(() => number) | null>(null);
@@ -62,7 +62,8 @@ export function MemoryPlayer({ day }: { day: DayRecord }) {
     return () => window.removeEventListener(VOICE_EVENT, onVoice);
   }, []);
 
-  if (!day.style) return null;
+  const style = styleOverride ?? day.style;
+  if (!style) return null;
   const photos = day.photos.map((p) => p.url ?? p.thumbUrl ?? '').filter(Boolean);
 
   return (
@@ -70,17 +71,17 @@ export function MemoryPlayer({ day }: { day: DayRecord }) {
       <div className="relative mx-auto w-full max-w-[420px]">
         {/* Ритуал открытия: кадр проявляется из цвета дня за 1,5 с, уходя из размытия. */}
         <div style={{ opacity: open ? 1 : 0, filter: open ? 'blur(0px)' : 'blur(14px)', transition: 'opacity 1.5s ease, filter 1.5s ease' }}>
-          <MemoryCanvas style={day.style} photos={photos} playing={open} onReady={onReady}
+          <MemoryCanvas style={style} photos={photos} playing={open} onReady={onReady}
             liveEnergy={() => meter.current?.() ?? null}
             info={{ title: day.title ?? '', caption: day.analysis?.caption ?? '', date: day.date, dayNumber: day.dayNumber, songLabel: songLabel(day), notes: day.analysis?.sensory }}
             className="rounded-sm shadow-2xl" />
         </div>
         <button type="button" onClick={start} aria-hidden={open} tabIndex={open ? -1 : 0}
           className="absolute inset-0 flex flex-col items-center justify-center gap-6 rounded-sm px-8 text-center"
-          style={{ background: day.style.palette.bg, color: day.style.palette.ink, opacity: open ? 0 : 1, pointerEvents: open ? 'none' : 'auto', transition: 'opacity 1.5s ease' }}>
+          style={{ background: style.palette.bg, color: style.palette.ink, opacity: open ? 0 : 1, pointerEvents: open ? 'none' : 'auto', transition: 'opacity 1.5s ease' }}>
           <span className="font-mono text-xs uppercase tracking-[0.3em] opacity-70">{day.date.split('-').reverse().join('.')}</span>
           <span className="text-4xl font-semibold leading-tight">{day.title}</span>
-          <span className="rounded-full border px-6 py-3 font-mono text-sm uppercase tracking-[0.15em]" style={{ borderColor: day.style.palette.ink }}>▶ Открыть день</span>
+          <span className="rounded-full border px-6 py-3 font-mono text-sm uppercase tracking-[0.15em]" style={{ borderColor: style.palette.ink }}>▶ Открыть день</span>
           {songLabel(day) && <span className="font-hand text-2xl opacity-80">♪ {songLabel(day)}</span>}
         </button>
         {open && day.songUrl && (

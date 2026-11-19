@@ -61,6 +61,13 @@ export function buildStyle(input: StyleInput): StyleParams {
     because: `Зерно ${pct(grain)}: ностальгия ${round(s.nostalgia, 2)}${s.year ? `, песня ${s.year} года` : ''}${s.year !== null && s.year < 1990 ? ' — как старая плёнка' : ''}`,
   });
   if (s.genre) reasons.push({ param: 'genre', because: `Жанр «${s.genre}» сдвигает выбор техники: ${genreHint(s.genre)}` });
+  if (s.warmthOverride || s.energyOverride) {
+    const parts = [
+      s.warmthOverride ? `${s.warmthOverride > 0 ? 'теплее' : 'холоднее'} на ${round(Math.abs(s.warmthOverride), 2)}` : '',
+      s.energyOverride ? `${s.energyOverride > 0 ? 'живее' : 'спокойнее'} на ${round(Math.abs(s.energyOverride), 2)}` : '',
+    ].filter(Boolean);
+    reasons.unshift({ param: 'override', because: `Вы сделали день ${parts.join(' и ')} — палитра и ритм пересчитаны по тем же правилам` });
+  }
   const { atmosphere, reason: atmosphereReason } = buildAtmosphere(input);
   if (atmosphereReason) reasons.push(atmosphereReason);
   if (s.energy > 0.6 || s.energy < 0.3)
