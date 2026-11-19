@@ -27,7 +27,7 @@
 
 | Слой | Выбор | Почему |
 |---|---|---|
-| Фреймворк | **Next.js 15 (App Router) + TypeScript** | Фронт и бэк в одном репо, деплой на Vercel в один клик |
+| Фреймворк | **Next.js 16 (App Router) + TypeScript**. Перед кодом читать `node_modules/next/dist/docs/` (см. `AGENTS.md`) | Фронт и бэк в одном репо, деплой на Vercel в один клик |
 | Стили UI | Tailwind CSS | Быстро, без своего CSS-фреймворка |
 | БД и файлы | **Supabase** (Postgres + Storage, приватный bucket `days`) | Бесплатный тариф, signed URLs для загрузки напрямую из браузера |
 | AI-анализ | **Claude API**, `@anthropic-ai/sdk`, модель `claude-opus-5-5` (через env `CLAUDE_MODEL`) | Мультимодальный разбор текста и фото за один вызов, structured output по zod-схеме |
@@ -296,6 +296,7 @@ Garamond, рукописная подпись Caveat внизу, окно для
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=      # для загрузки файлов по signed URL из браузера
 SUPABASE_SERVICE_ROLE_KEY=          # только сервер
 ANTHROPIC_API_KEY=
 CLAUDE_MODEL=claude-opus-5-5
@@ -310,11 +311,11 @@ GENERATE_LIMIT_PER_DAY=30
 
 **Files:** весь каркас, `src/lib/types.ts`, `.env.example`, `vitest.config.ts`, `supabase/migrations/0001_init.sql`
 
-- [ ] `npx create-next-app@latest . --ts --tailwind --app --src-dir --eslint --import-alias "@/*"`
-- [ ] `npm i @supabase/supabase-js @anthropic-ai/sdk zod p5 jszip heic2any web-audio-beat-detector meyda`
-- [ ] `npm i -D vitest @types/p5`, в `package.json` добавить `"test": "vitest run"`
-- [ ] Создать `src/lib/types.ts` дословно из раздела 3, создать `.env.example` из раздела 9
-- [ ] Подключить шрифты через `next/font/google` в `src/app/layout.tsx`: Cormorant Garamond (400, 600, 700), JetBrains Mono, Caveat, все с `subsets: ['latin', 'cyrillic']`
-- [ ] Проверка: `npm run build` и `npm test` проходят (тестов пока 0, это нормально)
+- [x] `npx create-next-app@latest . --ts --tailwind --app --src-dir --eslint --import-alias "@/*"`
+- [x] `npm i @supabase/supabase-js @anthropic-ai/sdk zod p5 jszip heic2any web-audio-beat-detector meyda`
+- [x] `npm i -D vitest @types/p5` (по факту: `@types/p5` не нужен, у p5 v2 свои типы; `@types/node@^24` для vitest 5), в `package.json` добавить `"test": "vitest run"`
+- [x] Создать `src/lib/types.ts` дословно из раздела 3, создать `.env.example` из раздела 9
+- [x] Подключить шрифты через `next/font/google` в `src/app/layout.tsx`: Cormorant Garamond (400, 600, 700), JetBrains Mono, Caveat, все с `subsets: ['latin', 'cyrillic']`
+- [x] Проверка: `npm run build` и `npm test` проходят (тестов пока 0, это нормально)
 - [ ] Подключить репозиторий к Vercel, добавить env, убедиться, что прод-ссылка открывается
 - [ ] Коммит `chore: scaffold next app, shared types` и пуш в `main`
