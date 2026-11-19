@@ -16,6 +16,12 @@
 
 **Дедлайн:** 22 ноября 2026, 23:59 по Астане.
 
+## Инфраструктура
+
+- Прод: https://genesis-art-tech.vercel.app (Vercel, проект `nurzhandys-projects/genesis-art-tech`, функции в `fra1`)
+- Supabase: проект `genesis-art-tech`, `https://gwpsfbqetmjboplljuzr.supabase.co` (eu-central-1), схема в `supabase/migrations/`
+- Локально: `cp .env.example .env.local`, заполнить ключи, `npm i`, `npm run dev`. Ключи спросить у Нуржанды, в git их не коммитить.
+
 ## Стек
 
 Next.js + TypeScript, Supabase, Claude API, p5.js, Vercel. Подробности в обзоре плана.

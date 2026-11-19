@@ -30,14 +30,15 @@
   `signRead(paths: string[], ttlSec?: number): Promise<Record<string, string>>`;
   `signUpload(path: string): Promise<{ path: string; token: string; signedUrl: string }>`
 
-- [ ] Создать проект Supabase (регион Frankfurt), скопировать URL и service role key в `.env.local` и Vercel
-- [ ] Миграция `0001_init.sql`:
+- [x] Создать проект Supabase `genesis-art-tech` (eu-central-1), URL и anon key в `.env.local` и Vercel
+- [ ] Service role key из Supabase Dashboard → Project Settings → API Keys: в `.env.local` и Vercel (`vercel env add SUPABASE_SERVICE_ROLE_KEY --environment production --type secret`)
+- [x] Миграция `0001_init.sql` (применена к проекту):
   - `diaries(id text primary key, created_at timestamptz default now())`
   - `days(id uuid pk default gen_random_uuid(), diary_id text references diaries, date date not null, title text, slug text, text text not null, photos jsonb not null default '[]', song jsonb not null, music jsonb, analysis jsonb, style jsonb, voice jsonb, poster_path text, status text not null default 'draft', error text, created_at timestamptz default now())`
   - индекс `days(diary_id, date desc)`
   - RLS включён, политик нет: всё идёт только через наши API-роуты с service role
   - `insert into diaries(id) values ('demo')`
-- [ ] Bucket `days`, **private**, лимит файла 15 MB
+- [x] Bucket `days`, **private**, лимит файла 15 MB (создаётся той же миграцией)
 - [ ] Тест `dayFolder`:
   ```ts
   expect(dayFolder('d1', '2026-11-03', 'osenniy-park-i-kakao', 'x')).toBe('d1/2026-11-03-osenniy-park-i-kakao')

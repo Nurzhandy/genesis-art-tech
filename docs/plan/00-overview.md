@@ -317,5 +317,5 @@ GENERATE_LIMIT_PER_DAY=30
 - [x] Создать `src/lib/types.ts` дословно из раздела 3, создать `.env.example` из раздела 9
 - [x] Подключить шрифты через `next/font/google` в `src/app/layout.tsx`: Cormorant Garamond (400, 600, 700), JetBrains Mono, Caveat, все с `subsets: ['latin', 'cyrillic']`
 - [x] Проверка: `npm run build` и `npm test` проходят (тестов пока 0, это нормально)
-- [ ] Подключить репозиторий к Vercel, добавить env, убедиться, что прод-ссылка открывается
-- [ ] Коммит `chore: scaffold next app, shared types` и пуш в `main`
+- [x] Подключить репозиторий к Vercel, добавить env, убедиться, что прод-ссылка открывается (https://genesis-art-tech.vercel.app)
+- [x] Коммит `chore: scaffold next app, shared types` и пуш в `main`
