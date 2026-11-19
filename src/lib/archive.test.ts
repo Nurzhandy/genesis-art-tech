@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DayRecord } from './types';
-import { dayColor, groupByMonth, humanDate, monthGrid, monthLabel, onThisDay, yearsWord } from './archive';
+import { averageColor, bookPages, dayColor, groupByMonth, humanDate, monthGrid, monthLabel, onThisDay, yearsWord } from './archive';
 
 const day = (date: string, accent = '#c8892b'): DayRecord => ({
   id: date, diaryId: 'd', date, title: 't', slug: 's', text: '', photos: [], song: { kind: 'file', path: 'x/song.mp3' }, music: null, analysis: null,
@@ -30,6 +30,19 @@ describe('архив (R12)', () => {
   it('«В этот день» — тот же день и месяц, только прошлые годы', () => {
     const list = [day('2025-11-19'), day('2024-11-19'), day('2026-11-19'), day('2025-11-18')];
     expect(onThisDay(list, '2026-11-19').map((d) => d.date)).toEqual(['2025-11-19', '2024-11-19']);
+  });
+
+  it('книга идёт от первого дня к последнему (S1)', () => {
+    expect(bookPages([day('2026-11-03'), day('2026-10-01'), day('2026-10-20')]).map((d) => d.date))
+      .toEqual(['2026-10-01', '2026-10-20', '2026-11-03']);
+  });
+
+  it('обложка — средний акцент дней, достаточно тёмный для белых букв', () => {
+    expect(averageColor([day('2026-10-01', '#200000'), day('2026-10-02', '#400000')])).toBe('#300000');
+    const c = averageColor([day('2026-10-01', '#ffffff')]);
+    const lum = (0.2126 * parseInt(c.slice(1, 3), 16) + 0.7152 * parseInt(c.slice(3, 5), 16) + 0.0722 * parseInt(c.slice(5, 7), 16)) / 255;
+    expect(lum).toBeLessThanOrEqual(0.43);
+    expect(averageColor([])).toBe('#5b4a3a');
   });
 
   it('по-русски: год, года, лет', () => {

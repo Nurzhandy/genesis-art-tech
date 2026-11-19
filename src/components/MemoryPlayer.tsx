@@ -7,8 +7,11 @@ import type { DayRecord, StyleParams } from '@/lib/types';
 import type { Engine } from '@/render/engine';
 import { exportPoster } from '@/render/poster';
 import { createEnergyMeter } from '@/render/audioReactive';
+import { songObjectPlace } from '@/render/songObject';
+import { LAYOUT } from '@/lib/style/constants';
 
 const MemoryCanvas = dynamic(() => import('@/render/MemoryCanvas'), { ssr: false });
+const OBJ = songObjectPlace(LAYOUT.width, LAYOUT.height).box;
 
 export function songLabel(day: DayRecord): string {
   const s = day.song;
@@ -67,6 +70,13 @@ export function MemoryPlayer({ day, styleOverride }: { day: DayRecord; styleOver
 
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
+  function toggleSong() {
+    const a = audioRef.current;
+    if (!a) return;
+    if (a.paused) void a.play().then(() => fadeVolume(a, 1, 800)).catch(() => undefined);
+    else a.pause();
+  }
+
   // Пока звучит озвучка, музыка тише (25%), потом плавно возвращается.
   useEffect(() => {
     const onVoice = (e: Event) => {
@@ -102,8 +112,15 @@ export function MemoryPlayer({ day, styleOverride }: { day: DayRecord; styleOver
           {songLabel(day) && <span className="font-hand text-2xl opacity-80">♪ {songLabel(day)}</span>}
         </button>
         {open && day.songUrl && (
-          <button type="button" onClick={() => { const a = audioRef.current; if (a) { if (a.paused) void a.play(); else a.pause(); } }}
+          <button type="button" onClick={toggleSong}
             className="absolute right-3 top-3 rounded-full bg-black/50 px-3 py-1.5 font-mono text-[11px] text-white">♪ звук</button>
+        )}
+        {/* Песня как предмет (S2): пластинка, кассета, CD или стикер на холсте — по клику песня играет или замолкает. */}
+        {open && day.songUrl && style.songObject && (
+          <button type="button" onClick={toggleSong} aria-label={`Включить или остановить песню${songLabel(day) ? ` «${songLabel(day)}»` : ''}`}
+            title="Нажмите, чтобы включить или остановить песню"
+            className="absolute cursor-pointer rounded-full transition hover:bg-white/10"
+            style={{ left: `${OBJ.x * 100}%`, top: `${OBJ.y * 100}%`, width: `${OBJ.w * 100}%`, height: `${OBJ.h * 100}%` }} />
         )}
       </div>
       {open && !day.songUrl && embed && (

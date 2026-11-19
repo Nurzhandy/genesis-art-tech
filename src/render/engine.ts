@@ -3,6 +3,7 @@ import type { StyleParams, Technique } from '@/lib/types';
 import { LAYOUT } from '@/lib/style/constants';
 import { createAtmosphere } from './atmosphere';
 import { drawNotes, placeNotes } from './notes';
+import { drawSongObject } from './songObject';
 import { clamp } from './draw';
 import { drawGrain, drawVignette, makeGrainTile } from './fx';
 import { drawConstants, makePaper, zoneOf } from './layout';
@@ -121,6 +122,7 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
     primary.drawOverlay(rc, pt, 1);
     if (secondary) secondary.drawOverlay(rc, pt, secondaryAlpha);
     atmosphere.draw(rc, pt);   // слой 3.5: между оверлеем и текстом
+    drawSongObject(ctx, W, H, style, fonts, opts.info.songLabel, t, energy(pt));   // песня как предмет (S2)
     drawConstants(ctx, W, H, style, opts.info, fonts);
     drawNotes(ctx, notes, notePlaces, style, fonts, pt, photos.length, !realtime);
     drawGrain(ctx, grain, W, H, style, frame++);

@@ -67,6 +67,7 @@ export interface StyleInput {
 }
 
 export type AtmosphereKind = 'leaves' | 'snow' | 'rain' | 'mist' | 'dust' | 'lights' | 'none';
+export type SongObjectKind = 'vinyl' | 'cassette' | 'cd' | 'stream';
 
 export interface StyleReason { param: string; because: string }   // для панели «Почему так»
 
@@ -83,6 +84,8 @@ export interface StyleParams {
   typography: { titleWeight: 400 | 600 | 700; captionTilt: number /*градусы, -6..6*/ };
   durationSec: number;   // 20..45
   atmosphere: { kind: AtmosphereKind; amount: number /*0..1*/ };   // ресерч R3
+  // Песня как предмет (ресерч S2). Необязательно: у дней, собранных раньше, его нет.
+  songObject?: { kind: SongObjectKind; year: number | null; revPerSec: number };
   reasons: StyleReason[];
 }
 

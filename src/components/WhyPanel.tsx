@@ -2,7 +2,7 @@ import type { StyleParams, Technique } from '@/lib/types';
 import { TECHNIQUE_NAMES } from '@/lib/style/techniques';
 
 const LABELS: Record<string, string> = {
-  override: 'Ваша поправка', atmosphere: 'Атмосфера', technique: 'Техника', palette: 'Палитра', motion: 'Ритм', negativeSpace: 'Воздух', grain: 'Зерно', genre: 'Жанр', jitter: 'Движение',
+  override: 'Ваша поправка', atmosphere: 'Атмосфера', technique: 'Техника', palette: 'Палитра', motion: 'Ритм', negativeSpace: 'Воздух', grain: 'Зерно', genre: 'Жанр', jitter: 'Движение', songObject: 'Песня',
 };
 
 export function WhyPanel({ style }: { style: StyleParams }) {

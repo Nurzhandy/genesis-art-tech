@@ -50,6 +50,26 @@ export function yearsWord(n: number): string {
 
 export const humanDate = (date: string) => `${Number(date.slice(8, 10))} ${MONTHS_GEN[Number(date.slice(5, 7)) - 1]} ${date.slice(0, 4)}`;
 
+/** Порядок страниц книги: как в настоящем дневнике — от первого дня к последнему. */
+export function bookPages(days: DayRecord[]): DayRecord[] {
+  return [...days].sort((a, b) => (a.date === b.date ? a.createdAt.localeCompare(b.createdAt) : a.date < b.date ? -1 : 1));
+}
+
+/**
+ * Цвет обложки — средний акцент всех дней, притемнённый, чтобы белые буквы читались.
+ * Обложка меняется вместе с дневником: тёплая осень даёт охру, зимние ночи — синеву.
+ */
+export function averageColor(days: DayRecord[], fallback = '#5b4a3a'): string {
+  const hexes = days.map((d) => d.style?.palette.accents[0]).filter((h): h is string => !!h && /^#[0-9a-f]{6}$/i.test(h));
+  if (!hexes.length) return fallback;
+  const sum = [0, 0, 0];
+  for (const h of hexes) for (let i = 0; i < 3; i++) sum[i] += parseInt(h.slice(1 + 2 * i, 3 + 2 * i), 16);
+  const avg = sum.map((v) => v / hexes.length);
+  const lum = (0.2126 * avg[0] + 0.7152 * avg[1] + 0.0722 * avg[2]) / 255;
+  const k = lum > 0.42 ? 0.42 / lum : 1;
+  return '#' + avg.map((v) => Math.round(v * k).toString(16).padStart(2, '0')).join('');
+}
+
 export function localToday(now = new Date()): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
