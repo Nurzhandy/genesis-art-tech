@@ -1,0 +1,55 @@
+{
+  "input": {
+    "analysis": {
+      "mood": {
+        "valence": 0,
+        "arousal": 0.5,
+        "tension": 0,
+        "nostalgia": 0
+      },
+      "moodWords": [
+        "обычный",
+        "ровный",
+        "тихий"
+      ],
+      "season": "autumn",
+      "timeOfDay": "day",
+      "setting": "mixed",
+      "people": "unknown",
+      "sensory": [],
+      "photoScenes": [],
+      "title": "Осенний день без особых событий",
+      "caption": "просто день",
+      "songGuess": null,
+      "source": "fallback"
+    },
+    "photos": [
+      {
+        "index": 0,
+        "width": 1600,
+        "height": 1200,
+        "palette": [
+          "#808080",
+          "#a0a0a0",
+          "#606060",
+          "#c0c0c0",
+          "#404040"
+        ],
+        "brightness": 0.5,
+        "warmth": 0,
+        "saturation": 0
+      }
+    ],
+    "music": {
+      "source": "llm",
+      "bpm": 90,
+      "energy": 0.5,
+      "mode": "unknown"
+    },
+    "date": "2026-11-19",
+    "seed": 1119
+  },
+  "photos": [
+    "/fixtures/neutral/01.jpg"
+  ]
+}

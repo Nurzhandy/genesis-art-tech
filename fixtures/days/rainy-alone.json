@@ -1,0 +1,71 @@
+{
+  "input": {
+    "analysis": {
+      "mood": {
+        "valence": -0.4,
+        "arousal": 0.15,
+        "tension": 0.2,
+        "nostalgia": 0.2
+      },
+      "moodWords": [
+        "тихий",
+        "серый",
+        "задумчивый"
+      ],
+      "season": "autumn",
+      "timeOfDay": "evening",
+      "setting": "city",
+      "people": "alone",
+      "sensory": [
+        "стук дождя"
+      ],
+      "photoScenes": [
+        {
+          "index": 0,
+          "subject": "окно в каплях",
+          "light": "low"
+        }
+      ],
+      "title": "Дождливый вечер у окна",
+      "caption": "дождь всё не кончался",
+      "songGuess": {
+        "bpm": 70,
+        "energy": 0.2,
+        "mode": "minor",
+        "genre": "ambient",
+        "year": 2014
+      },
+      "source": "claude"
+    },
+    "photos": [
+      {
+        "index": 0,
+        "width": 1600,
+        "height": 1200,
+        "palette": [
+          "#6b7480",
+          "#9aa3ad",
+          "#3d434b",
+          "#c8ced4",
+          "#545b64"
+        ],
+        "brightness": 0.45,
+        "warmth": -0.25,
+        "saturation": 0.12
+      }
+    ],
+    "music": {
+      "source": "llm",
+      "bpm": 70,
+      "energy": 0.2,
+      "mode": "minor",
+      "genre": "ambient",
+      "year": 2014
+    },
+    "date": "2026-11-02",
+    "seed": 1102
+  },
+  "photos": [
+    "/fixtures/rainy-alone/01.jpg"
+  ]
+}

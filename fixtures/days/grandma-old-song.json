@@ -1,0 +1,93 @@
+{
+  "input": {
+    "analysis": {
+      "mood": {
+        "valence": 0.4,
+        "arousal": 0.3,
+        "tension": 0.05,
+        "nostalgia": 0.85
+      },
+      "moodWords": [
+        "родной",
+        "тёплый",
+        "далёкий"
+      ],
+      "season": "winter",
+      "timeOfDay": "evening",
+      "setting": "indoor",
+      "people": "pair",
+      "sensory": [
+        "запах пирогов",
+        "тиканье часов"
+      ],
+      "photoScenes": [
+        {
+          "index": 0,
+          "subject": "кухня бабушки",
+          "light": "warm"
+        },
+        {
+          "index": 1,
+          "subject": "старый проигрыватель",
+          "light": "warm"
+        }
+      ],
+      "title": "Вечер у бабушки с пластинкой",
+      "caption": "как в детстве",
+      "songGuess": {
+        "bpm": 96,
+        "energy": 0.4,
+        "mode": "major",
+        "genre": "pop",
+        "year": 1975
+      },
+      "source": "claude"
+    },
+    "photos": [
+      {
+        "index": 0,
+        "width": 1600,
+        "height": 1200,
+        "palette": [
+          "#b0703c",
+          "#e6c79a",
+          "#5e3a20",
+          "#f4e6cf",
+          "#8c4f2c"
+        ],
+        "brightness": 0.5,
+        "warmth": 0.65,
+        "saturation": 0.5
+      },
+      {
+        "index": 1,
+        "width": 1600,
+        "height": 1200,
+        "palette": [
+          "#6e4a32",
+          "#c99a6b",
+          "#3a261a",
+          "#ead7bd",
+          "#9c6b45"
+        ],
+        "brightness": 0.45,
+        "warmth": 0.6,
+        "saturation": 0.4
+      }
+    ],
+    "music": {
+      "source": "llm",
+      "bpm": 96,
+      "energy": 0.4,
+      "mode": "major",
+      "genre": "pop",
+      "year": 1975
+    },
+    "date": "2026-01-03",
+    "seed": 103
+  },
+  "photos": [
+    "/fixtures/grandma-old-song/01.jpg",
+    "/fixtures/grandma-old-song/02.jpg"
+  ]
+}

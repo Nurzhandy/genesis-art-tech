@@ -1,0 +1,114 @@
+{
+  "input": {
+    "analysis": {
+      "mood": {
+        "valence": 0.6,
+        "arousal": 0.25,
+        "tension": 0.1,
+        "nostalgia": 0.3
+      },
+      "moodWords": [
+        "тёплый",
+        "уютный",
+        "зябкий"
+      ],
+      "season": "autumn",
+      "timeOfDay": "day",
+      "setting": "nature",
+      "people": "pair",
+      "sensory": [
+        "запах какао",
+        "шуршание листьев"
+      ],
+      "photoScenes": [
+        {
+          "index": 0,
+          "subject": "аллея в жёлтых листьях",
+          "light": "warm"
+        },
+        {
+          "index": 1,
+          "subject": "две кружки какао",
+          "light": "warm"
+        },
+        {
+          "index": 2,
+          "subject": "пруд",
+          "light": "warm"
+        }
+      ],
+      "title": "Осенний парк и какао",
+      "caption": "холодно, но так тепло",
+      "songGuess": {
+        "bpm": 76,
+        "energy": 0.3,
+        "mode": "major",
+        "genre": "jazz",
+        "year": 1957
+      },
+      "source": "claude"
+    },
+    "photos": [
+      {
+        "index": 0,
+        "width": 1600,
+        "height": 1200,
+        "palette": [
+          "#c8892b",
+          "#e0b062",
+          "#7a5a2e",
+          "#3f4a2a",
+          "#f2e2c0"
+        ],
+        "brightness": 0.55,
+        "warmth": 0.6,
+        "saturation": 0.55
+      },
+      {
+        "index": 1,
+        "width": 1600,
+        "height": 1200,
+        "palette": [
+          "#8a5a3a",
+          "#d9b48c",
+          "#5b3a22",
+          "#f0e0cc",
+          "#2a1d14"
+        ],
+        "brightness": 0.5,
+        "warmth": 0.55,
+        "saturation": 0.45
+      },
+      {
+        "index": 2,
+        "width": 1600,
+        "height": 1200,
+        "palette": [
+          "#9bb0a8",
+          "#c8892b",
+          "#5a6b55",
+          "#e8dcc2",
+          "#344038"
+        ],
+        "brightness": 0.6,
+        "warmth": 0.25,
+        "saturation": 0.35
+      }
+    ],
+    "music": {
+      "source": "deezer",
+      "bpm": 76,
+      "energy": 0.3,
+      "mode": "major",
+      "genre": "jazz",
+      "year": 1957
+    },
+    "date": "2026-10-18",
+    "seed": 1018
+  },
+  "photos": [
+    "/fixtures/autumn-park/01.jpg",
+    "/fixtures/autumn-park/02.jpg",
+    "/fixtures/autumn-park/03.jpg"
+  ]
+}

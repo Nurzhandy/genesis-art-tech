@@ -1,0 +1,93 @@
+{
+  "input": {
+    "analysis": {
+      "mood": {
+        "valence": -0.2,
+        "arousal": 0.75,
+        "tension": 0.85,
+        "nostalgia": 0
+      },
+      "moodWords": [
+        "собранный",
+        "холодный",
+        "нервный"
+      ],
+      "season": "autumn",
+      "timeOfDay": "night",
+      "setting": "indoor",
+      "people": "alone",
+      "sensory": [
+        "гул кондиционера",
+        "свет мониторов"
+      ],
+      "photoScenes": [
+        {
+          "index": 0,
+          "subject": "экран с кодом",
+          "light": "cool"
+        },
+        {
+          "index": 1,
+          "subject": "пустой офис ночью",
+          "light": "low"
+        }
+      ],
+      "title": "Ночь в офисе перед сдачей",
+      "caption": "ещё один коммит",
+      "songGuess": {
+        "bpm": 128,
+        "energy": 0.85,
+        "mode": "minor",
+        "genre": "electronic",
+        "year": 2019
+      },
+      "source": "claude"
+    },
+    "photos": [
+      {
+        "index": 0,
+        "width": 1600,
+        "height": 1200,
+        "palette": [
+          "#1d2a44",
+          "#4a6fa5",
+          "#0e1420",
+          "#9fb4d6",
+          "#2f3b52"
+        ],
+        "brightness": 0.25,
+        "warmth": -0.6,
+        "saturation": 0.4
+      },
+      {
+        "index": 1,
+        "width": 1600,
+        "height": 1200,
+        "palette": [
+          "#2a3242",
+          "#5d6b80",
+          "#11151d",
+          "#c9d2de",
+          "#3c4658"
+        ],
+        "brightness": 0.3,
+        "warmth": -0.45,
+        "saturation": 0.25
+      }
+    ],
+    "music": {
+      "source": "deezer",
+      "bpm": 128,
+      "energy": 0.85,
+      "mode": "minor",
+      "genre": "electronic",
+      "year": 2019
+    },
+    "date": "2026-11-12",
+    "seed": 1112
+  },
+  "photos": [
+    "/fixtures/office-night/01.jpg",
+    "/fixtures/office-night/02.jpg"
+  ]
+}
