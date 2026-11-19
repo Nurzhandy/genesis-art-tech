@@ -1,6 +1,7 @@
 // Движок правил визуальной системы: StyleInput → StyleParams с причинами.
 // Чистая детерминированная функция — один и тот же день всегда выглядит одинаково.
 import type { StyleInput, StyleParams, StyleReason, Technique } from '@/lib/types';
+import { buildAtmosphere } from './atmosphere';
 import { buildMotion, photoInterval } from './motion';
 import { buildPalette } from './palette';
 import { clamp01, round, signals } from './signals';
@@ -59,6 +60,8 @@ export function buildStyle(input: StyleInput): StyleParams {
     because: `Зерно ${pct(grain)}: ностальгия ${round(s.nostalgia, 2)}${s.year ? `, песня ${s.year} года` : ''}${s.year !== null && s.year < 1990 ? ' — как старая плёнка' : ''}`,
   });
   if (s.genre) reasons.push({ param: 'genre', because: `Жанр «${s.genre}» сдвигает выбор техники: ${genreHint(s.genre)}` });
+  const { atmosphere, reason: atmosphereReason } = buildAtmosphere(input);
+  if (atmosphereReason) reasons.push(atmosphereReason);
   if (s.energy > 0.6 || s.energy < 0.3)
     reasons.push({ param: 'jitter', because: `Энергия песни ${round(s.energy, 2)} → ${s.energy > 0.6 ? 'фигуры и мазки дрожат и пульсируют' : 'движение почти неподвижное'}` });
 
@@ -81,6 +84,7 @@ export function buildStyle(input: StyleInput): StyleParams {
     motion,
     typography: { titleWeight, captionTilt: round(Math.max(-6, Math.min(6, tilt)), 2) },
     durationSec,
+    atmosphere,
     reasons,
   };
 }

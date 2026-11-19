@@ -128,3 +128,34 @@ describe('buildStyle: система', () => {
     expect(new Set(names.map((n) => s(n).techniques.primary)).size).toBe(5);
   });
 });
+
+describe('buildStyle: атмосферный слой (R3)', () => {
+  it('осенний парк → падающие листья', () => {
+    expect(s('autumn-park').atmosphere.kind).toBe('leaves');
+  });
+  it('ночь в офисе → огни города', () => {
+    expect(s('office-night').atmosphere.kind).toBe('lights');
+  });
+  it('«стук дождя» в деталях → капли дождя', () => {
+    expect(s('rainy-alone').atmosphere.kind).toBe('rain');
+  });
+  it('зимний вечер → снег', () => {
+    expect(s('grandma-old-song').atmosphere.kind).toBe('snow');
+  });
+  it('нейтральный день → без слоя', () => {
+    expect(s('neutral').atmosphere.kind).toBe('none');
+  });
+  it('«парк» не путается с «паром»', () => {
+    const inp = input('neutral');
+    const withPark = { ...inp, analysis: { ...inp.analysis, sensory: ['тишина в парке'] } };
+    expect(buildStyle(withPark).atmosphere.kind).toBe('none');
+    const withTea = { ...inp, analysis: { ...inp.analysis, sensory: ['пар от чая'] } };
+    expect(buildStyle(withTea).atmosphere.kind).toBe('mist');
+  });
+  it('плотность растёт с энергией песни: 0.3 + 0.5·energy', () => {
+    expect(s('office-night').atmosphere.amount).toBeCloseTo(0.3 + 0.5 * 0.85, 2);
+  });
+  it('причина слоя записана в reasons', () => {
+    expect(s('rainy-alone').reasons.some((r) => r.param === 'atmosphere' && /дожд/.test(r.because))).toBe(true);
+  });
+});

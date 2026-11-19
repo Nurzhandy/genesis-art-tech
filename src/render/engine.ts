@@ -1,6 +1,7 @@
 // Движок воспоминания: фото + стиль → живой холст 9:16 (B2, B7).
 import type { StyleParams, Technique } from '@/lib/types';
 import { LAYOUT } from '@/lib/style/constants';
+import { createAtmosphere } from './atmosphere';
 import { clamp } from './draw';
 import { drawGrain, drawVignette, makeGrainTile } from './fx';
 import { drawConstants, makePaper, zoneOf } from './layout';
@@ -98,6 +99,7 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
   secondary?.prepare(rc);
   const paper = makePaper(style, W, H);
   const grain = makeGrainTile(style.seed);
+  const atmosphere = createAtmosphere(style, W, H);
   // Доля второй техники заметна, но не спорит с основной.
   const secondaryAlpha = clamp(style.techniques.mix * 2.2, 0.25, 0.75);
 
@@ -115,6 +117,7 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
     primary.drawPhoto(rc, pt, { realtime });
     primary.drawOverlay(rc, pt, 1);
     if (secondary) secondary.drawOverlay(rc, pt, secondaryAlpha);
+    atmosphere.draw(rc, pt);   // слой 3.5: между оверлеем и текстом
     drawConstants(ctx, W, H, style, opts.info, fonts);
     drawGrain(ctx, grain, W, H, style, frame++);
     drawVignette(ctx, W, H, 0.12 + 0.2 * style.texture.grain);

@@ -55,13 +55,18 @@ export interface DayAnalysis {
 // ── Визуальная система ──────────────────────────────────
 export type Technique = 'impressionist' | 'geometric' | 'minimal' | 'film' | 'collage';
 
+export interface MoodOverride { warmth: number; energy: number }   // -0.4..0.4 (ресерч R10)
+
 export interface StyleInput {
   analysis: DayAnalysis;
   photos: PhotoFeatures[];
   music: MusicFeatures;
   date: string;          // ISO yyyy-mm-dd
   seed: number;          // стабильный, из dayId
+  moodOverride?: MoodOverride | null;   // поправка человека «Не совсем так?»
 }
+
+export type AtmosphereKind = 'leaves' | 'snow' | 'rain' | 'mist' | 'dust' | 'lights' | 'none';
 
 export interface StyleReason { param: string; because: string }   // для панели «Почему так»
 
@@ -77,6 +82,7 @@ export interface StyleParams {
   motion: { bpm: number; beatsPerPhoto: 2 | 4 | 8; jitter: number; easing: 'soft' | 'sharp' };
   typography: { titleWeight: 400 | 600 | 700; captionTilt: number /*градусы, -6..6*/ };
   durationSec: number;   // 20..45
+  atmosphere: { kind: AtmosphereKind; amount: number /*0..1*/ };   // ресерч R3
   reasons: StyleReason[];
 }
 
@@ -99,4 +105,5 @@ export interface DayRecord {
   status: DayStatus; error: string | null;
   createdAt: string;
   dayNumber?: number;                   // порядковый номер готового дня в дневнике (для шапки)
+  moodOverride?: MoodOverride | null;   // ресерч R10, null = как решила система (колонка mood_override — часть A)
 }
