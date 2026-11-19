@@ -1,10 +1,10 @@
 import type { NextConfig } from "next";
 
+// Ruling: cacheComponents/partialPrefetching отключены — все данные динамические (дневники, signed URLs),
+// а страницы-клиенты проще без обязательных Suspense-границ.
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
   turbopack: {
+    root: __dirname,
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],
