@@ -27,8 +27,8 @@ export function buildAtmosphere(input: StyleInput): { atmosphere: { kind: Atmosp
     kind = 'rain'; why = `В записи «${w}» → капли дождя`;
   } else if ((w = hasStem(ts, ['снег', 'снеж'])) || a.season === 'winter') {
     kind = 'snow'; why = w ? `В записи «${w}» → падает снег` : 'Зима → тихо падает снег';
-  } else if (a.season === 'autumn' && a.setting === 'nature') {
-    kind = 'leaves'; why = 'Осень на природе → падают листья';
+  } else if ((w = hasStem(ts, ['листь', 'листв', 'листоп'])) || (a.season === 'autumn' && (a.setting === 'nature' || a.setting === 'water'))) {
+    kind = 'leaves'; why = w ? `В записи «${w}» → падают листья` : `Осень ${a.setting === 'water' ? 'у воды' : 'на природе'} → падают листья`;
   } else if ((w = hasWord(ts, ['пар', 'пару', 'паром', 'какао', 'чай', 'чая', 'чаем', 'кофе', 'туман', 'тумане', 'тумана']))) {
     kind = 'mist'; why = `В записи «${w}» → в кадре плывёт тёплый пар`;
   } else if (s.night && (a.setting === 'city' || a.setting === 'indoor')) {

@@ -198,3 +198,20 @@ describe('buildStyle: поправка человека «Не совсем та
     expect(r).toMatch(/спокойнее на 0\.1/);
   });
 });
+
+describe('buildStyle: атмосфера, найдено при тестировании', () => {
+  it('«жёлтые листья» в деталях → листья, даже если место «у воды»', () => {
+    const inp = input('neutral');
+    const day = { ...inp, analysis: { ...inp.analysis, setting: 'water' as const, sensory: ['парку', 'жёлтых листьях', 'холодно'] } };
+    expect(buildStyle(day).atmosphere.kind).toBe('leaves');
+  });
+  it('осень у воды (пруд в парке) → листья', () => {
+    const inp = input('neutral');
+    expect(buildStyle({ ...inp, analysis: { ...inp.analysis, setting: 'water' as const } }).atmosphere.kind).toBe('leaves');
+  });
+  it('«корицей» и «какао» в подписи → пар, если нет листьев и осадков', () => {
+    const inp = input('neutral');
+    const day = { ...inp, analysis: { ...inp.analysis, season: 'spring' as const, caption: 'пахло корицей и какао' } };
+    expect(buildStyle(day).atmosphere.kind).toBe('mist');
+  });
+});

@@ -20,18 +20,35 @@ export function MemoryPlayer({ day, styleOverride }: { day: DayRecord; styleOver
   const [open, setOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const meter = useRef<(() => number) | null>(null);
-  const posterDone = useRef(Boolean(day.posterUrl));
+  // Постер рисуем для сохранённого стиля дня: заново после «Сохранить» в «Не совсем так?»,
+  // но никогда — для несохранённого превью ползунков.
+  const exportedFor = useRef<string | null>(null);
+  const latest = useRef({ day, styleOverride });
+  useEffect(() => { latest.current = { day, styleOverride }; });
   const embed = day.song.kind === 'link' ? day.song.embedUrl : undefined;
 
-  const onReady = useCallback(async (engine: Engine) => {
-    if (posterDone.current) return;
-    posterDone.current = true;
+  const engineRef = useRef<{ engine: Engine; styleKey: string } | null>(null);
+  const tryExportPoster = useCallback(async () => {
+    const { day: d, styleOverride: preview } = latest.current;
+    if (!engineRef.current || preview || d.posterUrl || !d.style) return;
+    const key = JSON.stringify(d.style);
+    // Снимаем постер только с холста, нарисованного именно этим стилем.
+    if (engineRef.current.styleKey !== key || exportedFor.current === key) return;
+    const { engine } = engineRef.current;
+    exportedFor.current = key;
     try {
       const blob = await exportPoster(engine);
-      const { uploads } = await api.requestUploads(day.id, [{ kind: 'poster', ext: 'jpg' }]);
+      const { uploads } = await api.requestUploads(d.id, [{ kind: 'poster', ext: 'jpg' }]);
       await api.uploadFile(uploads[0], blob);
     } catch { /* постер — приятный бонус, не критично */ }
-  }, [day.id]);
+  }, []);
+  const onReady = useCallback((engine: Engine) => {
+    const { day: d, styleOverride: preview } = latest.current;
+    engineRef.current = { engine, styleKey: JSON.stringify(preview ?? d.style) };
+    void tryExportPoster();
+  }, [tryExportPoster]);
+  // После «Сохранить» стиль тот же, что в превью, и холст не пересоздаётся — проверяем постер по смене дня.
+  useEffect(() => { void tryExportPoster(); }, [day, styleOverride, tryExportPoster]);
 
   function start() {
     setOpen(true);
