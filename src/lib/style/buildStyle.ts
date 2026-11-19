@@ -47,7 +47,8 @@ export function buildStyle(input: StyleInput): StyleParams {
   reasons.push({
     param: 'motion',
     because:
-      `${s.bpm} BPM, ${s.arousal > 0.6 ? 'много энергии' : s.arousal > 0.3 ? 'средний темп дня' : 'спокойный день'} → ` +
+      `${s.bpm} BPM, энергия дня ${round(s.arousal, 2)} (запись ${round(s.textArousal, 2)}, песня ${round(s.energy, 2)}) — ` +
+      `${s.arousal > 0.6 ? 'много энергии' : s.arousal > 0.3 ? 'средний темп' : 'спокойно'} → ` +
       `кадр держится ${motion.beatsPerPhoto} долей ≈ ${round(photoInterval(motion), 1)} с, ` +
       `переходы ${motion.easing === 'sharp' ? 'резкие, точно в долю' : 'мягкие'}`,
   });

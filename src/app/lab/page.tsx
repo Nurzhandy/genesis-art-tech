@@ -2,6 +2,7 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { SongCompare } from '@/components/SongCompare';
 import { WhyPanel } from '@/components/WhyPanel';
 import { FIXTURES } from '@/lib/fixtures';
 import { buildStyle } from '@/lib/style/buildStyle';
@@ -28,12 +29,39 @@ export default function Lab() {
   const [tech, setTech] = useState<Technique | 'auto'>('auto');
   const [playing, setPlaying] = useState(true);
   const [engine, setEngine] = useState<Engine | null>(null);
+  const [mode, setMode] = useState<'tune' | 'songs'>('tune');
   const f = FIXTURES.find((x) => x.name === fixture)!;
   const ruled = useMemo(() => buildStyle(f.input), [f]);
   const style = overrides ?? ruled;
 
+  const modeSwitch = (
+    <div className="mb-6 inline-flex rounded-full border border-foreground/20 p-0.5 font-mono text-xs">
+      {([['tune', 'настройка стиля'], ['songs', 'те же фото, другая песня']] as const).map(([m, label]) => (
+        <button key={m} onClick={() => setMode(m)} className={`rounded-full px-3 py-1 ${mode === m ? 'bg-foreground text-background' : 'text-muted'}`}>{label}</button>
+      ))}
+    </div>
+  );
+
+  if (mode === 'songs') {
+    return (
+      <main className="mx-auto w-full max-w-5xl px-4 py-8">
+        {modeSwitch}
+        <h1 className="mb-2 text-4xl font-semibold">Те же фото, другая песня</h1>
+        <p className="mb-5 max-w-2xl text-lg text-muted">Запись и фото одни и те же — меняется только музыка. Темп, воздух, палитра, зерно и атмосфера следуют за песней.</p>
+        <div className="mb-6 flex flex-wrap gap-2 font-mono text-xs">
+          {FIXTURES.map((x) => (
+            <button key={x.name} onClick={() => setFixture(x.name)}
+              className={`rounded-full px-3 py-1.5 ${x.name === fixture ? 'bg-foreground text-background' : 'border border-foreground/30'}`}>{x.input.analysis.title}</button>
+          ))}
+        </div>
+        <SongCompare fixture={f} dayNumber={FIXTURES.indexOf(f) + 1} />
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 lg:grid-cols-[minmax(0,420px)_1fr]">
+      <div className="lg:col-span-2">{modeSwitch}</div>
       <div>
         <MemoryCanvas style={style} photos={f.photos} playing={playing} onReady={setEngine}
           info={{ title: f.input.analysis.title, caption: f.input.analysis.caption, date: f.input.date, dayNumber: FIXTURES.indexOf(f) + 1, songLabel: f.song, notes: f.input.analysis.sensory }}

@@ -3,6 +3,7 @@ import type { StyleInput } from '@/lib/types';
 
 export interface Signals {
   valence: number; arousal: number; tension: number; nostalgia: number;
+  textArousal: number;   // энергия из записи; arousal = 65% записи + 35% энергии песни
   vPos: number; vNeg: number;
   warmLight: boolean;
   night: boolean;
@@ -16,7 +17,10 @@ export interface Signals {
 
 export function signals(input: StyleInput): Signals {
   const { analysis: a, music, photos } = input;
-  const { valence, arousal, tension, nostalgia } = a.mood;
+  const { valence, tension, nostalgia } = a.mood;
+  const textArousal = a.mood.arousal;
+  // Песня влияет на форму: её энергия сдвигает «энергию дня», но запись остаётся главной.
+  const arousal = Math.min(1, Math.max(0, 0.65 * textArousal + 0.35 * music.energy));
   const scenes = a.photoScenes;
   const warmScenes = scenes.filter((s) => s.light === 'warm').length;
   const meanWarmth = photos.length ? photos.reduce((acc, p) => acc + p.warmth, 0) / photos.length : 0;
@@ -25,7 +29,7 @@ export function signals(input: StyleInput): Signals {
   const year = music.year ?? a.songGuess?.year ?? null;
   const mode = music.mode !== 'unknown' ? music.mode : a.songGuess?.mode ?? 'unknown';
   return {
-    valence, arousal, tension, nostalgia,
+    valence, arousal, tension, nostalgia, textArousal,
     vPos: Math.max(valence, 0), vNeg: Math.max(-valence, 0),
     warmLight,
     night: a.timeOfDay === 'night',

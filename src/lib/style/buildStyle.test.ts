@@ -159,3 +159,21 @@ describe('buildStyle: атмосферный слой (R3)', () => {
     expect(s('rainy-alone').reasons.some((r) => r.param === 'atmosphere' && /дожд/.test(r.because))).toBe(true);
   });
 });
+
+import { MUSIC_PRESETS } from './musicPresets';
+
+describe('buildStyle: та же запись, другая песня (R5)', () => {
+  const withSong = (name: Name, id: string) => buildStyle({ ...input(name), music: MUSIC_PRESETS.find((p) => p.id === id)!.music });
+  it('энергичная песня ускоряет смену кадров на тех же фото', () => {
+    expect(withSong('autumn-park', 'techno').motion.beatsPerPhoto).toBeLessThan(withSong('autumn-park', 'ambient').motion.beatsPerPhoto);
+  });
+  it('минорная тихая песня даёт больше воздуха, чем бодрый поп', () => {
+    expect(withSong('autumn-park', 'ambient').composition.negativeSpace).toBeGreaterThan(withSong('autumn-park', 'pop').composition.negativeSpace);
+  });
+  it('старая песня даёт больше зерна, чем современная', () => {
+    expect(withSong('autumn-park', 'sinatra').texture.grain).toBeGreaterThan(withSong('autumn-park', 'techno').texture.grain);
+  });
+  it('в причинах видно, что энергия песни сдвинула темп дня', () => {
+    expect(withSong('autumn-park', 'techno').reasons.find((r) => r.param === 'motion')?.because).toMatch(/песн/);
+  });
+});
