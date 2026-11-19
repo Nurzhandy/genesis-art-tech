@@ -58,7 +58,7 @@ export const PhotoFeaturesSchema = z.object({
 
 export const MusicFeaturesSchema = z.object({
   source: z.enum(['audio', 'deezer', 'llm']),
-  bpm: z.number().min(30).max(250),
+  bpm: z.number().min(0).max(250),          // 0 у Deezer = «нет данных», mergeMusic это учитывает
   energy: unit,
   mode: z.enum(['major', 'minor', 'unknown']),
   brightness: unit.optional(),

@@ -58,6 +58,13 @@ describe('GenerateBody', () => {
     });
     expect(r.success).toBe(true);
   });
+  it('принимает музыку из Deezer с bpm=0 («нет данных»)', () => {
+    const r = GenerateBody.safeParse({
+      photoFeatures: [{ index: 0, width: 10, height: 10, palette: ['#ffffff'], brightness: 0.5, warmth: 0, saturation: 0 }],
+      music: { source: 'deezer', bpm: 0, energy: 0.5, mode: 'unknown', year: 2002 },
+    });
+    expect(r.success).toBe(true);
+  });
   it('отклоняет теплоту вне -1..1', () => {
     const r = GenerateBody.safeParse({
       photoFeatures: [{ index: 0, width: 10, height: 10, palette: ['#ffffff'], brightness: 0.5, warmth: 3, saturation: 0 }],
