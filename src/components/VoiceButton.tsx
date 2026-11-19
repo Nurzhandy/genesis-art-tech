@@ -1,6 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { api } from '@/lib/client/api';
+import { announceVoice } from '@/lib/client/fade';
 import type { DayRecord, VoicePreset } from '@/lib/types';
 
 export function VoiceButton({ day }: { day: DayRecord }) {
@@ -13,6 +14,7 @@ export function VoiceButton({ day }: { day: DayRecord }) {
       audio.current?.pause();
       speechSynthesis.cancel();
       setState('idle');
+      announceVoice(false);
       return;
     }
     setState('loading');
@@ -22,7 +24,8 @@ export function VoiceButton({ day }: { day: DayRecord }) {
       if (r.url) {
         audio.current ??= new Audio();
         audio.current.src = r.url;
-        audio.current.onended = () => setState('idle');
+        audio.current.onended = () => { setState('idle'); announceVoice(false); };
+        announceVoice(true);
         await audio.current.play();
       } else {
         // Без ключа TTS — синтез в браузере с той же скоростью из правил.
@@ -32,12 +35,14 @@ export function VoiceButton({ day }: { day: DayRecord }) {
         u.pitch = r.preset.voice === 'ash' || r.preset.voice === 'coral' ? 1.05 : 0.95;
         const ru = speechSynthesis.getVoices().find((v) => v.lang.startsWith('ru'));
         if (ru) u.voice = ru;
-        u.onend = () => setState('idle');
+        u.onend = () => { setState('idle'); announceVoice(false); };
+        announceVoice(true);
         speechSynthesis.speak(u);
       }
       setState('playing');
     } catch {
       setState('idle');
+      announceVoice(false);
     }
   }
 
