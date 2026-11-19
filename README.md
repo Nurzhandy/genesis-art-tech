@@ -12,6 +12,7 @@
 - [Обзор: архитектура, контракты, таймлайн](docs/plan/00-overview.md)
 - [Часть A: бэкенд, AI, ввод дня, архив](docs/plan/part-A-backend-input.md)
 - [Часть B: визуальная система, рендер, просмотр дня](docs/plan/part-B-visual-system.md)
+- [Ресерч: потребности пользователей → баллы](docs/research/user-needs.md)
 - [ТЗ хакатона (PDF)](docs/spec/genesis-art-tech-tz.pdf)
 
 **Дедлайн:** 22 ноября 2026, 23:59 по Астане.
