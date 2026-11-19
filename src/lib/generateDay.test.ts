@@ -83,6 +83,17 @@ describe('generateDay', () => {
     await expect(generateDay(ID, { photoFeatures: features, music: null }, deps)).rejects.toMatchObject({ status: 500 });
     expect(log.statuses).toEqual(['generating', 'error']);
   });
+  it('признаки фото сохраняются ещё до генерации — чтобы можно было повторить после ошибки', async () => {
+    const patches: Partial<Record<string, unknown>>[] = [];
+    const { deps } = fakeDeps(draft(), { moveFile: async () => { throw new Error('x'); } });
+    const orig = deps.updateDay;
+    deps.updateDay = async (id, patch) => { patches.push(patch); return orig(id, patch); };
+    await generateDay(ID, { photoFeatures: features, music: null }, deps).catch(() => undefined);
+    const first = patches[0] as { status: string; photos: { features: unknown; path: string }[] };
+    expect(first.status).toBe('generating');
+    expect(first.photos[0].features).toEqual(features[0]);
+    expect(first.photos[0].path).toBe(`d1/_draft-${ID}/photos/01.jpg`);
+  });
   it('день со статусом error можно сгенерировать заново', async () => {
     const { deps, log } = fakeDeps(draft({ status: 'error', error: 'x' }));
     await generateDay(ID, { photoFeatures: features, music: null }, deps);

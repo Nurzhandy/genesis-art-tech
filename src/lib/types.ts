@@ -98,4 +98,5 @@ export interface DayRecord {
   posterPath: string | null; posterUrl?: string;
   status: DayStatus; error: string | null;
   createdAt: string;
+  dayNumber?: number;                   // порядковый номер готового дня в дневнике (для шапки)
 }

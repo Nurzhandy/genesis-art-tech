@@ -39,10 +39,15 @@ export async function generateDay(dayId: string, body: GenerateBody, deps: Gener
   if (day.status === 'generating') throw new HttpError(409, 'День уже собирается');
   if ((await deps.recentGenerations(day.diaryId)) >= deps.limit) throw new HttpError(429, 'Лимит на сегодня исчерпан');
 
-  await deps.updateDay(day.id, { status: 'generating', error: null });
+  const features: PhotoFeatures[] = [...body.photoFeatures].sort((a, b) => a.index - b.index);
+  const draft = dayFiles(dayFolder(day.diaryId, day.date, null, day.id));
+  // Признаки фото сохраняем сразу: после ошибки день можно собрать повторно со страницы дня.
+  await deps.updateDay(day.id, {
+    status: 'generating', error: null,
+    photos: features.map((f) => ({ path: draft.photo(f.index), thumbPath: draft.thumb(f.index), features: f })),
+    music: body.music,
+  });
   try {
-    const features: PhotoFeatures[] = [...body.photoFeatures].sort((a, b) => a.index - b.index);
-    const draft = dayFiles(dayFolder(day.diaryId, day.date, null, day.id));
 
     // Песня: дополняем ссылку данными, если браузер их не прислал.
     let song: SongRef = day.song;
