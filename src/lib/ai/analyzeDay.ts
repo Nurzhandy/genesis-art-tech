@@ -19,7 +19,8 @@ export interface AnalyzeInput {
 
 export interface LlmRequest {
   system: string;
-  images: AnalyzeInput['photos'];
+  /** Фото дня или запись рассказа: всё, что модель должна увидеть или услышать. */
+  images: { base64: string; mediaType: string }[];
   text: string;
   schema: object;
 }
@@ -28,7 +29,7 @@ export interface LlmRequest {
 export interface LlmLike { generateJson(req: LlmRequest): Promise<string | null> }
 
 let defaultLlm: LlmLike | null | undefined;
-function getLlm(): LlmLike | null {
+export function getLlm(): LlmLike | null {
   if (defaultLlm !== undefined) return defaultLlm;
   const key = process.env.GEMINI_API_KEY;
   defaultLlm = key ? createGemini(key, process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL) : null;

@@ -1,6 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useStored, writeStored } from '@/lib/client/diaryKey';
 import { humanDate } from '@/lib/archive';
 import { commonShotDate, shotHour } from '@/lib/client/exif';
 import { api, type NewSong } from '@/lib/client/api';
@@ -12,6 +13,7 @@ import { RotatingQuestion } from './RotatingQuestion';
 import { GenerateProgress } from './GenerateProgress';
 import { PhotoPicker, type PickedPhoto } from './PhotoPicker';
 import { SongInput, type SongState } from './SongInput';
+import { StoryRecorder, type StoryOutcome } from './StoryRecorder';
 
 const today = () => {
   const d = new Date();
@@ -25,7 +27,9 @@ const addDays = (iso: string, n: number) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export function DayForm({ diaryId, prompt, questions }: { diaryId: string; prompt?: string; questions?: string[] }) {
+export function DayForm({ diaryId, prompt, questions, startWithStory = false }: { diaryId: string; prompt?: string; questions?: string[]; startWithStory?: boolean }) {
+  // Пришли с главной по «Рассказать о сегодня» — сразу показываем запись голосом.
+  useEffect(() => { if (startWithStory) document.getElementById('story')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, [startWithStory]);
   const router = useRouter();
   const [date, setDate] = useState(today);
   const [text, setText] = useState('');
@@ -36,6 +40,17 @@ export function DayForm({ diaryId, prompt, questions }: { diaryId: string; promp
   const [error, setError] = useState<string | null>(null);
   const [songKey, setSongKey] = useState(0);
   const [sampleBusy, setSampleBusy] = useState(false);
+  // «Рассказать день»: запись голоса, если человек решил оставить её в папке дня.
+  const [ownVoice, setOwnVoice] = useState<StoryOutcome['voice']>(null);
+  // Черновик без давления: текст тихо сохраняется на устройстве, можно уйти и вернуться позже.
+  const draftKey = `diary-draft:${diaryId}`;
+  const savedDraft = useStored(draftKey);
+  useEffect(() => {
+    if (!text.trim()) return;
+    const t = setTimeout(() => writeStored(draftKey, text), 700);
+    return () => clearTimeout(t);
+  }, [text, draftKey]);
+  const offerDraft = !text && savedDraft && savedDraft.trim() ? savedDraft : null;
   // Город для погоды того дня (план 20.11, A1) — запоминаем на устройстве.
   const [place, setPlace] = useState(() => { try { return localStorage.getItem(PLACE_KEY) ?? ''; } catch { return ''; } });
   // Капсула времени (A5).
@@ -61,6 +76,18 @@ export function DayForm({ diaryId, prompt, questions }: { diaryId: string; promp
     } finally {
       setSampleBusy(false); setPhotosBusy(false);
     }
+  }
+
+  function applyStory(o: StoryOutcome) {
+    setText((prev) => (prev.trim() ? `${prev.trim()}
+
+${o.entry}` : o.entry).slice(0, 5000));
+    if (o.place && !place.trim()) setPlace(o.place);
+    if (o.songUrl && song.kind === 'none') {
+      setSong({ kind: 'link', url: o.songUrl, status: 'checking', music: null });
+      setSongKey((k) => k + 1);
+    }
+    if (o.voice) setOwnVoice(o.voice);
   }
 
   const sealError = sealOn && !(sealedUntil > today()) ? 'дата капсулы — в будущем' : null;
@@ -109,6 +136,14 @@ export function DayForm({ diaryId, prompt, questions }: { diaryId: string; promp
         coverPalette: song.kind === 'link' ? song.coverPalette : undefined,
         photoHour: shotHour(photos.map((p) => p.takenAt), date),
       });
+      // Свой голос из рассказа — в папку дня; плеер дальше играет его вместо синтеза.
+      if (ownVoice) {
+        try {
+          const { uploads: [u] } = await api.requestUploads(dayId, [{ kind: 'voice', ext: ownVoice.ext }]);
+          await api.uploadFile(u, ownVoice.blob);
+        } catch { /* голос — бонус: день уже собран */ }
+      }
+      writeStored(draftKey, '');
       router.push(`/day/${dayId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Что-то пошло не так');
@@ -152,7 +187,17 @@ export function DayForm({ diaryId, prompt, questions }: { diaryId: string; promp
       <section>
         <label className="mb-2 block font-mono text-xs uppercase tracking-[0.2em] text-muted" htmlFor="text">как прошёл день</label>
         {questions && <RotatingQuestion questions={questions} paused={text.length > 0} />}
+        {offerDraft && (
+          <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md border border-dashed border-foreground/25 px-4 py-3">
+            <p className="min-w-0 flex-1 basis-64 text-base text-muted">С прошлого раза остался черновик: <span className="font-hand text-xl text-foreground">«{offerDraft.slice(0, 70)}{offerDraft.length > 70 ? '…' : ''}»</span></p>
+            <button type="button" onClick={() => setText(offerDraft)} className="rounded-full bg-foreground px-4 py-1.5 text-base text-background">Продолжить</button>
+            <button type="button" onClick={() => writeStored(draftKey, '')} className="text-sm text-muted underline-offset-4 hover:text-foreground hover:underline">Начать с чистого листа</button>
+          </div>
+        )}
+        <div className="mb-4"><StoryRecorder onUse={applyStory} hasText={!!text.trim()} highlight={startWithStory} /></div>
         <DayTextInput value={text} onChange={setText} placeholder={prompt} />
+        {text.trim() && <p className="mt-1 text-sm text-muted">Черновик сохраняется на этом устройстве — можно вернуться позже.</p>}
+        {ownVoice && <p className="mt-2 text-sm text-muted">Ваш рассказ голосом ляжет в папку дня. <button type="button" onClick={() => setOwnVoice(null)} className="underline underline-offset-4 hover:text-foreground">Не сохранять голос</button></p>}
       </section>
 
       <section>

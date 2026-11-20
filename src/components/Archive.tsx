@@ -7,13 +7,14 @@ import { api } from '@/lib/client/api';
 import { useStored, writeStored } from '@/lib/client/diaryKey';
 import { dayColor, groupByMonth, humanDate, localToday, monthGrid, monthLabel, onThisDay, yearsAgo, yearsWord } from '@/lib/archive';
 import type { DayRecord } from '@/lib/types';
+import { AtlasView } from './AtlasView';
 import { BookView } from './BookView';
 import { songLabel } from './MemoryPlayer';
 import { DayCard } from './DayCard';
 import { DiaryKey } from './DiaryKey';
 
-type View = 'grid' | 'book' | 'feed' | 'calendar';
-const VIEWS: [View, string][] = [['grid', 'сетка'], ['book', 'книга'], ['feed', 'лента'], ['calendar', 'календарь']];
+type View = 'grid' | 'book' | 'atlas' | 'feed' | 'calendar';
+const VIEWS: [View, string][] = [['grid', 'сетка'], ['book', 'книга'], ['atlas', 'атлас'], ['feed', 'лента'], ['calendar', 'календарь']];
 const WEEK = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'];
 const VIEW_KEY = 'atmosphere-archive-view';
 
@@ -150,6 +151,7 @@ export function Archive({ diaryId, isDemo, songs = [], title }: { diaryId: strin
       {days && days.length > 0 && view === 'calendar' && <Calendar days={days} />}
 
       {days && days.length > 0 && view === 'book' && <BookView days={days.filter((d) => !d.sealed)} title={title ?? (isDemo ? 'Демо-дневник' : 'Мой дневник')} />}
+      {days && days.length > 0 && view === 'atlas' && <AtlasView days={days.filter((d) => !d.sealed)} />}
 
       {days && days.length > 0 && view === 'grid' && groups.map(([month, list]) => (
         <section key={month} className="mb-10">

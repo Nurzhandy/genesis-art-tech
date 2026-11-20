@@ -169,3 +169,63 @@ body::after {
   65% { opacity: 1; transform: translateY(8px) rotate(1deg); }
   100% { opacity: 1; transform: none; }
 }
+
+/* ───────────── «Рассказать день» и «Атлас дней» (20.11) ───────────── */
+
+/* Чернила записи: тёмно-вишнёвый, как лампочка «REC» на старом диктофоне */
+:root { --story-ink: #8f2433; }
+@media (prefers-color-scheme: dark) { :root { --story-ink: #e07a85; } }
+
+/* Готовая запись лежит на линованном листе */
+.story-sheet {
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(1.6em - 1px), color-mix(in srgb, var(--foreground) 9%, transparent) calc(1.6em - 1px), color-mix(in srgb, var(--foreground) 9%, transparent) 1.6em);
+  background-position: 0 1.1rem;
+  font-size: 1rem;
+  animation: sheet-in 0.6s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+@keyframes sheet-in { from { opacity: 0; transform: translateY(10px) rotate(-0.4deg); } }
+
+/* Живая расшифровка гаснет к началу строки: видно только то, что сказано сейчас */
+.story-live { mask-image: linear-gradient(to right, transparent, #000 22%); -webkit-mask-image: linear-gradient(to right, transparent, #000 22%); text-align: right; white-space: nowrap; overflow: hidden; }
+
+.story-dots { width: 18px; height: 6px; background: radial-gradient(circle, currentColor 2.5px, transparent 3px) 0 0 / 6px 6px repeat-x; animation: story-dots 1s steps(3) infinite; }
+@keyframes story-dots { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+/* Атлас: каждое пятно-день медленно дышит в темпе своей песни */
+.atlas-blob { transform-box: fill-box; transform-origin: center; animation: atlas-breathe var(--beat, 4s) ease-in-out infinite alternate; }
+@keyframes atlas-breathe { from { transform: scale(0.94); } to { transform: scale(1.06); } }
+.atlas-day:focus-visible .atlas-ring, .atlas-day:hover .atlas-ring { opacity: 1; }
+.atlas-thread { stroke-dasharray: 2 6; animation: atlas-thread 30s linear infinite; }
+@keyframes atlas-thread { to { stroke-dashoffset: -400; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-blob, .atlas-thread, .story-dots { animation: none; }
+}
+
+/* ───────────── Первый экран: живое небо дня и вход (20.11) ───────────── */
+.hero-aurora { min-height: min(92vh, 900px); }
+.aurora-cloud {
+  position: absolute; width: 62vmax; height: 62vmax; border-radius: 50%;
+  filter: blur(80px) saturate(1.4); opacity: 0.75;
+  animation: aurora-drift 18s ease-in-out infinite alternate;
+}
+@media (prefers-color-scheme: dark) { .aurora-cloud { opacity: 0.7; mix-blend-mode: screen; } }
+@keyframes aurora-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(6vw, 4vh) scale(1.12); }
+  100% { transform: translate(-4vw, -3vh) scale(0.95); }
+}
+/* Вход: небо проявляется, текст поднимается из «чернил», страница дня ложится с поворотом */
+.hero-aurora { animation: hero-sky 1.6s ease-out both; }
+@keyframes hero-sky { from { filter: saturate(0) brightness(1.1); } to { filter: none; } }
+.hero-rise { animation: hero-rise 0.9s cubic-bezier(0.2, 0.7, 0.1, 1) both; }
+@keyframes hero-rise { from { opacity: 0; transform: translateY(22px); filter: blur(6px); } }
+.hero-card { animation: hero-card 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes hero-card { from { opacity: 0; transform: translateY(40px) rotate(4deg) scale(0.94); } }
+/* Пульс кнопки голоса: зовёт, но не кричит */
+.tell-pulse { animation: tell-pulse 2.4s ease-out infinite; }
+@keyframes tell-pulse { from { transform: scale(1); opacity: 0.55; } to { transform: scale(1.8); opacity: 0; } }
+.story-highlight { box-shadow: 0 0 0 4px color-mix(in srgb, var(--story-ink) 18%, transparent); }
+@media (prefers-reduced-motion: reduce) {
+  .aurora-cloud, .hero-aurora, .hero-rise, .hero-card, .tell-pulse { animation: none; }
+}

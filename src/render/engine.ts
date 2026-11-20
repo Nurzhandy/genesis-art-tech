@@ -5,6 +5,7 @@ import { assemblyAt } from './assembly';
 import { createAtmosphere } from './atmosphere';
 import { drawNotes, placeNotes } from './notes';
 import { drawSongObject } from './songObject';
+import { createPhotoFirst } from './photoFirst';
 import { drawDecor } from './decor';
 import { drawStamps } from './stamps';
 import { clamp } from './draw';
@@ -107,6 +108,7 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
   primary.prepare(rc);
   secondary?.prepare(rc);
   const paper = makePaper(style, W, H);
+  const photoFirst = createPhotoFirst(style, photos, rc.zone);
   const grain = makeGrainTile(style.seed);
   const atmosphere = createAtmosphere(style, W, H);
   const notes = (opts.info.notes ?? []).map((n) => n.trim()).filter(Boolean).slice(0, 4).map((n) => (n.length > 34 ? n.slice(0, 33) + '…' : n));
@@ -128,6 +130,8 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
     primary.drawPhoto(rc, pt, { realtime });
     primary.drawOverlay(rc, pt, 1);
     if (secondary) secondary.drawOverlay(rc, pt, secondaryAlpha);
+    // Фото главное: поверх техники — настоящее фото, чёткое, с наездом камеры (техника остаётся фоном и рамкой).
+    photoFirst.draw(ctx, pt, opts.info.date);
     // Страница собирается на глазах (B5): фото проявляется из бумаги, затем марка, подпись, песня.
     const asm = assemblyAt(t, style.motion, realtime);
     if (asm.photo < 1) {

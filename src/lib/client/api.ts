@@ -51,6 +51,10 @@ export const api = {
   generate: (dayId: string, body: { photoFeatures: PhotoFeatures[]; music: MusicFeatures | null; coverPalette?: string[]; photoHour?: number }) =>
     call<DayRecord>(`/api/days/${dayId}/generate`, { method: 'POST', body: JSON.stringify(body) }),
   voice: (dayId: string) => call<{ url: string | null; preset: VoicePreset }>(`/api/days/${dayId}/voice`, { method: 'POST' }),
+  // «Рассказать день»: голос (base64) и/или расшифровка браузера → запись дня.
+  story: (body: { audio?: string; mime?: string; transcript?: string }) =>
+    call<{ transcript: string; entry: string; place: string | null; song: string | null; songUrl: string | null; details: string[]; source: 'ai' | 'local' }>(
+      '/api/story', { method: 'POST', body: JSON.stringify(body) }),
   resolveSong: (url: string) =>
     call<{ song: SongRef; music: MusicFeatures | null }>(`/api/music/resolve?url=${encodeURIComponent(url)}`),
   files: (dayId: string) => call<{ folder: string; files: { name: string; size: number }[] }>(`/api/days/${dayId}/files`),
