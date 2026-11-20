@@ -60,7 +60,7 @@ const fmtDate = (iso: string) => {
   return `${d}.${m}.${y}`;
 };
 
-export function drawConstants(g: CanvasRenderingContext2D, W: number, H: number, style: StyleParams, info: DayInfo, fonts: Fonts) {
+export function drawConstants(g: CanvasRenderingContext2D, W: number, H: number, style: StyleParams, info: DayInfo, fonts: Fonts, captionAlpha = 1) {
   const m = LAYOUT.margin * W;
   const ink = style.palette.ink;
   g.save();
@@ -100,7 +100,7 @@ export function drawConstants(g: CanvasRenderingContext2D, W: number, H: number,
   g.translate(m + 6, cy);
   g.rotate((style.typography.captionTilt * Math.PI) / 180);
   g.font = `500 ${LAYOUT.sizes.caption}px ${fonts.hand}`;
-  g.fillStyle = rgba(ink, 0.88);
+  g.fillStyle = rgba(ink, 0.88 * captionAlpha);   // подпись ложится в свою долю (B5)
   g.fillText(info.caption, 0, 0, W - 2 * m - 12);
   g.restore();
 

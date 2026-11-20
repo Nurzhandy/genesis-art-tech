@@ -1,6 +1,7 @@
 // Движок воспоминания: фото + стиль → живой холст 9:16 (B2, B7).
 import type { StyleParams, Technique } from '@/lib/types';
 import { LAYOUT } from '@/lib/style/constants';
+import { assemblyAt } from './assembly';
 import { createAtmosphere } from './atmosphere';
 import { drawNotes, placeNotes } from './notes';
 import { drawSongObject } from './songObject';
@@ -122,10 +123,23 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
     primary.drawPhoto(rc, pt, { realtime });
     primary.drawOverlay(rc, pt, 1);
     if (secondary) secondary.drawOverlay(rc, pt, secondaryAlpha);
+    // Страница собирается на глазах (B5): фото проявляется из бумаги, затем марка, подпись, песня.
+    const asm = assemblyAt(t, style.motion, realtime);
+    if (asm.photo < 1) {
+      const z = rc.zone, pad = 24;
+      ctx.save();
+      ctx.globalAlpha = 1 - asm.photo;
+      ctx.drawImage(paper, z.x - pad, z.y - pad, z.w + pad * 2, z.h + pad * 2, z.x - pad, z.y - pad, z.w + pad * 2, z.h + pad * 2);
+      ctx.restore();
+    }
     atmosphere.draw(rc, pt);   // слой 3.5: между оверлеем и текстом
+    ctx.save(); ctx.globalAlpha = asm.stamps;
     drawStamps(ctx, W, H, style, fonts);   // марка сезона, штемпель и бирки (план 20.11, B3)
+    ctx.restore();
+    ctx.save(); ctx.globalAlpha = asm.song;
     drawSongObject(ctx, W, H, style, fonts, opts.info.songLabel, t, energy(pt));   // песня как предмет (S2)
-    drawConstants(ctx, W, H, style, opts.info, fonts);
+    ctx.restore();
+    drawConstants(ctx, W, H, style, opts.info, fonts, asm.caption);
     drawNotes(ctx, notes, notePlaces, style, fonts, pt, photos.length, !realtime);
     drawGrain(ctx, grain, W, H, style, frame++);
     drawVignette(ctx, W, H, 0.12 + 0.2 * style.texture.grain);
