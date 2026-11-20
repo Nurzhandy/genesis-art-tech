@@ -32,6 +32,10 @@ export interface EngineOptions {
   /** Живой уровень громкости 0..1 (если звук идёт через наш <audio>). */
   liveEnergy?: () => number | null;
   overrideTechnique?: { primary?: Technique; secondary?: Technique | null; mix?: number };
+  /** Обои без текста (план 20.11, C1): без названия, подписи, заметок, марки и песни-предмета. */
+  noText?: boolean;
+  /** Экспорт (обои, видео): всегда 1080×1920, даже на телефоне. */
+  fullRes?: boolean;
 }
 
 export interface Engine {
@@ -78,7 +82,7 @@ export async function loadFonts(): Promise<Fonts> {
 export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOptions): Promise<Engine> {
   const W = LAYOUT.width, H = LAYOUT.height;
   const lowPower = typeof window !== 'undefined' && window.innerWidth < 500 && window.devicePixelRatio > 2;
-  const k = lowPower ? 0.5 : 1;
+  const k = lowPower && !opts.fullRes ? 0.5 : 1;
   canvas.width = W * k;
   canvas.height = H * k;
   const ctx = canvas.getContext('2d')!;
@@ -133,6 +137,11 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
       ctx.restore();
     }
     atmosphere.draw(rc, pt);   // слой 3.5: между оверлеем и текстом
+    if (opts.noText) {
+      drawGrain(ctx, grain, W, H, style, frame++);
+      drawVignette(ctx, W, H, 0.12 + 0.2 * style.texture.grain);
+      return;
+    }
     ctx.save(); ctx.globalAlpha = asm.stamps;
     drawStamps(ctx, W, H, style, fonts);   // марка сезона, штемпель и бирки (план 20.11, B3)
     ctx.restore();
