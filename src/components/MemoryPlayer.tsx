@@ -11,6 +11,8 @@ import { exportPoster } from '@/render/poster';
 import { createEnergyMeter } from '@/render/audioReactive';
 import { songObjectPlace } from '@/render/songObject';
 import { LAYOUT } from '@/lib/style/constants';
+import type { Ritual } from '@/lib/ritual';
+import { EnvelopeRitual } from './EnvelopeRitual';
 
 const MemoryCanvas = dynamic(() => import('@/render/MemoryCanvas'), { ssr: false });
 const OBJ = songObjectPlace(LAYOUT.width, LAYOUT.height).box;
@@ -21,7 +23,7 @@ export function songLabel(day: DayRecord): string {
   return parts.length ? parts.join(' — ') : s.kind === 'file' ? 'своя песня' : '';
 }
 
-export function MemoryPlayer({ day, styleOverride, savePoster = true }: { day: DayRecord; styleOverride?: StyleParams | null; savePoster?: boolean }) {
+export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = 'cover' }: { day: DayRecord; styleOverride?: StyleParams | null; savePoster?: boolean; ritual?: Ritual }) {
   const [open, setOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const meter = useRef<(() => number) | null>(null);
@@ -135,6 +137,8 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true }: { day: D
           <span className="rounded-full border px-6 py-3 font-mono text-sm uppercase tracking-[0.15em]" style={{ borderColor: style.palette.ink }}>▶ Открыть день</span>
           {songLabel(day) && <span className="font-hand text-2xl opacity-80">♪ {songLabel(day)}</span>}
         </button>
+        {/* Письмо в конверте (план 20.11, C3): для «В этот день» и открывшихся капсул. */}
+        {!open && ritual === 'envelope' && <EnvelopeRitual day={day} style={style} onOpen={start} />}
         {open && (day.songUrl || atmosphereKind !== 'none') && (
           <div className="absolute right-3 top-3 flex gap-1.5">
             {atmosphereKind !== 'none' && (
