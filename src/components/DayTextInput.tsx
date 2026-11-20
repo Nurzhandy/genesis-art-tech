@@ -95,17 +95,21 @@ export function DayTextInput({ value, onChange, placeholder }: { value: string; 
 
   return (
     <div>
+      {canDictate && (
+        // Быстрый путь (спека 2026-11-20): нет времени писать — наговорите день, остальное система соберёт сама.
+        <button type="button" onClick={toggleDictation} aria-pressed={listening} data-ink
+          className={`mb-3 flex w-full items-center gap-4 rounded-md border px-4 py-3 text-left transition ${listening ? 'border-red-500/60 bg-red-500/10' : 'border-foreground/20 hover:border-foreground/50'}`}>
+          <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-xl ${listening ? 'animate-pulse bg-red-500 text-white' : 'bg-foreground text-background'}`}>🎙</span>
+          <span className="flex flex-col">
+            <span className="text-xl leading-tight">{listening ? 'Слушаю… нажмите, чтобы закончить' : 'Наговорить день'}</span>
+            <span className="text-sm text-muted">{listening ? 'Рассказывайте как другу: где были, что видели, что звучало' : 'Нет времени писать? Расскажите голосом — страница соберётся сама, со стикерами'}</span>
+          </span>
+        </button>
+      )}
       <div className="relative">
         <textarea ref={area} id="text" value={value} onChange={(e) => onChange(e.target.value)} rows={7} maxLength={5000}
           placeholder={placeholder ?? "Расскажите как другу: погода, свет, запахи, звуки, кто был рядом, мелочи, которые запомнились…"}
-          className="w-full resize-y rounded-sm border border-foreground/15 bg-white/40 p-4 pr-14 text-xl leading-relaxed outline-none placeholder:text-muted/70 focus:border-foreground/40 dark:bg-white/5" />
-        {canDictate && (
-          <button type="button" onClick={toggleDictation} aria-pressed={listening}
-            aria-label={listening ? 'Остановить диктовку' : 'Надиктовать голосом'} title={listening ? 'Остановить диктовку' : 'Надиктовать голосом'}
-            className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border text-base transition ${listening ? 'animate-pulse border-red-500 bg-red-500 text-white' : 'border-foreground/20 text-muted hover:border-foreground/50 hover:text-foreground'}`}>
-            🎙
-          </button>
-        )}
+          className="w-full resize-y rounded-sm border border-foreground/15 bg-white/40 p-4 text-xl leading-relaxed outline-none placeholder:text-muted/70 focus:border-foreground/40 dark:bg-white/5" />
       </div>
       {interim && <p className="mt-1 text-lg italic text-muted">{interim}…</p>}
       {micError && <p className="mt-1 text-sm text-red-700 dark:text-red-400">{micError}</p>}

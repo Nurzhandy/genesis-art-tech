@@ -137,4 +137,18 @@ describe('generateDay', () => {
     await generateDay(ID, { photoFeatures: features, music: null, photoHour: 19 }, deps);
     expect(hour).toBe(19);
   });
+  it('система сама кладёт стикеры по записи и объясняет почему (спека 2026-11-20)', async () => {
+    const { deps, log } = fakeDeps(draft({ text: 'Гуляли по парку, пили какао' }));
+    await generateDay(ID, { photoFeatures: features, music: null }, deps);
+    expect(log.final?.decor?.source).toBe('auto');
+    expect(log.final?.decor?.items.some((i) => i.kind === 'sticker' && i.shape === 'cup')).toBe(true);
+    expect((log.final?.style as unknown as { reasons: { param: string }[] }).reasons.some((r) => r.param === 'decor')).toBe(true);
+  });
+  it('украшения человека при повторной сборке не затираются', async () => {
+    const mine = { v: 1 as const, source: 'user' as const, items: [{ id: 'm', kind: 'text' as const, text: 'моё', x: 100, y: 100, size: 60, rot: 0, color: 'ink' as const }] };
+    const { deps, log } = fakeDeps(draft({ decor: mine }));
+    await generateDay(ID, { photoFeatures: features, music: null }, deps);
+    expect(log.final?.decor).toEqual(mine);
+  });
 });
+

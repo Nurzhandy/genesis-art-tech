@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { DayRecord, MoodOverride, StyleInput, StyleParams } from './types';
 import type { DayRow } from './db';
 import { seedFromId } from './generateDay';
+import { autoDecor } from './decor/autoDecor';
 import { HttpError } from './http';
 import { dayFiles, dayFolder, type StoredFile } from './storage';
 import { slugify, validateTitle } from './title/validateTitle';
@@ -32,6 +33,10 @@ export function restyle(day: DayRecord, o: MoodOverride, buildStyle: (i: StyleIn
     analysis: day.analysis, photos: day.photos.map((p) => p.features), music: day.music, date: day.date,
     seed: seedFromId(day.id), moodOverride, weather: day.weather ?? null,
   });
+  // Причина авто-стикеров живёт в стиле: после пересчёта возвращаем её, если человек их не трогал.
+  if (day.decor?.source === 'auto' && day.decor.items.length) {
+    style.reasons = [...style.reasons, { param: 'decor', because: autoDecor(day.analysis, day.text, seedFromId(day.id)).because }];
+  }
   return { style, moodOverride };
 }
 

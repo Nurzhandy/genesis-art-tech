@@ -3,6 +3,7 @@ import type { DayAnalysis, DayRecord, DayWeather, MusicFeatures, PhotoFeatures, 
 import type { AnalyzeInput } from './ai/analyzeDay';
 import { HttpError } from './http';
 import { mergeMusic } from './music/resolve';
+import { autoDecor } from './decor/autoDecor';
 import { dayFiles, dayFolder } from './storage';
 import { slugify } from './title/validateTitle';
 import type { DayRow } from './db';
@@ -71,7 +72,11 @@ export async function generateDay(dayId: string, body: GenerateBody, deps: Gener
     const cover = body.coverPalette ?? body.music?.coverPalette;
     if (cover?.length) music.coverPalette = cover;
     const weather = await weatherP;
-    const style = deps.buildStyle({ analysis, photos: features, music, date: day.date, seed: seedFromId(day.id), weather });
+    const built = deps.buildStyle({ analysis, photos: features, music, date: day.date, seed: seedFromId(day.id), weather });
+    // Авто-стикеры (спека 2026-11-20): человек, у которого нет времени, получает уже украшенную страницу.
+    const auto = day.decor?.source === 'user' ? null : autoDecor(analysis, day.text, seedFromId(day.id));
+    const style = auto ? { ...built, reasons: [...(built.reasons ?? []), { param: 'decor', because: auto.because }] } : built;
+    const decor = auto?.decor ?? day.decor ?? null;
 
     // Название и уникальная папка.
     const title = analysis.title;
@@ -96,9 +101,10 @@ export async function generateDay(dayId: string, body: GenerateBody, deps: Gener
     await deps.putFile(final.json('song'), json(song), 'application/json');
     await deps.putFile(final.json('analysis'), json(analysis), 'application/json');
     await deps.putFile(final.json('style'), json(style), 'application/json');
+    if (decor?.items.length) await deps.putFile(`${dayFolder(day.diaryId, day.date, slug, day.id)}/decor.json`, json(decor), 'application/json');
 
     return await deps.updateDay(day.id, {
-      status: 'ready', error: null, title, slug, photos, song, music, analysis, style, weather,
+      status: 'ready', error: null, title, slug, photos, song, music, analysis, style, weather, decor,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

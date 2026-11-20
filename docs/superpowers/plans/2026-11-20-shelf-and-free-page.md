@@ -1,6 +1,6 @@
 # Полка дневников и свободная страница — план реализации
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Несколько дневников на «столе», украшения поверх страницы дня (стикеры, текст, кисть) в цветах палитры, авто-стикеры по записи.
 
@@ -39,10 +39,10 @@
   `NewDiaryInput` (zod: `title` 1..60 trim, `kind`); `DIARY_KINDS: Record<DiaryKind, { label; icon; cover; prompt; defaultTitle }>`;
   клиент: `readShelf(): string[]`, `addToShelf(id)`, `removeFromShelf(id)`, `useShelf(): string[] | undefined`, `useIsMyDiary(id)` (по полке), `ownerHeaders(diaryId)`;
   API: `api.createDiary({title, kind})`, `api.shelf(ids)`, `api.renameDiary(id, title)`.
-- [ ] Тест `shelf.test.ts`: `parseShelf('["a","b"]')` → `['a','b']`; битый JSON → `[]`; `migrateShelf(null, 'old')` → `['old']`; `migrateShelf('["x"]', 'old')` → `['x','old']` без дублей; `NewDiaryInput` режет пробелы и отклоняет 61 символ и неизвестный вид.
-- [ ] Реализовать, миграцию применить к Supabase, `assertCanEdit` не меняется (ключ = id дневника).
-- [ ] `GET /api/diaries?ids=` отдаёт только существующие, до 50 id; `PATCH /api/diaries/[id]` — `x-diary-key`.
-- [ ] Коммит `feat(shelf): several diaries with title and kind`.
+- [x] Тест `shelf.test.ts`: `parseShelf('["a","b"]')` → `['a','b']`; битый JSON → `[]`; `migrateShelf(null, 'old')` → `['old']`; `migrateShelf('["x"]', 'old')` → `['x','old']` без дублей; `NewDiaryInput` режет пробелы и отклоняет 61 символ и неизвестный вид.
+- [x] Реализовать, миграцию применить к Supabase, `assertCanEdit` не меняется (ключ = id дневника).
+- [x] `GET /api/diaries?ids=` отдаёт только существующие, до 50 id; `PATCH /api/diaries/[id]` — `x-diary-key`.
+- [x] Коммит `feat(shelf): several diaries with title and kind`.
 
 ### Task 2: «Стол» на главной и дневник с названием
 
@@ -51,9 +51,9 @@
 - Modify: `src/app/page.tsx`, `src/components/Archive.tsx`, `src/app/diary/[diaryId]/page.tsx`, `src/components/DiaryKey.tsx`, `src/components/DayForm.tsx`, `src/components/BookView.tsx`
 
 **Interfaces:** Consumes Task 1.
-- [ ] Первый экран: обложки дневников полки (`DiaryCover`: цвет вида или цвет последнего дня, иконка, название, число дней), слот «+ новый дневник» (диалог: название + вид), демо-дневник примером. Пустая полка — только слот и пример. Импорт `/?shelf=a,b` с подтверждением.
-- [ ] Архив: заголовок = название дневника (владелец может переименовать), вид — подсказка в форме записи (`DIARY_KINDS[kind].prompt`), обложка книги — цвет вида.
-- [ ] Проверить в браузере, коммит `feat(shelf): desk on the home page`.
+- [x] Первый экран: обложки дневников полки (`DiaryCover`: цвет вида или цвет последнего дня, иконка, название, число дней), слот «+ новый дневник» (диалог: название + вид), демо-дневник примером. Пустая полка — только слот и пример. Импорт `/?shelf=a,b` с подтверждением.
+- [x] Архив: заголовок = название дневника (владелец может переименовать), вид — подсказка в форме записи (`DIARY_KINDS[kind].prompt`), обложка книги — цвет вида.
+- [x] Проверить в браузере, коммит `feat(shelf): desk on the home page`.
 
 ### Task 3: Модель украшений, стикеры, рендер, сохранение
 
@@ -68,10 +68,10 @@
   `normalizeDecor(raw: unknown): Decor`; `resolveColor(c: DecorColor, palette): string`;
   `STICKER_SHAPES` (16: tape, star, heart, leaf, snowflake, sun, flower, drop, cloud, cup, note, ticket, arrow, sparkle, stamp, wave), `drawSticker(g, shape, size, color)`;
   `drawDecor(g, decor, palette, fonts, alpha)`; `api.saveDecor(dayId, decor)`.
-- [ ] Тесты: `normalizeDecor(undefined)` → `{v:1, source:'auto', items:[]}`; 41 элемент → ошибка схемы; штрих 401 точка → ошибка; `resolveColor('a1', palette)` = `palette.accents[1]`, `a2` при двух акцентах → `accents[0]`; текст длиннее 80 обрезается схемой (ошибка).
-- [ ] `PUT /api/days/[id]/decor`: `assertCanEdit`, не капсула, статус ready, тело ≤ 64 КБ, сохраняет `decor`, `decor.json` в папку, `poster_path: null`.
-- [ ] Движок рисует decor после подписи/заметок, до зерна, с альфой подписи из сборки; `noText` обоев decor оставляет только стикеры и кисть.
-- [ ] Коммит `feat(decor): stickers, text and brush layer in the renderer`.
+- [x] Тесты: `normalizeDecor(undefined)` → `{v:1, source:'auto', items:[]}`; 41 элемент → ошибка схемы; штрих 401 точка → ошибка; `resolveColor('a1', palette)` = `palette.accents[1]`, `a2` при двух акцентах → `accents[0]`; текст длиннее 80 обрезается схемой (ошибка).
+- [x] `PUT /api/days/[id]/decor`: `assertCanEdit`, не капсула, статус ready, тело ≤ 64 КБ, сохраняет `decor`, `decor.json` в папку, `poster_path: null`.
+- [x] Движок рисует decor после подписи/заметок, до зерна, с альфой подписи из сборки; `noText` обоев decor оставляет только стикеры и кисть.
+- [x] Коммит `feat(decor): stickers, text and brush layer in the renderer`.
 
 ### Task 4: Редактор страницы
 
@@ -80,10 +80,10 @@
 - Modify: `src/components/DayView.tsx`, `src/components/MemoryPlayer.tsx`
 
 **Interfaces:** Consumes Task 3 (`Decor`, `DecorItem`, `drawSticker`, `api.saveDecor`).
-- [ ] Кнопка «✎ Украсить страницу» (владелец). Режим: холст постерного кадра + слой SVG/DOM с элементами в координатах 1080×1920 (масштаб к ширине). Панель: стикеры (16), «Текст», «Кисть» (3 толщины), 5 цветов палитры, «Отменить», «Очистить», «Сохранить», «Отмена».
-- [ ] Перетаскивание pointer-событиями, ручка поворота/размера у выбранного, удаление клавишей Delete и кнопкой.
-- [ ] После сохранения день перезагружается, постер пересоздаётся плеером.
-- [ ] Проверить в браузере (мышь и тач-эмуляция), коммит `feat(decor): page editor`.
+- [x] Кнопка «✎ Украсить страницу» (владелец). Режим: холст постерного кадра + слой SVG/DOM с элементами в координатах 1080×1920 (масштаб к ширине). Панель: стикеры (16), «Текст», «Кисть» (3 толщины), 5 цветов палитры, «Отменить», «Очистить», «Сохранить», «Отмена».
+- [x] Перетаскивание pointer-событиями, ручка поворота/размера у выбранного, удаление клавишей Delete и кнопкой.
+- [x] После сохранения день перезагружается, постер пересоздаётся плеером.
+- [x] Проверить в браузере (мышь и тач-эмуляция), коммит `feat(decor): page editor`.
 
 ### Task 5: Авто-стикеры и «Наговорить день»
 
@@ -93,12 +93,12 @@
 
 **Interfaces:**
 - Produces: `autoDecor(analysis: DayAnalysis, text: string, seed: number): { decor: Decor; because: string }`.
-- [ ] Тесты: «пили какао», осень → есть `cup` и `leaf`, причина содержит «какао»; ночь → `star`; дождь → `drop`; не больше 4, без повторов формы; все точки вне фото-зоны и зоны подписи (`LAYOUT`); одинаковый seed → одинаковый результат.
-- [ ] `generateDay` пишет `decor` (source auto), `restyle` его не трогает; причина «Стикеры: …» в reasons (`param: 'decor'`), подпись «Стикеры» в WhyPanel.
-- [ ] Форма: кнопка «🎙 Наговорить день» первой, крупно.
-- [ ] Коммит `feat(decor): auto stickers from the entry`.
+- [x] Тесты: «пили какао», осень → есть `cup` и `leaf`, причина содержит «какао»; ночь → `star`; дождь → `drop`; не больше 4, без повторов формы; все точки вне фото-зоны и зоны подписи (`LAYOUT`); одинаковый seed → одинаковый результат.
+- [x] `generateDay` пишет `decor` (source auto), `restyle` его не трогает; причина «Стикеры: …» в reasons (`param: 'decor'`), подпись «Стикеры» в WhyPanel.
+- [x] Форма: кнопка «🎙 Наговорить день» первой, крупно.
+- [x] Коммит `feat(decor): auto stickers from the entry`.
 
 ### Task 6: Проверка и сдача
 
-- [ ] Полный прогон проверок, сценарий в браузере: новый дневник «Путешествия» → день → украсить → постер/обои с украшениями → архив → книга.
-- [ ] Обновить `docs/submission/description.md` (полка, свободная страница) и план; пуш. Деплой — по согласию.
+- [x] Полный прогон проверок, сценарий в браузере: новый дневник «Путешествия» → день → украсить → постер/обои с украшениями → архив → книга.
+- [x] Обновить `docs/submission/description.md` (полка, свободная страница) и план; пуш. Деплой — по согласию.
