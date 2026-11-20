@@ -39,3 +39,14 @@ describe('fallbackAnalysis', () => {
     expect(fallbackAnalysis('день', '2026-07-10', [photo()]).season).toBe('summer');
   });
 });
+
+describe('час съёмки из EXIF (план 20.11, A2)', () => {
+  it('без слов о времени берём час фото', () => {
+    expect(fallbackAnalysis('гуляли по парку', '2026-10-18', [], 19).timeOfDay).toBe('evening');
+    expect(fallbackAnalysis('гуляли по парку', '2026-10-18', [], 8).timeOfDay).toBe('morning');
+    expect(fallbackAnalysis('гуляли по парку', '2026-10-18', [], 2).timeOfDay).toBe('night');
+  });
+  it('слова записи важнее часов камеры', () => {
+    expect(fallbackAnalysis('утром гуляли по парку', '2026-10-18', [], 21).timeOfDay).toBe('morning');
+  });
+});

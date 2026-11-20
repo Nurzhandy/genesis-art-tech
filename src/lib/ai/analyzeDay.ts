@@ -14,6 +14,7 @@ export interface AnalyzeInput {
   photos: { base64: string; mediaType: 'image/jpeg' }[];
   photoFeatures: PhotoFeatures[];
   song: SongRef;
+  photoHour?: number;   // час съёмки из EXIF (план 20.11, A2)
 }
 
 export interface LlmRequest {
@@ -60,7 +61,7 @@ export function userCaption(fromModel: string, text: string): string {
 }
 
 export function normalize(raw: DayAnalysisRaw, input: AnalyzeInput): DayAnalysis {
-  const fb = () => fallbackAnalysis(input.text, input.date, input.photoFeatures);
+  const fb = () => fallbackAnalysis(input.text, input.date, input.photoFeatures, input.photoHour);
   const title = validateTitle(raw.title);
   return {
     mood: {
@@ -93,13 +94,13 @@ export function normalize(raw: DayAnalysisRaw, input: AnalyzeInput): DayAnalysis
 
 export async function analyzeDay(input: AnalyzeInput, deps: { llm?: LlmLike | null } = {}): Promise<DayAnalysis> {
   const llm = deps.llm === undefined ? getLlm() : deps.llm;
-  const fallback = () => fallbackAnalysis(input.text, input.date, input.photoFeatures);
+  const fallback = () => fallbackAnalysis(input.text, input.date, input.photoFeatures, input.photoHour);
   if (!llm) return fallback();
   try {
     const text = await llm.generateJson({
       system: SYSTEM_PROMPT,
       images: input.photos,
-      text: userBlock(input.text, input.date, input.song),
+      text: userBlock(input.text, input.date, input.song, input.photoHour),
       schema: RESPONSE_SCHEMA,
     });
     if (!text) return fallback();

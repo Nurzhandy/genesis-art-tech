@@ -30,7 +30,7 @@ export function restyle(day: DayRecord, o: MoodOverride, buildStyle: (i: StyleIn
   const moodOverride = isZero(o) ? null : { warmth: r2(o.warmth), energy: r2(o.energy) };
   const style = buildStyle({
     analysis: day.analysis, photos: day.photos.map((p) => p.features), music: day.music, date: day.date,
-    seed: seedFromId(day.id), moodOverride,
+    seed: seedFromId(day.id), moodOverride, weather: day.weather ?? null,
   });
   return { style, moodOverride };
 }

@@ -1,5 +1,5 @@
 // Генерация дня: анализ → музыка → стиль → название → папка дня (A6).
-import type { DayAnalysis, DayRecord, MusicFeatures, PhotoFeatures, SongRef, StyleInput, StyleParams } from './types';
+import type { DayAnalysis, DayRecord, DayWeather, MusicFeatures, PhotoFeatures, SongRef, StyleInput, StyleParams } from './types';
 import type { AnalyzeInput } from './ai/analyzeDay';
 import { HttpError } from './http';
 import { mergeMusic } from './music/resolve';
@@ -19,6 +19,8 @@ export interface GenerateDeps {
   buildStyle(input: StyleInput): StyleParams;
   moveFile(from: string, to: string): Promise<void>;
   putFile(path: string, body: string, contentType: string): Promise<void>;
+  /** Погода дня по городу (план 20.11, A1); null — города нет или сервис недоступен. */
+  weather(place: string | null | undefined, date: string): Promise<DayWeather | null>;
   limit: number;
 }
 
@@ -61,10 +63,15 @@ export async function generateDay(dayId: string, body: GenerateBody, deps: Gener
       } catch { /* песня без метаданных — не повод падать */ }
     }
 
+    // Погоду спрашиваем параллельно с анализом: она не нужна модели, только правилам стиля.
+    const weatherP = deps.weather(day.place, day.date).catch(() => null);
     const thumbs = await deps.loadThumbs(features.map((f) => draft.thumb(f.index))).catch(() => []);
-    const analysis = await deps.analyze({ text: day.text, date: day.date, photos: thumbs, photoFeatures: features, song });
+    const analysis = await deps.analyze({ text: day.text, date: day.date, photos: thumbs, photoFeatures: features, song, photoHour: body.photoHour });
     const music = mergeMusic(audio, deezer, analysis.songGuess);
-    const style = deps.buildStyle({ analysis, photos: features, music, date: day.date, seed: seedFromId(day.id) });
+    const cover = body.coverPalette ?? body.music?.coverPalette;
+    if (cover?.length) music.coverPalette = cover;
+    const weather = await weatherP;
+    const style = deps.buildStyle({ analysis, photos: features, music, date: day.date, seed: seedFromId(day.id), weather });
 
     // Название и уникальная папка.
     const title = analysis.title;
@@ -91,7 +98,7 @@ export async function generateDay(dayId: string, body: GenerateBody, deps: Gener
     await deps.putFile(final.json('style'), json(style), 'application/json');
 
     return await deps.updateDay(day.id, {
-      status: 'ready', error: null, title, slug, photos, song, music, analysis, style,
+      status: 'ready', error: null, title, slug, photos, song, music, analysis, style, weather,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

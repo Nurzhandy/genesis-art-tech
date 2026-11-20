@@ -6,6 +6,7 @@ import { resolveSong } from './music/resolve';
 import { getFile, moveFile, putFile } from './storage';
 import { buildStyle } from './style/buildStyle';
 import { supabaseAdmin } from './supabase/server';
+import { weatherFor } from './weather';
 
 export function realDeps(): GenerateDeps {
   return {
@@ -41,6 +42,7 @@ export function realDeps(): GenerateDeps {
       }
     },
     putFile: (path, body, type) => putFile(path, body, type),
+    weather: (place, date) => weatherFor(place, date),
     limit: Number(process.env.GENERATE_LIMIT_PER_DAY ?? 30),
   };
 }

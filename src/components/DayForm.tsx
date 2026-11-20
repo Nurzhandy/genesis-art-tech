@@ -1,6 +1,8 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { humanDate } from '@/lib/archive';
+import { commonShotDate, shotHour } from '@/lib/client/exif';
 import { api, type NewSong } from '@/lib/client/api';
 import type { UploadFile } from '@/lib/validation';
 import { processPhoto } from '@/lib/client/imageProcess';
@@ -15,6 +17,13 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+const PLACE_KEY = 'diary-place';
+const addDays = (iso: string, n: number) => {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export function DayForm({ diaryId }: { diaryId: string }) {
   const router = useRouter();
   const [date, setDate] = useState(today);
@@ -26,6 +35,14 @@ export function DayForm({ diaryId }: { diaryId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [songKey, setSongKey] = useState(0);
   const [sampleBusy, setSampleBusy] = useState(false);
+  // Город для погоды того дня (план 20.11, A1) — запоминаем на устройстве.
+  const [place, setPlace] = useState(() => { try { return localStorage.getItem(PLACE_KEY) ?? ''; } catch { return ''; } });
+  // Капсула времени (A5).
+  const [sealOn, setSealOn] = useState(false);
+  const [sealedUntil, setSealedUntil] = useState(() => addDays(today(), 365));
+  // Дата съёмки из EXIF (A2): все фото в один день, а в форме другой — предлагаем поставить его.
+  const shotDate = commonShotDate(photos.map((p) => p.takenAt));
+  const suggestDate = shotDate && shotDate !== date && shotDate <= today() ? shotDate : null;
 
   async function fillSample() {
     setSampleBusy(true); setPhotosBusy(true); setError(null);
@@ -45,12 +62,14 @@ export function DayForm({ diaryId }: { diaryId: string }) {
     }
   }
 
+  const sealError = sealOn && !(sealedUntil > today()) ? 'дата капсулы — в будущем' : null;
   const songReady = (song.kind === 'link' && song.status !== 'checking') || (song.kind === 'file' && song.status === 'ok');
-  const canSubmit = text.trim().length > 0 && photos.length > 0 && !photosBusy && songReady && stage === 'form';
+  const canSubmit = text.trim().length > 0 && photos.length > 0 && !photosBusy && songReady && stage === 'form' && !sealError;
   const missing = [
     !text.trim() && 'расскажите о дне',
     !photos.length && 'добавьте хотя бы одно фото',
     !songReady && 'добавьте песню',
+    sealError,
   ].filter(Boolean);
 
   async function submit(e: React.FormEvent) {
@@ -64,7 +83,12 @@ export function DayForm({ diaryId }: { diaryId: string }) {
         : song.kind === 'link' && song.song?.kind === 'link'
           ? song.song
           : { kind: 'link', url: (song as { url: string }).url, provider: 'other' };
-      const { dayId } = await api.createDay(diaryId, { date, text: text.trim(), photoCount: photos.length, song: newSong });
+      const city = place.trim();
+      try { if (city) localStorage.setItem(PLACE_KEY, city); else localStorage.removeItem(PLACE_KEY); } catch { /* не критично */ }
+      const { dayId } = await api.createDay(diaryId, {
+        date, text: text.trim(), photoCount: photos.length, song: newSong,
+        ...(city ? { place: city } : {}), ...(sealOn ? { sealedUntil } : {}),
+      });
 
       const files: UploadFile[] = photos.flatMap((_, i) => [
         { kind: 'photo' as const, index: i, ext: 'jpg' as const },
@@ -78,7 +102,12 @@ export function DayForm({ diaryId }: { diaryId: string }) {
       }));
 
       setStage('generate');
-      await api.generate(dayId, { photoFeatures: photos.map((p) => p.features), music: 'music' in song ? song.music : null });
+      await api.generate(dayId, {
+        photoFeatures: photos.map((p) => p.features),
+        music: 'music' in song ? song.music : null,
+        coverPalette: song.kind === 'link' ? song.coverPalette : undefined,
+        photoHour: shotHour(photos.map((p) => p.takenAt), date),
+      });
       router.push(`/day/${dayId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Что-то пошло не так');
@@ -103,6 +132,20 @@ export function DayForm({ diaryId }: { diaryId: string }) {
         <label className="mb-2 block font-mono text-xs uppercase tracking-[0.2em] text-muted" htmlFor="date">дата</label>
         <input id="date" type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value)}
           className="border-b border-foreground/30 bg-transparent py-1 font-mono text-sm outline-none focus:border-foreground" />
+        {suggestDate && (
+          <button type="button" onClick={() => setDate(suggestDate)}
+            className="mt-2 block text-left text-sm text-muted underline decoration-dotted underline-offset-4 hover:text-foreground">
+            Фото сделаны {humanDate(suggestDate)} — поставить эту дату?
+          </button>
+        )}
+      </section>
+
+      <section>
+        <label className="mb-2 block font-mono text-xs uppercase tracking-[0.2em] text-muted" htmlFor="place">город · необязательно</label>
+        <input id="place" value={place} onChange={(e) => setPlace(e.target.value)} maxLength={80} autoComplete="address-level2"
+          placeholder="Астана"
+          className="w-full max-w-xs border-b border-foreground/30 bg-transparent py-1 text-lg outline-none placeholder:text-muted/60 focus:border-foreground" />
+        <p className="mt-1 text-sm text-muted">Узнаем погоду того дня: дождь, снег или мороз будут видны в воспоминании.</p>
       </section>
 
       <section>
@@ -118,6 +161,21 @@ export function DayForm({ diaryId }: { diaryId: string }) {
       <section>
         <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-muted">песня дня</p>
         <SongInput key={songKey} value={song} onChange={setSong} />
+      </section>
+
+      <section className="rounded-sm border border-dashed border-foreground/20 px-4 py-3">
+        <label className="flex cursor-pointer items-center gap-3">
+          <input type="checkbox" checked={sealOn} onChange={(e) => setSealOn(e.target.checked)} className="h-4 w-4 accent-current" />
+          <span className="text-lg">✉ Запечатать как капсулу времени</span>
+        </label>
+        {sealOn && (
+          <div className="mt-3 flex flex-wrap items-center gap-3 pl-7">
+            <label htmlFor="seal" className="text-sm text-muted">откроется</label>
+            <input id="seal" type="date" value={sealedUntil} min={addDays(today(), 1)} max={addDays(today(), 3650)} onChange={(e) => setSealedUntil(e.target.value)}
+              className="border-b border-foreground/30 bg-transparent py-1 font-mono text-sm outline-none focus:border-foreground" />
+            <p className="w-full text-sm text-muted">До этой даты в архиве будет только конверт с названием — даже для вас.</p>
+          </div>
+        )}
       </section>
 
       {error && <p className="rounded-sm bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950/40 dark:text-red-300">{error}</p>}

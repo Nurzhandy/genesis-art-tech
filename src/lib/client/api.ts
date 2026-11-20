@@ -26,9 +26,11 @@ export type NewSong = SongRef extends infer S ? (S extends { kind: 'file' } ? { 
 
 export const api = {
   createDiary: () => call<{ diaryId: string }>('/api/diaries', { method: 'POST' }),
-  listDays: (diaryId: string, q = '') =>
-    call<DayRecord[]>(`/api/diaries/${diaryId}/days${q ? `?q=${encodeURIComponent(q)}` : ''}`),
-  createDay: (diaryId: string, body: { date: string; text: string; photoCount: number; song: NewSong }) =>
+  listDays: (diaryId: string, q = '', songs: string[] = []) => {
+    const params = new URLSearchParams([...(q ? [['q', q]] : []), ...songs.map((s) => ['song', s])]).toString();
+    return call<DayRecord[]>(`/api/diaries/${diaryId}/days${params ? `?${params}` : ''}`);
+  },
+  createDay: (diaryId: string, body: { date: string; text: string; photoCount: number; song: NewSong; place?: string; sealedUntil?: string }) =>
     call<{ dayId: string }>(`/api/diaries/${diaryId}/days`, { method: 'POST', body: JSON.stringify(body) }),
   getDay: (dayId: string) => call<DayRecord>(`/api/days/${dayId}`),
   requestUploads: (dayId: string, files: UploadFile[]) =>
@@ -37,7 +39,7 @@ export const api = {
     const { error } = await anon().storage.from('days').uploadToSignedUrl(u.path, u.token, blob, { contentType: blob.type || undefined });
     if (error) throw new Error('Не удалось загрузить файл: ' + error.message);
   },
-  generate: (dayId: string, body: { photoFeatures: PhotoFeatures[]; music: MusicFeatures | null }) =>
+  generate: (dayId: string, body: { photoFeatures: PhotoFeatures[]; music: MusicFeatures | null; coverPalette?: string[]; photoHour?: number }) =>
     call<DayRecord>(`/api/days/${dayId}/generate`, { method: 'POST', body: JSON.stringify(body) }),
   voice: (dayId: string) => call<{ url: string | null; preset: VoicePreset }>(`/api/days/${dayId}/voice`, { method: 'POST' }),
   resolveSong: (url: string) =>
@@ -50,6 +52,12 @@ export const api = {
     call<DayRecord>(`/api/days/${dayId}/restyle`, { method: 'POST', headers: owner(), body: JSON.stringify(override) }),
   rename: (dayId: string, title: string) =>
     call<DayRecord>(`/api/days/${dayId}`, { method: 'PATCH', headers: owner(), body: JSON.stringify({ title }) }),
+  // Ссылка-подарок (план 20.11, A4).
+  share: (dayId: string) => call<{ shareId: string; path: string }>(`/api/days/${dayId}/share`, { method: 'POST', headers: owner() }),
+  async unshare(dayId: string) {
+    const res = await fetch(`/api/days/${dayId}/share`, { method: 'DELETE', headers: owner() });
+    if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? `Ошибка ${res.status}`);
+  },
   async deleteDay(dayId: string) {
     const res = await fetch(`/api/days/${dayId}`, { method: 'DELETE', headers: owner() });
     if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? `Ошибка ${res.status}`);

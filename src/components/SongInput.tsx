@@ -2,11 +2,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/client/api';
 import { analyzeAudioFile } from '@/lib/client/audioAnalysis';
+import { extractCoverPalette } from '@/lib/client/coverPalette';
 import type { MusicFeatures, SongRef } from '@/lib/types';
 
 export type SongState =
   | { kind: 'none' }
-  | { kind: 'link'; url: string; status: 'checking' | 'ok' | 'error'; song?: SongRef; music: MusicFeatures | null; error?: string }
+  | { kind: 'link'; url: string; status: 'checking' | 'ok' | 'error'; song?: SongRef; music: MusicFeatures | null; error?: string; coverPalette?: string[] }
   | { kind: 'file'; file: File; ext: string; title: string; status: 'checking' | 'ok' | 'error'; music: MusicFeatures | null };
 
 export function SongInput({ value, onChange }: { value: SongState; onChange: (s: SongState) => void }) {
@@ -24,7 +25,9 @@ export function SongInput({ value, onChange }: { value: SongState; onChange: (s:
     const t = setTimeout(async () => {
       try {
         const r = await api.resolveSong(u);
-        latest.current({ kind: 'link', url: u, status: 'ok', song: r.song, music: r.music });
+        // Цвета обложки альбома (план 20.11, A3): не дождались — не беда, день соберётся и без них.
+        const cover = r.song.kind === 'link' && r.song.coverUrl ? await extractCoverPalette(r.song.coverUrl).catch(() => undefined) : undefined;
+        latest.current({ kind: 'link', url: u, status: 'ok', song: r.song, music: r.music, coverPalette: cover });
       } catch (e) {
         latest.current({ kind: 'link', url: u, status: 'error', music: null, error: e instanceof Error ? e.message : 'Не получилось распознать ссылку' });
       }
@@ -70,7 +73,12 @@ export function SongInput({ value, onChange }: { value: SongState; onChange: (s:
             {value.kind === 'link' && value.status === 'checking' && <span className="text-muted">слушаю ссылку…</span>}
             {value.kind === 'link' && value.status === 'ok' && (
               <span>{label ?? 'Ссылка принята'} <span className="text-green-700 dark:text-green-400">✓</span>
-                {value.music?.bpm ? <span className="ml-2 font-mono text-xs text-muted">{Math.round(value.music.bpm)} BPM</span> : null}</span>
+                {value.music?.bpm ? <span className="ml-2 font-mono text-xs text-muted">{Math.round(value.music.bpm)} BPM</span> : null}
+                {value.coverPalette?.length ? (
+                  <span className="ml-2 inline-flex translate-y-0.5 gap-0.5" title="Цвета обложки альбома попадут в палитру дня">
+                    {value.coverPalette.map((c) => <span key={c} className="h-3 w-3 rounded-full ring-1 ring-black/10" style={{ background: c }} />)}
+                  </span>
+                ) : null}</span>
             )}
             {value.kind === 'link' && value.status === 'error' && <span className="text-red-700 dark:text-red-400">{value.error}</span>}
           </p>

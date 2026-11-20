@@ -1,9 +1,10 @@
 'use client';
 // Подготовка фото в браузере: HEIC → JPEG, поворот по EXIF, 1600px + превью 768px, признаки (A4).
 import type { PhotoFeatures } from '@/lib/types';
+import { exifDateTime } from './exif';
 import { computeFeatures } from './photoFeatures';
 
-export interface ProcessedPhoto { full: Blob; thumb: Blob; preview: string; features: PhotoFeatures }
+export interface ProcessedPhoto { full: Blob; thumb: Blob; preview: string; features: PhotoFeatures; takenAt: string | null }
 
 const isHeic = (f: File) => /heic|heif/i.test(f.type) || /\.(heic|heif)$/i.test(f.name);
 
@@ -39,7 +40,14 @@ function resize(bmp: ImageBitmap, maxSide: number): HTMLCanvasElement {
 const toBlob = (c: HTMLCanvasElement, q: number) =>
   new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Не удалось сжать фото'))), 'image/jpeg', q));
 
+/** Время съёмки из EXIF (план 20.11, A2): он в начале JPEG, хватает первых 256 КБ. */
+async function readTakenAt(file: File): Promise<string | null> {
+  if (isHeic(file)) return null;
+  try { return exifDateTime(await file.slice(0, 256 * 1024).arrayBuffer()); } catch { return null; }
+}
+
 export async function processPhoto(file: File, index: number): Promise<ProcessedPhoto> {
+  const takenAt = await readTakenAt(file);
   const bmp = await toBitmap(file);
   const fullCanvas = resize(bmp, 1600);
   const thumbCanvas = resize(bmp, 768);
@@ -48,5 +56,5 @@ export async function processPhoto(file: File, index: number): Promise<Processed
   const px = small.getContext('2d')!.getImageData(0, 0, small.width, small.height).data;
   const features = { ...computeFeatures(px, small.width, small.height, index), width: fullCanvas.width, height: fullCanvas.height };
   const [full, thumb] = await Promise.all([toBlob(fullCanvas, 0.85), toBlob(thumbCanvas, 0.8)]);
-  return { full, thumb, preview: URL.createObjectURL(thumb), features };
+  return { full, thumb, preview: URL.createObjectURL(thumb), features, takenAt };
 }

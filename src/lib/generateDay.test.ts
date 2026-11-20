@@ -31,6 +31,7 @@ function fakeDeps(day: DayRecord, o: Partial<GenerateDeps> = {}) {
     buildStyle: (input) => { log.styleInput = input; return { seed: input.seed } as never; },
     moveFile: async (a, b) => { log.moves.push([a, b]); },
     putFile: async (p) => { log.puts.push(p); },
+    weather: async () => null,
     limit: 30,
     ...o,
   };
@@ -108,5 +109,32 @@ describe('generateDay', () => {
     expect(resolved).toBe(true);
     expect(log.styleInput?.music.source).toBe('deezer');
     expect(log.final?.song).toMatchObject({ title: 'T', artist: 'A' });
+  });
+
+  it('погода дня по городу идёт в стиль и сохраняется (план 20.11, A1)', async () => {
+    const wx = { tempC: -4, precipitationMm: 3, snowfallCm: 2, cloudCover: 90, place: 'Астана' };
+    let asked: [string | null | undefined, string] | null = null;
+    const { deps, log } = fakeDeps(draft({ place: 'Астана' }), { weather: async (p, d) => { asked = [p, d]; return wx; } });
+    await generateDay(ID, { photoFeatures: features, music: null }, deps);
+    expect(asked).toEqual(['Астана', '2026-10-18']);
+    expect(log.styleInput?.weather).toEqual(wx);
+    expect(log.final?.weather).toEqual(wx);
+  });
+  it('погода недоступна — день всё равно собирается', async () => {
+    const { deps, log } = fakeDeps(draft({ place: 'Астана' }), { weather: async () => { throw new Error('offline'); } });
+    const res = await generateDay(ID, { photoFeatures: features, music: null }, deps);
+    expect(res.status).toBe('ready');
+    expect(log.styleInput?.weather).toBeNull();
+  });
+  it('цвета обложки попадают в music.coverPalette (A3)', async () => {
+    const { deps, log } = fakeDeps(draft());
+    await generateDay(ID, { photoFeatures: features, music: null, coverPalette: ['#112233', '#445566', '#778899'] }, deps);
+    expect(log.styleInput?.music.coverPalette).toEqual(['#112233', '#445566', '#778899']);
+  });
+  it('час съёмки из EXIF передаётся в анализ (A2)', async () => {
+    let hour: number | undefined;
+    const { deps } = fakeDeps(draft(), { analyze: async (i) => { hour = i.photoHour; return analysis(); } });
+    await generateDay(ID, { photoFeatures: features, music: null, photoHour: 19 }, deps);
+    expect(hour).toBe(19);
   });
 });

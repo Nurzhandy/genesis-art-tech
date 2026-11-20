@@ -35,9 +35,11 @@ songGuess: если знаешь песню по исполнителю и на�
 
 season — по тексту и дате; если неясно, по дате.`;
 
-export function userBlock(text: string, date: string, song: SongRef): string {
+export function userBlock(text: string, date: string, song: SongRef, photoHour?: number): string {
   const songLine = song.kind === 'link'
     ? `ссылка (${song.provider})${song.artist || song.title ? `: ${[song.artist, song.title].filter(Boolean).join(' — ')}` : ''}${song.year ? `, ${song.year}` : ''}`
     : `свой аудиофайл${song.artist || song.title ? `: ${[song.artist, song.title].filter(Boolean).join(' — ')}` : ''}`;
-  return `Дата: ${date}\nПесня дня: ${songLine}\n\nЗапись:\n${text}`;
+  // Час съёмки из EXIF (план 20.11, A2) подсказывает время суток, если в тексте его нет.
+  const shot = photoHour === undefined ? '' : `\nФото сняты около ${String(photoHour).padStart(2, '0')}:00`;
+  return `Дата: ${date}${shot}\nПесня дня: ${songLine}\n\nЗапись:\n${text}`;
 }

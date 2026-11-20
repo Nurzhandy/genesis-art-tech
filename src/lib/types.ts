@@ -122,7 +122,9 @@ export interface DayRecord {
   createdAt: string;
   dayNumber?: number;                   // порядковый номер готового дня в дневнике (для шапки)
   moodOverride?: MoodOverride | null;   // ресерч R10, null = как решила система (колонка mood_override — часть A)
+  place?: string | null;                // город, который ввёл человек (план 20.11, A1)
   weather?: DayWeather | null;          // план 20.11 #3 (колонка weather — часть A)
   sealedUntil?: string | null;          // план 20.11 #12, капсула времени (часть A)
+  sealed?: boolean;                     // true — капсула ещё запечатана, содержимое скрыто сервером
   shareId?: string | null;              // план 20.11 #6, ссылка-подарок (часть A)
 }

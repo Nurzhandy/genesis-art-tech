@@ -74,7 +74,15 @@ export function fallbackTitle(season: Season, time: TimeOfDay, setting: Setting,
   return place ? `${adj} ${noun.word} ${place} ${tail === 'без особых событий' ? '' : tail}`.trim() : `${adj} ${noun.word} ${tail}`;
 }
 
-export function fallbackAnalysis(rawText: string, date: string, photos: PhotoFeatures[]): DayAnalysis {
+/** Время суток по часу съёмки фото (EXIF, план 20.11, A2). */
+export function timeOfHour(h: number): TimeOfDay {
+  if (h >= 5 && h < 11) return 'morning';
+  if (h >= 11 && h < 17) return 'day';
+  if (h >= 17 && h < 22) return 'evening';
+  return 'night';
+}
+
+export function fallbackAnalysis(rawText: string, date: string, photos: PhotoFeatures[], photoHour?: number): DayAnalysis {
   const t = rawText.toLocaleLowerCase('ru');
   const meanWarmth = photos.length ? photos.reduce((a, p) => a + p.warmth, 0) / photos.length : 0;
   const meanBright = photos.length ? photos.reduce((a, p) => a + p.brightness, 0) / photos.length : 0.5;
@@ -87,7 +95,9 @@ export function fallbackAnalysis(rawText: string, date: string, photos: PhotoFea
   const nostalgia = r2(clamp(0.1 + 0.25 * count(t, NOSTALGIC)));
 
   const season = seasonOf(date);
-  const timeOfDay = timeOf(t);
+  const fromText = timeOf(t);
+  // Слова записи важнее часов камеры; час съёмки — когда в тексте времени нет.
+  const timeOfDay = fromText === 'unknown' && photoHour !== undefined ? timeOfHour(photoHour) : fromText;
   const setting = settingOf(t);
   const people = peopleOf(t);
 

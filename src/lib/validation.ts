@@ -29,6 +29,8 @@ export const NewDayInput = z.object({
   text: z.string().trim().min(1).max(5000),
   photoCount: z.number().int().min(1).max(5),
   song: SongInput,
+  place: z.string().trim().max(80).optional(),                          // город для погоды (план 20.11, A1)
+  sealedUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),     // капсула времени (A5)
 });
 export type NewDayInput = z.infer<typeof NewDayInput>;
 
@@ -45,6 +47,7 @@ export const UploadRequest = z.object({ files: z.array(UploadFile).min(1).max(12
 export type UploadFile = z.infer<typeof UploadFile>;
 
 const unit = z.number().min(0).max(1);
+const HEX = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 
 export const PhotoFeaturesSchema = z.object({
   index: z.number().int().min(0).max(4),
@@ -64,10 +67,13 @@ export const MusicFeaturesSchema = z.object({
   brightness: unit.optional(),
   genre: z.string().max(60).optional(),
   year: z.number().int().optional(),
+  coverPalette: z.array(HEX).max(5).optional(),
 });
 
 export const GenerateBody = z.object({
   photoFeatures: z.array(PhotoFeaturesSchema).min(1).max(5),
   music: MusicFeaturesSchema.nullable(),
+  coverPalette: z.array(HEX).max(5).optional(),        // цвета обложки альбома (план 20.11, A3)
+  photoHour: z.number().int().min(0).max(23).optional(), // час съёмки из EXIF (A2)
 });
 export type GenerateBody = z.infer<typeof GenerateBody>;

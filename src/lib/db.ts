@@ -10,6 +10,10 @@ export interface DayRow {
   analysis: DayRecord['analysis']; style: DayRecord['style']; voice: DayRecord['voice'];
   poster_path: string | null; status: DayStatus; error: string | null; created_at: string;
   mood_override?: DayRecord['moodOverride'];   // колонка из миграции 0002
+  place?: string | null;                       // колонки из миграции 0003 (план 20.11, часть A)
+  weather?: DayRecord['weather'];
+  sealed_until?: string | null;
+  share_id?: string | null;
 }
 
 export function rowToDay(r: DayRow): DayRecord {
@@ -18,6 +22,8 @@ export function rowToDay(r: DayRow): DayRecord {
     photos: r.photos ?? [], song: r.song, music: r.music, analysis: r.analysis, style: r.style, voice: r.voice,
     posterPath: r.poster_path, status: r.status, error: r.error, createdAt: r.created_at,
     moodOverride: r.mood_override ?? null,
+    place: r.place ?? null, weather: r.weather ?? null,
+    sealedUntil: r.sealed_until ?? null, shareId: r.share_id ?? null,
   };
 }
 
@@ -60,6 +66,13 @@ export async function withUrls(days: DayRecord[]): Promise<DayRecord[]> {
 
 export async function getDayRow(id: string): Promise<DayRecord | null> {
   const { data, error } = await supabaseAdmin().from('days').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data ? rowToDay(data as DayRow) : null;
+}
+
+/** День по ссылке-подарку (план 20.11, A4). */
+export async function getDayByShare(shareId: string): Promise<DayRecord | null> {
+  const { data, error } = await supabaseAdmin().from('days').select('*').eq('share_id', shareId).maybeSingle();
   if (error) throw error;
   return data ? rowToDay(data as DayRow) : null;
 }
