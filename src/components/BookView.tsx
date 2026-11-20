@@ -27,17 +27,21 @@ function excerpt(text: string, max = 420): string {
 
 const fmt = (d: string) => d.split('-').reverse().join('.');
 
-export function BookView({ days, title }: { days: DayRecord[]; title: string }) {
+/** large — полноэкранная книга (открывается со стола); startOpen — сразу на первом развороте, как после анимации обложки. */
+export function BookView({ days, title, cover: coverColor, large = false, startOpen = false, emptyHref }: {
+  days: DayRecord[]; title: string; cover?: string; large?: boolean; startOpen?: boolean; emptyHref?: string;
+}) {
   const host = useRef<HTMLDivElement>(null);
   const template = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const flipRef = useRef<import('page-flip').PageFlip | null>(null);
   const ordered = useMemo(() => bookPages(days), [days]);
-  const cover = useMemo(() => averageColor(days), [days]);
+  const avg = useMemo(() => averageColor(days), [days]);
+  const cover = coverColor ?? avg;
   // Книга сама не перестраивает разворот при повороте экрана — пересобираем её при смене ширины.
   const narrow = useSyncExternalStore(subscribeNarrow, () => window.matchMedia(NARROW).matches, () => false);
-  const key = `${narrow}|` + ordered.map((d) => `${d.id}:${d.posterUrl ? 1 : 0}:${d.title}`).join('|');
+  const key = `${narrow}|${large}|${startOpen}|${cover}|` + ordered.map((d) => `${d.id}:${d.posterUrl ? 1 : 0}:${d.title}`).join('|');
 
   useEffect(() => {
     let cancelled = false;
@@ -53,7 +57,9 @@ export function BookView({ days, title }: { days: DayRecord[]; title: string }) 
       flip = new PageFlip(mount, {
         width: PAGE_W, height: PAGE_H, size: 'stretch',
         // Разворот помещается в экран ноутбука; на телефоне книга становится одностраничной.
-        minWidth: 240, maxWidth: 440, minHeight: 360, maxHeight: 650,
+        // Полноэкранная книга занимает высоту окна (минус шапка и кнопки).
+        minWidth: 240, maxWidth: large ? 720 : 440, minHeight: 360,
+        maxHeight: large ? Math.max(420, window.innerHeight - 170) : 650,
         showCover: true, maxShadowOpacity: 0.45, flippingTime: 900, mobileScrollSupport: true, usePortrait: true,
       });
       flip.loadFromHTML(pages);
@@ -62,6 +68,7 @@ export function BookView({ days, title }: { days: DayRecord[]; title: string }) 
       flip.on('changeState', (e) => { if (e.data === 'flipping') playPageFlip(); });
       flipRef.current = flip;
       setTotal(pages.length);
+      if (startOpen && pages.length > 1) { flip.turnToPage(1); setPage(1); }
     });
     return () => {
       cancelled = true;
@@ -69,11 +76,15 @@ export function BookView({ days, title }: { days: DayRecord[]; title: string }) 
       flipRef.current = null;
       mount.remove();
     };
+    // key уже включает large, startOpen и обложку.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   return (
     <div>
-      <div ref={host} className="mx-auto w-full max-w-[1120px] [&_.stf__parent]:mx-auto" />
+      {/* Полноэкранная книга: ширину разворота ограничиваем высотой окна, иначе страницы уходят за нижний край. */}
+      <div ref={host} className={`mx-auto w-full ${large ? 'max-w-[1500px]' : 'max-w-[1120px]'} [&_.stf__parent]:mx-auto`}
+        style={large ? { maxWidth: `min(1500px, calc((100vh - 190px) * ${(PAGE_W / PAGE_H) * 2}))` } : undefined} />
       <div className="mt-6 flex items-center justify-center gap-4 font-mono text-xs text-muted">
         <button type="button" onClick={() => flipRef.current?.flipPrev()} disabled={page === 0}
           className="rounded-full border border-foreground/20 px-3 py-1.5 transition hover:border-foreground/50 hover:text-foreground disabled:opacity-30">← назад</button>
@@ -101,6 +112,16 @@ export function BookView({ days, title }: { days: DayRecord[]; title: string }) 
           </div>
         </div>
 
+        {ordered.length === 0 && [
+          <div key="empty-l" className="h-full w-full"><div className="h-full w-full bg-[#f4efe6]" /></div>,
+          <div key="empty-r" className="h-full w-full">
+            <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-[#f4efe6] p-10 text-center text-[#2b241c]">
+              <p className="font-hand text-4xl">Здесь пока пусто</p>
+              <p className="text-lg opacity-70">Первая страница ждёт вашего дня</p>
+              {emptyHref && <a href={emptyHref} className="rounded-full bg-[#2b241c] px-6 py-3 font-mono text-xs uppercase tracking-[0.15em] text-[#f4efe6]">+ записать день</a>}
+            </div>
+          </div>,
+        ]}
         {ordered.flatMap((d) => {
           const ink = d.style?.palette.ink ?? '#1f1b16';
           const paper = d.style?.palette.paper ?? '#f4efe6';

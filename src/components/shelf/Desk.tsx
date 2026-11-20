@@ -9,6 +9,7 @@ import type { DiaryMeta } from '@/lib/shelf';
 import { Tilt } from '@/components/fx/Tilt';
 import { DiaryCover } from './DiaryCover';
 import { NewDiaryDialog } from './NewDiaryDialog';
+import { BookOpening, type OpeningFrom } from './BookOpening';
 
 const tilt = (i: number) => [-3, 2, -1.5, 3.5, -2.5, 1][i % 6];
 const DEMO = 'demo';
@@ -19,6 +20,13 @@ export function Desk() {
   const [demo, setDemo] = useState<DiaryMeta | null>(null);
   const [dialog, setDialog] = useState(false);
   const [fresh, setFresh] = useState<string | null>(null);
+  const [opening, setOpening] = useState<OpeningFrom | null>(null);
+  // Клик по дневнику: не переходим сразу, а сначала открываем книгу в 3D (Ctrl/⌘-клик — как обычная ссылка).
+  const open = (meta: DiaryMeta, example = false) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    setOpening({ meta, example, rect: e.currentTarget.getBoundingClientRect() });
+  };
   const key = shelf?.join(',') ?? '';
 
   // Ссылка на всю полку с другого устройства: /?shelf=id1,id2
@@ -61,8 +69,8 @@ export function Desk() {
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">
           {mine.map((m, i) => (
-            <Link key={m.id} href={`/diary/${m.id}`} className="group block"
-              style={{ rotate: `${tilt(i)}deg`, animation: m.id === fresh ? 'polaroid-in 0.7s cubic-bezier(0.2,0.8,0.2,1.15) both' : `pop-in 0.6s ease-out ${i * 70}ms both` } as React.CSSProperties}>
+            <Link key={m.id} href={`/diary/${m.id}/book`} onClick={open(m)} className="group block"
+              style={{ rotate: `${tilt(i)}deg`, opacity: opening?.meta.id === m.id ? 0 : undefined, animation: m.id === fresh ? 'polaroid-in 0.7s cubic-bezier(0.2,0.8,0.2,1.15) both' : `pop-in 0.6s ease-out ${i * 70}ms both` } as React.CSSProperties}>
               <Tilt className="rounded-md transition-transform duration-300 group-hover:-translate-y-2"><DiaryCover meta={m} /></Tilt>
             </Link>
           ))}
@@ -75,7 +83,7 @@ export function Desk() {
           </button>
 
           {demo && (
-            <Link href={`/diary/${DEMO}`} className="group block opacity-80 transition-opacity hover:opacity-100"
+            <Link href={`/diary/${DEMO}/book`} onClick={open(demo, true)} className="group block opacity-80 transition-opacity hover:opacity-100"
               style={{ rotate: `${tilt(mine.length + 1)}deg`, animation: 'pop-in 0.6s ease-out 0.2s both' }}>
               <Tilt className="rounded-md transition-transform duration-300 group-hover:-translate-y-2"><DiaryCover meta={demo} example /></Tilt>
             </Link>
@@ -89,6 +97,7 @@ export function Desk() {
         )}
       </div>
 
+      {opening && <BookOpening from={opening} />}
       <NewDiaryDialog open={dialog} onClose={() => setDialog(false)}
         onCreated={(id) => { setDialog(false); setFresh(id); }} />
     </section>
