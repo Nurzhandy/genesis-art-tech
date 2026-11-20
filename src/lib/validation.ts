@@ -1,5 +1,6 @@
 // Zod-схемы входа API (A2).
 import { z } from 'zod';
+import { RECORDING_EXT } from './voice/ownVoice';
 
 export const SongProviderSchema = z.enum(['spotify', 'youtube', 'yandex', 'apple', 'deezer', 'soundcloud', 'other']);
 
@@ -42,6 +43,7 @@ export const UploadFile = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('thumb'), index: z.number().int().min(0).max(4), ext: z.enum(['jpg', 'jpeg']) }),
   z.object({ kind: z.literal('audio'), ext: z.enum(AUDIO_EXT) }),
   z.object({ kind: z.literal('poster'), ext: z.literal('jpg') }),
+  z.object({ kind: z.literal('voice'), ext: z.enum(RECORDING_EXT) }),   // свой голос (план 20.11, C5)
 ]);
 export const UploadRequest = z.object({ files: z.array(UploadFile).min(1).max(12) });
 export type UploadFile = z.infer<typeof UploadFile>;

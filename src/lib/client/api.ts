@@ -34,7 +34,7 @@ export const api = {
     call<{ dayId: string }>(`/api/diaries/${diaryId}/days`, { method: 'POST', body: JSON.stringify(body) }),
   getDay: (dayId: string) => call<DayRecord>(`/api/days/${dayId}`),
   requestUploads: (dayId: string, files: UploadFile[]) =>
-    call<{ uploads: SignedUpload[] }>(`/api/days/${dayId}/uploads`, { method: 'POST', body: JSON.stringify({ files }) }),
+    call<{ uploads: SignedUpload[] }>(`/api/days/${dayId}/uploads`, { method: 'POST', headers: owner(), body: JSON.stringify({ files }) }),
   async uploadFile(u: SignedUpload, blob: Blob) {
     const { error } = await anon().storage.from('days').uploadToSignedUrl(u.path, u.token, blob, { contentType: blob.type || undefined });
     if (error) throw new Error('Не удалось загрузить файл: ' + error.message);

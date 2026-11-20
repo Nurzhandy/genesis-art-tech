@@ -51,9 +51,9 @@ export function VoiceButton({ day, loadVoice }: { day: DayRecord; loadVoice?: ()
     <div className="flex flex-col gap-1">
       <button type="button" onClick={toggle} disabled={state === 'loading'}
         className="self-start rounded-full border border-foreground/30 px-4 py-2 font-mono text-xs uppercase tracking-wider transition hover:bg-foreground hover:text-background disabled:opacity-40">
-        {state === 'loading' ? 'готовлю голос…' : state === 'playing' ? '❚❚ остановить' : '◉ Послушать запись'}
+        {state === 'loading' ? 'готовлю голос…' : state === 'playing' ? '❚❚ остановить' : preset?.voice === 'own' ? '◉ Послушать запись автора' : '◉ Послушать запись'}
       </button>
-      {preset && <p className="text-sm text-muted">Голос подобран под настроение: {preset.because}</p>}
+      {preset && <p className="text-sm text-muted">{preset.voice === 'own' ? 'Читает автор — своим голосом' : `Голос подобран под настроение: ${preset.because}`}</p>}
     </div>
   );
 }

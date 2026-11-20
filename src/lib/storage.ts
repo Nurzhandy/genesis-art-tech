@@ -14,6 +14,7 @@ export function dayFiles(folder: string) {
     audio: (ext: string) => `${folder}/song.${ext}`,
     poster: `${folder}/memory.jpg`,
     voice: `${folder}/voice.mp3`,
+    ownVoice: (ext: string) => `${folder}/voice-own.${ext}`,
     text: `${folder}/text.md`,
     json: (name: 'analysis' | 'style' | 'song') => `${folder}/${name}.json`,
   };
