@@ -21,14 +21,17 @@ export function BookOpening({ from, onDone }: { from: OpeningFrom; onDone?: () =
     const t2 = setTimeout(() => setStep(2), 700);
     const t3 = setTimeout(() => { router.push(href); onDone?.(); }, 1650);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [router, href, onDone]);
+    // onDone меняется на каждом рендере стола — таймеры не перезапускаем.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, href]);
 
   const { rect } = from;
   // Куда летит книга: по центру экрана, в высоту ~72% окна; при открытии сдвигается вправо, чтобы разворот был по центру.
   const vh = typeof window === 'undefined' ? 800 : window.innerHeight;
   const vw = typeof window === 'undefined' ? 1200 : window.innerWidth;
-  const h = Math.min(vh * 0.72, 680);
-  const w = h * 0.75;
+  // Раскрытая книга (две страницы) должна поместиться и по высоте, и по ширине окна.
+  const w = Math.min(Math.min(vh * 0.72, 680) * 0.75, vw > 700 ? vw * 0.44 : vw * 0.8);
+  const h = w / 0.75;
   const target = { left: vw / 2 - w / 2, top: vh / 2 - h / 2 + 20 };
   const box = step === 0
     ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height, transform: 'rotate(0deg)' }

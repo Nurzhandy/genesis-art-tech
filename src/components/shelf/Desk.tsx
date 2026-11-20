@@ -97,7 +97,8 @@ export function Desk() {
         )}
       </div>
 
-      {opening && <BookOpening from={opening} />}
+      {/* Next сохраняет состояние стола при возврате «назад» — убираем оверлей после перехода, иначе он висел бы поверх. */}
+      {opening && <BookOpening from={opening} onDone={() => setTimeout(() => setOpening(null), 700)} />}
       <NewDiaryDialog open={dialog} onClose={() => setDialog(false)}
         onCreated={(id) => { setDialog(false); setFresh(id); }} />
     </section>
