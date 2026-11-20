@@ -97,6 +97,8 @@ export interface StyleParams {
   atmosphere: { kind: AtmosphereKind; amount: number /*0..1*/ };   // ресерч R3
   // Песня как предмет (ресерч S2). Необязательно: у дней, собранных раньше, его нет.
   songObject?: { kind: SongObjectKind; year: number | null; revPerSec: number };
+  // Марка сезона и штампы из анализа (план 20.11, B3). Необязательно: у старых дней нет.
+  stamps?: { shape: 'circle' | 'square' | 'ticket'; season: DayAnalysis['season']; date: string; tags: { kind: 'weather' | 'place' | 'people'; text: string }[] };
   reasons: StyleReason[];
 }
 

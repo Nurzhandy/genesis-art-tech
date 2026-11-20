@@ -4,6 +4,7 @@ import type { StyleInput, StyleParams, StyleReason, Technique } from '@/lib/type
 import { buildAtmosphere } from './atmosphere';
 import { buildSongObject } from './songObject';
 import { buildMotion, photoInterval } from './motion';
+import { buildStamps } from './stamps';
 import { buildPalette } from './palette';
 import { clamp01, round, signals } from './signals';
 import { pickTechniques, scoreTechniques, TECHNIQUE_NAMES } from './techniques';
@@ -83,6 +84,8 @@ export function buildStyle(input: StyleInput): StyleParams {
   if (input.music.coverPalette?.length) {
     reasons.push({ param: 'cover', because: 'Цвета обложки альбома подмешаны в акценты на 12% — песня окрашивает день' });
   }
+  const { stamps, reason: stampsReason } = buildStamps(input, t.primary);
+  reasons.push(stampsReason);
   const { atmosphere, reason: atmosphereReason } = buildAtmosphere(input);
   if (atmosphereReason) reasons.push(atmosphereReason);
   const { songObject, reason: songObjectReason } = buildSongObject(input);
@@ -111,6 +114,7 @@ export function buildStyle(input: StyleInput): StyleParams {
     durationSec,
     atmosphere,
     songObject,
+    stamps,
     reasons,
   };
 }
