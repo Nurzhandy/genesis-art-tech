@@ -215,3 +215,44 @@ describe('buildStyle: атмосфера, найдено при тестиров
     expect(buildStyle(day).atmosphere.kind).toBe('mist');
   });
 });
+
+describe('buildStyle: погода и обложка альбома (план 20.11, B1)', () => {
+  const wx = (o: Partial<import('@/lib/types').DayWeather>) => ({ tempC: 8, precipitationMm: 0, snowfallCm: 0, cloudCover: 30, place: 'Астана', ...o });
+  const withWx = (name: Name, o: Partial<import('@/lib/types').DayWeather>) => buildStyle({ ...input(name), weather: wx(o) });
+
+  it('в тот день шёл дождь → капли, причина с городом и миллиметрами', () => {
+    const st = withWx('neutral', { precipitationMm: 4 });
+    expect(st.atmosphere.kind).toBe('rain');
+    expect(st.reasons.find((r) => r.param === 'atmosphere')?.because).toMatch(/Астан.*4 мм|4 мм.*Астан/);
+  });
+  it('снегопад → снег, даже осенью', () => {
+    expect(withWx('autumn-park', { snowfallCm: 2, tempC: -3 }).atmosphere.kind).toBe('snow');
+  });
+  it('осадки в мороз → снег', () => {
+    expect(withWx('neutral', { precipitationMm: 3, tempC: -6 }).atmosphere.kind).toBe('snow');
+  });
+  it('ясная погода не отменяет «дождь» из слов записи', () => {
+    expect(withWx('rainy-alone', { precipitationMm: 0 }).atmosphere.kind).toBe('rain');
+  });
+  it('мороз холодит палитру, жара — греет', () => {
+    const base = warmthOf(s('autumn-park').palette.accents);
+    expect(warmthOf(withWx('autumn-park', { tempC: -12 }).palette.accents)).toBeLessThan(base);
+    expect(warmthOf(withWx('autumn-park', { tempC: 30 }).palette.accents)).toBeGreaterThan(base);
+  });
+  it('пасмурный день приглушает цвета', () => {
+    const chroma = (hexes: string[]) => hexes.reduce((a, h) => a + hexToOklch(h).c, 0) / hexes.length;
+    expect(chroma(withWx('summer-friends', { cloudCover: 95 }).palette.accents)).toBeLessThan(chroma(s('summer-friends').palette.accents));
+  });
+  it('без погоды всё как раньше', () => {
+    expect(buildStyle({ ...input('autumn-park'), weather: null })).toEqual(s('autumn-park'));
+  });
+  it('цвет обложки альбома подмешивается в акценты и объясняется', () => {
+    const inp = input('office-night');
+    const st = buildStyle({ ...inp, music: { ...inp.music, coverPalette: ['#f2b705', '#d94f04', '#f2e8cf'] } });
+    expect(warmthOf(st.palette.accents)).toBeGreaterThan(warmthOf(s('office-night').palette.accents));
+    expect(st.reasons.some((r) => r.param === 'cover' && /обложк/.test(r.because))).toBe(true);
+  });
+  it('погода видна в «Почему так»', () => {
+    expect(withWx('autumn-park', { tempC: -12 }).reasons.some((r) => r.param === 'weather' && /−12|-12/.test(r.because))).toBe(true);
+  });
+});

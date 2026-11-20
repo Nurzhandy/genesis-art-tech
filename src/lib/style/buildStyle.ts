@@ -69,6 +69,20 @@ export function buildStyle(input: StyleInput): StyleParams {
     ].filter(Boolean);
     reasons.unshift({ param: 'override', because: `Вы сделали день ${parts.join(' и ')} — палитра и ритм пересчитаны по тем же правилам` });
   }
+  const wx = input.weather;
+  if (wx) {
+    const effects = [
+      wx.tempC <= -5 ? 'мороз холодит палитру' : wx.tempC >= 25 ? 'жара греет палитру' : '',
+      wx.cloudCover >= 80 ? 'пасмурно — цвета приглушены' : '',
+    ].filter(Boolean);
+    reasons.push({
+      param: 'weather',
+      because: `Погода того дня${wx.place ? ` (${wx.place})` : ''}: ${Math.round(wx.tempC)}°, облачность ${Math.round(wx.cloudCover)}%${wx.precipitationMm >= 1 ? `, осадки ${round(wx.precipitationMm, 1)} мм` : ''}${effects.length ? ` → ${effects.join(', ')}` : ''}`,
+    });
+  }
+  if (input.music.coverPalette?.length) {
+    reasons.push({ param: 'cover', because: 'Цвета обложки альбома подмешаны в акценты на 12% — песня окрашивает день' });
+  }
   const { atmosphere, reason: atmosphereReason } = buildAtmosphere(input);
   if (atmosphereReason) reasons.push(atmosphereReason);
   const { songObject, reason: songObjectReason } = buildSongObject(input);

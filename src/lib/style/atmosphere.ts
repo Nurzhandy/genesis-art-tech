@@ -23,7 +23,15 @@ export function buildAtmosphere(input: StyleInput): { atmosphere: { kind: Atmosp
   let why = '';
   let w: string | undefined;
 
-  if ((w = hasStem(ts, ['дожд', 'ливн', 'ливен', 'морос']))) {
+  const wx = input.weather;
+  const where = wx?.place ? ` (${wx.place})` : '';
+  if (wx && (wx.snowfallCm >= 0.5 || (wx.precipitationMm >= 1 && wx.tempC <= 0))) {
+    // Погода того дня важнее догадок по словам.
+    kind = 'snow';
+    why = `Погода того дня${where}: снег ${wx.snowfallCm >= 0.5 ? `${round(wx.snowfallCm, 1)} см` : `${round(wx.precipitationMm, 1)} мм при ${Math.round(wx.tempC)}°`} → падает снег`;
+  } else if (wx && wx.precipitationMm >= 1) {
+    kind = 'rain'; why = `Погода того дня${where}: дождь ${round(wx.precipitationMm, 1)} мм → капли дождя`;
+  } else if ((w = hasStem(ts, ['дожд', 'ливн', 'ливен', 'морос']))) {
     kind = 'rain'; why = `В записи «${w}» → капли дождя`;
   } else if ((w = hasStem(ts, ['снег', 'снеж'])) || a.season === 'winter') {
     kind = 'snow'; why = w ? `В записи «${w}» → падает снег` : 'Зима → тихо падает снег';

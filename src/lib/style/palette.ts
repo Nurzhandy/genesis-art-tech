@@ -29,9 +29,11 @@ export interface PaletteResult { palette: StyleParams['palette']; warmShift: num
 export function buildPalette(input: StyleInput): PaletteResult {
   const s = signals(input);
   // Поправка «теплее/холоднее» от человека двигает тон напрямую.
-  const warmShift = clamp01(0.25 * s.vPos + 0.15 * (s.warmLight ? 1 : 0) + Math.max(0, s.warmthOverride));
-  const coolShift = clamp01(0.3 * s.tension + 0.2 * (s.night ? 1 : 0) + Math.max(0, -s.warmthOverride) - Math.max(0, s.warmthOverride) * 0.5);
-  const chromaK = (0.55 + 0.45 * s.arousal) * (s.minor ? 0.75 : 1);
+  const wx = input.weather;
+  // Погода того дня: мороз холодит, жара греет, пасмурность приглушает.
+  const warmShift = clamp01(0.25 * s.vPos + 0.15 * (s.warmLight ? 1 : 0) + Math.max(0, s.warmthOverride) + (wx && wx.tempC >= 25 ? 0.1 : 0));
+  const coolShift = clamp01(0.3 * s.tension + 0.2 * (s.night ? 1 : 0) + Math.max(0, -s.warmthOverride) - Math.max(0, s.warmthOverride) * 0.5 + (wx && wx.tempC <= -5 ? 0.15 : 0));
+  const chromaK = (0.55 + 0.45 * s.arousal) * (s.minor ? 0.75 : 1) * (wx && wx.cloudCover >= 80 ? 0.9 : 1);
   const tint = SEASON_TINT[input.analysis.season] ?? null;
 
   const shifted = anchors(input).map((hex) => {
@@ -58,8 +60,10 @@ export function buildPalette(input: StyleInput): PaletteResult {
   const paper = oklchToHex({ l: hexToOklch(bg).l + (dark ? 0.04 : -0.04), c: 0.02, h: bgHue });
   const ink = dark ? oklchToHex({ l: 0.93, c: 0.02, h: bgHue }) : oklchToHex({ l: 0.22, c: 0.03, h: bgHue });
 
-  // Акценты — сдвинутые цвета, достаточно отличные от фона.
-  const accents = shifted.filter((h) => colorDistance(h, bg) > 0.12).slice(0, 4);
+  // Акценты — сдвинутые цвета, достаточно отличные от фона; 12% — от обложки альбома.
+  const cover = (input.music.coverPalette ?? []).filter((c) => /^#[0-9a-f]{6}$/i.test(c));
+  const accents = shifted.filter((h) => colorDistance(h, bg) > 0.12).slice(0, 4)
+    .map((h, i) => (cover.length ? mixHex(h, cover[i % cover.length].toLowerCase(), 0.12) : h));
   while (accents.length < 3) {
     const base = hexToOklch(accents[0] ?? shifted[0]);
     accents.push(oklchToHex({ l: dark ? 0.7 : 0.5, c: Math.max(0.06, base.c), h: (base.h + 40 * accents.length) % 360 }));

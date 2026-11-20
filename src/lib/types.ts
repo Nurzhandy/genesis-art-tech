@@ -27,6 +27,16 @@ export interface MusicFeatures {
   brightness?: number;                  // 0..1 спектральный центроид, только source='audio'
   genre?: string;                       // латиницей, lower-case: 'jazz', 'electronic', ...
   year?: number;
+  coverPalette?: string[];              // 3 hex из обложки альбома (план 20.11, #2)
+}
+
+/** Погода дня (план 20.11, #3). Источник — Open-Meteo по дате и городу. */
+export interface DayWeather {
+  tempC: number;            // средняя за день
+  precipitationMm: number;  // сумма осадков
+  snowfallCm: number;       // сумма снега
+  cloudCover: number;       // 0..100, средняя облачность
+  place?: string;           // «Астана» — как ввёл человек
 }
 
 // ── Анализ дня (выход модели или fallback) ──────────────
@@ -64,6 +74,7 @@ export interface StyleInput {
   date: string;          // ISO yyyy-mm-dd
   seed: number;          // стабильный, из dayId
   moodOverride?: MoodOverride | null;   // поправка человека «Не совсем так?»
+  weather?: DayWeather | null;          // погода того дня (план 20.11, #3)
 }
 
 export type AtmosphereKind = 'leaves' | 'snow' | 'rain' | 'mist' | 'dust' | 'lights' | 'none';
@@ -109,4 +120,7 @@ export interface DayRecord {
   createdAt: string;
   dayNumber?: number;                   // порядковый номер готового дня в дневнике (для шапки)
   moodOverride?: MoodOverride | null;   // ресерч R10, null = как решила система (колонка mood_override — часть A)
+  weather?: DayWeather | null;          // план 20.11 #3 (колонка weather — часть A)
+  sealedUntil?: string | null;          // план 20.11 #12, капсула времени (часть A)
+  shareId?: string | null;              // план 20.11 #6, ссылка-подарок (часть A)
 }
