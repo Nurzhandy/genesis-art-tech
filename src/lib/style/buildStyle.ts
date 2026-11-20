@@ -3,6 +3,7 @@
 import type { StyleInput, StyleParams, StyleReason, Technique } from '@/lib/types';
 import { buildAtmosphere } from './atmosphere';
 import { buildSongObject } from './songObject';
+import { buildVisual } from './visual';
 import { buildMotion, photoInterval } from './motion';
 import { buildStamps } from './stamps';
 import { buildPalette } from './palette';
@@ -88,8 +89,9 @@ export function buildStyle(input: StyleInput): StyleParams {
   reasons.push(stampsReason);
   const { atmosphere, reason: atmosphereReason } = buildAtmosphere(input);
   if (atmosphereReason) reasons.push(atmosphereReason);
+  const { visual, reasons: visualReasons } = buildVisual(input);
   const { songObject, reason: songObjectReason } = buildSongObject(input);
-  reasons.push(songObjectReason);
+  reasons.push(songObjectReason, ...visualReasons);
   if (s.energy > 0.6 || s.energy < 0.3)
     reasons.push({ param: 'jitter', because: `Энергия песни ${round(s.energy, 2)} → ${s.energy > 0.6 ? 'фигуры и мазки дрожат и пульсируют' : 'движение почти неподвижное'}` });
 
@@ -114,6 +116,7 @@ export function buildStyle(input: StyleInput): StyleParams {
     durationSec,
     atmosphere,
     songObject,
+    visual,
     stamps,
     reasons,
   };

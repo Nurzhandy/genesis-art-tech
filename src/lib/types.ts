@@ -36,6 +36,8 @@ export interface DayWeather {
   precipitationMm: number;  // сумма осадков
   snowfallCm: number;       // сумма снега
   cloudCover: number;       // 0..100, средняя облачность
+  windMs?: number;          // макс. ветер, м/с (B11 V11; у старых дней нет)
+  windDeg?: number;         // откуда дует, градусы
   place?: string;           // «Астана» — как ввёл человек
 }
 
@@ -97,6 +99,8 @@ export interface StyleParams {
   atmosphere: { kind: AtmosphereKind; amount: number /*0..1*/ };   // ресерч R3
   // Песня как предмет (ресерч S2). Необязательно: у дней, собранных раньше, его нет.
   songObject?: { kind: SongObjectKind; year: number | null; revPerSec: number };
+  // Живой кадр (B11): люди, ритм, свет часа, ветер. Необязательно: старые дни берут DEFAULT_VISUAL.
+  visual?: import('./style/visual').VisualParams;
   // Марка сезона и штампы из анализа (план 20.11, B3). Необязательно: у старых дней нет.
   stamps?: { shape: 'circle' | 'square' | 'ticket'; season: DayAnalysis['season']; date: string; tags: { kind: 'weather' | 'place' | 'people'; text: string }[] };
   reasons: StyleReason[];

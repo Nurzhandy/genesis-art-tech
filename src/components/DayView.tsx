@@ -144,7 +144,7 @@ export function DayView({ dayId, from = null }: { dayId: string; from?: string |
           <MoodTuner day={day} value={override === undefined ? day.moodOverride ?? null : override}
             onChange={setOverride} onSaved={(d) => { setDay(d); setOverride(undefined); setSettled(undefined); }} />
         )}
-        {(preview ?? day.style) && <WhyPanel style={(preview ?? day.style)!} />}
+        {(preview ?? day.style) && <WhyPanel style={(preview ?? day.style)!} date={day.date} />}
         <ExportPanel day={day} />
         {mine && <SharePanel day={day} onChange={setDay} />}
         <FolderPanel day={day} onChange={setDay} />

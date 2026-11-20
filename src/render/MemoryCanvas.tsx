@@ -11,6 +11,8 @@ export interface MemoryCanvasProps {
   info: DayInfo;
   playing: boolean;
   liveEnergy?: () => number | null;
+  /** B11 V2: полосы и удары живого звука. */
+  liveRhythm?: () => import('./audioReactive').Rhythm | null;
   overrideTechnique?: { primary?: Technique; secondary?: Technique | null; mix?: number };
   /** Момент для статичного кадра, когда playing=false (по умолчанию — постерный кадр). */
   stillAt?: number;
@@ -18,13 +20,14 @@ export interface MemoryCanvasProps {
   className?: string;
 }
 
-export default function MemoryCanvas({ style, photos, info, playing, liveEnergy, overrideTechnique, stillAt, onReady, className }: MemoryCanvasProps) {
+export default function MemoryCanvas({ style, photos, info, playing, liveEnergy, liveRhythm, overrideTechnique, stillAt, onReady, className }: MemoryCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const [state, setState] = useState<{ key: string; ready: boolean; error: string | null }>({ key: '', ready: false, error: null });
   const live = useRef(liveEnergy);
+  const liveR = useRef(liveRhythm);
   const onReadyRef = useRef(onReady);
-  useEffect(() => { live.current = liveEnergy; onReadyRef.current = onReady; });
+  useEffect(() => { live.current = liveEnergy; liveR.current = liveRhythm; onReadyRef.current = onReady; });
 
   const key = JSON.stringify([style, photos, info, overrideTechnique]);
   const ready = state.key === key && state.ready;
@@ -33,7 +36,7 @@ export default function MemoryCanvas({ style, photos, info, playing, liveEnergy,
     let cancelled = false;
     const canvas = ref.current;
     if (!canvas) return;
-    createEngine(canvas, { style, photoUrls: photos, info, overrideTechnique, liveEnergy: () => live.current?.() ?? null })
+    createEngine(canvas, { style, photoUrls: photos, info, overrideTechnique, liveEnergy: () => live.current?.() ?? null, liveRhythm: () => liveR.current?.() ?? null })
       .then((engine) => {
         if (cancelled) { engine.destroy(); return; }
         engineRef.current = engine;

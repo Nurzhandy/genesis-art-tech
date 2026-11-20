@@ -1,11 +1,16 @@
 import type { StyleParams, Technique } from '@/lib/types';
 import { TECHNIQUE_NAMES } from '@/lib/style/techniques';
+import { ageEffect, ageReason } from '@/lib/style/visual';
+import { localToday } from '@/lib/archive';
 
 const LABELS: Record<string, string> = {
-  override: 'Ваша поправка', atmosphere: 'Атмосфера', weather: 'Погода', cover: 'Обложка', stamps: 'Штампы', technique: 'Техника', palette: 'Палитра', motion: 'Ритм', negativeSpace: 'Воздух', grain: 'Зерно', genre: 'Жанр', jitter: 'Движение', songObject: 'Песня', decor: 'Стикеры',
+  override: 'Ваша поправка', atmosphere: 'Атмосфера', weather: 'Погода', cover: 'Обложка', stamps: 'Штампы', technique: 'Техника', palette: 'Палитра', motion: 'Ритм', negativeSpace: 'Воздух', grain: 'Зерно', genre: 'Жанр', jitter: 'Движение', songObject: 'Песня', portrait: 'Люди', rhythm: 'Ритм песни', light: 'Свет', wind: 'Ветер', age: 'Возраст', decor: 'Стикеры',
 };
 
-export function WhyPanel({ style }: { style: StyleParams }) {
+export function WhyPanel({ style, date }: { style: StyleParams; date?: string }) {
+  // B11 V6: возраст дня меняется со временем — строку считаем при просмотре, а не храним в стиле.
+  const age = date ? ageReason(ageEffect(date, localToday())) : null;
+  const reasons = age ? [...style.reasons, age] : style.reasons;
   const t = style.techniques;
   const top = (Object.entries(t.scores) as [Technique, number][]).sort((a, b) => b[1] - a[1]);
   return (
@@ -27,7 +32,7 @@ export function WhyPanel({ style }: { style: StyleParams }) {
         ))}
       </div>
       <ul className="space-y-2.5 text-[17px] leading-snug">
-        {style.reasons.map((r) => (
+        {reasons.map((r) => (
           <li key={r.param}><span className="font-mono text-[11px] uppercase tracking-wider text-muted">{LABELS[r.param] ?? r.param} · </span>{r.because}</li>
         ))}
       </ul>

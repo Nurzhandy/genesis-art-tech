@@ -8,7 +8,7 @@ import { AMBIENT_LEVEL, soundscapeFor } from '@/lib/sound/recipes';
 import type { DayRecord, StyleParams } from '@/lib/types';
 import type { Engine } from '@/render/engine';
 import { exportPoster } from '@/render/poster';
-import { createEnergyMeter } from '@/render/audioReactive';
+import { createRhythmMeter, type Rhythm } from '@/render/audioReactive';
 import { songObjectPlace } from '@/render/songObject';
 import { LAYOUT } from '@/lib/style/constants';
 import type { Ritual } from '@/lib/ritual';
@@ -27,6 +27,7 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
   const [open, setOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const meter = useRef<(() => number) | null>(null);
+  const rhythmMeter = useRef<(() => Rhythm) | null>(null);
   // Постер рисуем для сохранённого стиля дня: заново после «Сохранить» в «Не совсем так?»,
   // но никогда — для несохранённого превью ползунков.
   const exportedFor = useRef<string | null>(null);
@@ -88,7 +89,7 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
       a.src = day.songUrl;
       a.loop = true;
       a.volume = 0;
-      try { meter.current = createEnergyMeter(a); } catch { meter.current = null; }
+      try { const r = createRhythmMeter(a); rhythmMeter.current = r; meter.current = () => r().level; } catch { meter.current = null; rhythmMeter.current = null; }
       // Ритуал открытия: музыка с первой ноты, но нарастает за 2 секунды.
       void a.play().then(() => fadeVolume(a, 1, 2000)).catch(() => undefined);
     }
@@ -127,6 +128,7 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
         <div style={{ opacity: open ? 1 : 0, filter: open ? 'blur(0px)' : 'blur(14px)', transition: 'opacity 1.5s ease, filter 1.5s ease' }}>
           <MemoryCanvas style={style} photos={photos} playing={open} onReady={onReady}
             liveEnergy={() => meter.current?.() ?? null}
+            liveRhythm={() => rhythmMeter.current?.() ?? null}
             info={{ title: day.title ?? '', caption: day.analysis?.caption ?? '', date: day.date, dayNumber: day.dayNumber, songLabel: songLabel(day), notes: day.analysis?.sensory, decor: day.decor }}
             className="rounded-sm shadow-2xl" />
         </div>

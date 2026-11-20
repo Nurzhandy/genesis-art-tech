@@ -6,6 +6,9 @@ import { createAtmosphere } from './atmosphere';
 import { drawNotes, placeNotes } from './notes';
 import { drawSongObject } from './songObject';
 import { createPhotoFirst } from './photoFirst';
+import { personMask } from './segment';
+import { rhythmFromBeat, type Rhythm } from './audioReactive';
+import { ageEffect } from '@/lib/style/visual';
 import { drawDecor } from './decor';
 import { drawStamps } from './stamps';
 import { clamp } from './draw';
@@ -38,6 +41,10 @@ export interface EngineOptions {
   noText?: boolean;
   /** Экспорт (обои, видео): всегда 1080×1920, даже на телефоне. */
   fullRes?: boolean;
+  /** B11 V2: живой ритм песни (полосы и удары); без него ритм берётся из BPM. */
+  liveRhythm?: () => Rhythm | null;
+  /** B11 V6: «сегодня» для возраста дня (yyyy-mm-dd); по умолчанию — дата устройства. */
+  today?: string;
 }
 
 export interface Engine {
@@ -81,6 +88,8 @@ export async function loadFonts(): Promise<Fonts> {
   return fonts;
 }
 
+const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
 export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOptions): Promise<Engine> {
   const W = LAYOUT.width, H = LAYOUT.height;
   const lowPower = typeof window !== 'undefined' && window.innerWidth < 500 && window.devicePixelRatio > 2;
@@ -108,7 +117,15 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
   primary.prepare(rc);
   secondary?.prepare(rc);
   const paper = makePaper(style, W, H);
-  const photoFirst = createPhotoFirst(style, photos, rc.zone);
+  // V8: маски людей — только если на фото люди; модель не ответила за 6 с — рисуем как раньше.
+  const masks = style.visual?.portrait.focusPeople ? await Promise.all(photos.map((p) => personMask(p).catch(() => null))) : [];
+  const photoFirst = createPhotoFirst(style, photos, rc.zone, masks);
+  // V6: возраст дня на момент просмотра.
+  const age = ageEffect(opts.info.date, opts.today ?? localToday());
+  const agedStyle: StyleParams = age.grain > 0 ? { ...style, texture: { ...style.texture, grain: Math.min(1, style.texture.grain + age.grain) } } : style;
+  const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const rhythm = (pt: PhotoTime): Rhythm => opts.liveRhythm?.() ?? rhythmFromBeat(pt.beatPhase, energyBase);
+  const vis = style.visual;
   const grain = makeGrainTile(style.seed);
   const atmosphere = createAtmosphere(style, W, H);
   const notes = (opts.info.notes ?? []).map((n) => n.trim()).filter(Boolean).slice(0, 4).map((n) => (n.length > 34 ? n.slice(0, 33) + '…' : n));
@@ -131,7 +148,10 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
     primary.drawOverlay(rc, pt, 1);
     if (secondary) secondary.drawOverlay(rc, pt, secondaryAlpha);
     // Фото главное: поверх техники — настоящее фото, чёткое, с наездом камеры (техника остаётся фоном и рамкой).
-    photoFirst.draw(ctx, pt, opts.info.date);
+    const rh = rhythm(pt);
+    // V2: бас — кадр дышит (на постере и при «меньше движения» — без дыхания).
+    const breath = realtime && !reduced && vis ? vis.rhythm.breath * (rh.bass * 2 - 1) : 0;
+    photoFirst.draw(ctx, pt, opts.info.date, { breath, desat: age.desat });
     // Страница собирается на глазах (B5): фото проявляется из бумаги, затем марка, подпись, песня.
     const asm = assemblyAt(t, style.motion, realtime);
     if (asm.photo < 1) {
@@ -141,11 +161,19 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
       ctx.drawImage(paper, z.x - pad, z.y - pad, z.w + pad * 2, z.h + pad * 2, z.x - pad, z.y - pad, z.w + pad * 2, z.h + pad * 2);
       ctx.restore();
     }
+    // V2: верх спектра — частицы атмосферы мерцают.
+    ctx.save(); ctx.globalAlpha = realtime && !reduced ? 0.7 + 0.3 * rh.high : 1;
     atmosphere.draw(rc, pt);   // слой 3.5: между оверлеем и текстом
+    ctx.restore();
+    // V2: удар — короткая вспышка цвета дня.
+    if (realtime && !reduced && vis && rh.beat > 0.05) {
+      ctx.save(); ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = vis.rhythm.flash * rh.beat;
+      ctx.fillStyle = style.palette.accents[0] ?? '#ffffff'; ctx.fillRect(0, 0, W, H); ctx.restore();
+    }
     if (opts.noText) {
       drawDecor(ctx, opts.info.decor, style.palette, fonts, 1, false);
-      drawGrain(ctx, grain, W, H, style, frame++);
-      drawVignette(ctx, W, H, 0.12 + 0.2 * style.texture.grain);
+      drawGrain(ctx, grain, W, H, agedStyle, frame++);
+      drawVignette(ctx, W, H, 0.12 + 0.2 * style.texture.grain + age.vignette);
       return;
     }
     ctx.save(); ctx.globalAlpha = asm.stamps;
@@ -157,8 +185,8 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
     drawConstants(ctx, W, H, style, opts.info, fonts, asm.caption);
     drawNotes(ctx, notes, notePlaces, style, fonts, pt, photos.length, !realtime);
     drawDecor(ctx, opts.info.decor, style.palette, fonts, asm.caption);   // украшения человека (спека 2026-11-20)
-    drawGrain(ctx, grain, W, H, style, frame++);
-    drawVignette(ctx, W, H, 0.12 + 0.2 * style.texture.grain);
+    drawGrain(ctx, grain, W, H, agedStyle, frame++);
+    drawVignette(ctx, W, H, 0.12 + 0.2 * style.texture.grain + age.vignette);
   }
 
   const loop = () => {
