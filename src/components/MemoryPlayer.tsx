@@ -130,7 +130,7 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
             className="rounded-sm shadow-2xl" />
         </div>
         <button type="button" onClick={start} aria-hidden={open} tabIndex={open ? -1 : 0}
-          className="absolute inset-0 flex flex-col items-center justify-center gap-6 rounded-sm px-8 text-center"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-6 rounded-sm px-8 text-center shadow-2xl ring-1 ring-black/10"
           style={{ background: style.palette.bg, color: style.palette.ink, opacity: open ? 0 : 1, pointerEvents: open ? 'none' : 'auto', transition: 'opacity 1.5s ease' }}>
           <span className="font-mono text-xs uppercase tracking-[0.3em] opacity-70">{day.date.split('-').reverse().join('.')}</span>
           <span className="text-4xl font-semibold leading-tight">{day.title}</span>

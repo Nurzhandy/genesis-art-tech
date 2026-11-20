@@ -6,6 +6,7 @@ import { serverToday } from '@/lib/capsule';
 import { getDayByShare, withUrls } from '@/lib/db';
 import { publicDay, SHARE_ID, sharedCopy, sharedOrNull } from '@/lib/share';
 import { pickVoice } from '@/lib/voice/pickVoice';
+import { PageFade } from '@/components/fx/PageFade';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,8 +38,10 @@ export default async function SharedPage({ params }: PageProps<'/s/[shareId]'>) 
   if (!day) notFound();
   const preset = day.voice?.preset ?? (day.analysis ? pickVoice(day.analysis, day.music) : null);
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:py-12">
-      <SharedDay day={day} preset={preset} />
-    </main>
+    <PageFade>
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:py-12">
+        <SharedDay day={day} preset={preset} />
+      </main>
+    </PageFade>
   );
 }

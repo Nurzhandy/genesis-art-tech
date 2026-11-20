@@ -28,3 +28,128 @@ body {
   color: var(--foreground);
   font-family: var(--font-cormorant), Georgia, serif;
 }
+
+/* ───────────── Анимации интерфейса (ресерч 20.11, раздел 6: M2–M11) ───────────── */
+
+body {
+  transition: background-color 1.2s ease, color 1.2s ease;
+}
+
+/* M3. Живое плёночное зерно поверх всего сайта */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 0.9s steps(6) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -3%); }
+  60% { transform: translate(-2%, -1%); }
+  80% { transform: translate(3%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* M11. Нить прокрутки — как нитка в переплёте */
+.scroll-thread {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  z-index: 55;
+  pointer-events: none;
+  background: currentColor;
+  opacity: 0.35;
+  transform-origin: top;
+  transform: scaleY(0);
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-thread { animation: thread linear both; animation-timeline: scroll(root block); }
+}
+@keyframes thread { to { transform: scaleY(1); } }
+
+/* M5. Появление по прокрутке: «карточку кладут на стол» */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 28%;
+  }
+  .reveal-tilt {
+    animation: reveal-tilt linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+}
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(40px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes reveal-tilt {
+  from { opacity: 0; transform: translateY(70px) rotate(var(--tilt-from, -6deg)) scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+
+/* M2. Кинетический заголовок: буквы впитываются в бумагу, как чернила */
+.ink-letter {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(10px);
+  transform: translateY(0.25em) scale(1.08);
+  letter-spacing: 0.08em;
+  animation: ink-in 0.9s cubic-bezier(0.2, 0.7, 0.1, 1) forwards;
+  animation-delay: calc(var(--i) * 45ms + 150ms);
+}
+@keyframes ink-in {
+  60% { filter: blur(1px); }
+  to { opacity: 1; filter: blur(0); transform: none; letter-spacing: 0; }
+}
+
+/* M10. Бегущая строка настроений */
+.marquee { mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.marquee-track { display: flex; width: max-content; animation: marquee 48s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+/* M9. Чернильная клякса при нажатии */
+.ink-ripple {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: currentColor;
+  opacity: 0.25;
+  transform: translate(-50%, -50%) scale(0);
+  animation: ink-ripple 0.6s ease-out forwards;
+}
+@keyframes ink-ripple { to { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
+
+/* M6. Наклон и блик полароида */
+.tilt { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 0.25s ease-out; will-change: transform; }
+.tilt-shine { background: radial-gradient(circle at var(--sx, 50%) var(--sy, 50%), rgba(255, 255, 255, 0.35), transparent 55%); opacity: 0; transition: opacity 0.3s; mix-blend-mode: soft-light; }
+.tilt:hover .tilt-shine { opacity: 1; }
+
+/* M1. Машина воспоминаний на главной */
+@keyframes polaroid-in {
+  from { opacity: 0; transform: translate(var(--fx, 0), -120px) rotate(var(--fr, 20deg)) scale(1.2); }
+  to { opacity: 1; transform: translate(0, 0) rotate(var(--r, 0deg)); }
+}
+@keyframes vinyl-spin { to { transform: rotate(360deg); } }
+@keyframes caret { 50% { opacity: 0; } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes arrow-flow { from { background-position: 0 0; } to { background-position: 24px 0; } }
+
+/* M7. Переход между страницами — как перелистывание (View Transitions) */
+::view-transition-old(.page) { animation: page-out 0.32s ease-in both; }
+::view-transition-new(.page) { animation: page-in 0.5s cubic-bezier(0.2, 0.7, 0.1, 1) 0.12s both; }
+@keyframes page-out { to { opacity: 0; transform: translateX(-24px) rotate(-0.4deg); filter: blur(4px); } }
+@keyframes page-in { from { opacity: 0; transform: translateX(28px); filter: blur(6px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  body::after { animation: none; }
+  .marquee-track { animation: none; }
+}

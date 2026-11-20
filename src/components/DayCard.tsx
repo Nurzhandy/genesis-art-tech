@@ -1,5 +1,9 @@
 import Link from 'next/link';
 import type { DayRecord } from '@/lib/types';
+import { Tilt } from './fx/Tilt';
+
+/** Наклон карточки, когда её «кладут на стол» по прокрутке (ресерч 20.11, M5): свой для каждого дня. */
+const tiltFrom = (date: string) => `${((Number(date.slice(8, 10)) * 7) % 13) - 6}deg`;
 
 /** Запечатанная капсула (план 20.11, A5): конверт с маркой и датой открытия. */
 function Envelope({ day }: { day: DayRecord }) {
@@ -18,8 +22,8 @@ export function DayCard({ day, large = false, from }: { day: DayRecord; large?: 
   const href = `/day/${day.id}${from ? `?from=${from}` : ''}`;
   if (day.sealed) {
     return (
-      <Link href={href} className="group block">
-        <div className="transition group-hover:-translate-y-1"><Envelope day={day} /></div>
+      <Link href={href} className="reveal-tilt group block" style={{ '--tilt-from': tiltFrom(day.date) } as React.CSSProperties}>
+        <Tilt className="rounded-sm"><Envelope day={day} /></Tilt>
         <div className={`mt-2 ${large ? 'text-lg' : 'text-base'} leading-tight`}>{day.title}</div>
         <div className="font-mono text-[11px] text-muted">{day.date.split('-').reverse().join('.')}</div>
       </Link>
@@ -28,8 +32,9 @@ export function DayCard({ day, large = false, from }: { day: DayRecord; large?: 
   const cover = day.posterUrl ?? day.photos[0]?.thumbUrl;
   const bg = day.style?.palette.bg ?? '#e9e2d6';
   return (
-    <Link href={href} className="group block">
-      <div className="relative aspect-[9/16] overflow-hidden rounded-sm shadow-md ring-1 ring-black/5 transition group-hover:-translate-y-1 group-hover:shadow-xl" style={{ background: bg }}>
+    <Link href={href} className="reveal-tilt group block" style={{ '--tilt-from': tiltFrom(day.date) } as React.CSSProperties}>
+      <Tilt className="rounded-sm">
+      <div className="relative aspect-[9/16] overflow-hidden rounded-sm shadow-md ring-1 ring-black/5 transition-shadow group-hover:shadow-2xl" style={{ background: bg }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {cover && <img src={cover} alt="" loading="lazy" className={`h-full w-full ${day.posterUrl ? 'object-cover' : 'object-cover opacity-80'}`} />}
         {!day.posterUrl && (
@@ -39,6 +44,7 @@ export function DayCard({ day, large = false, from }: { day: DayRecord; large?: 
           </div>
         )}
       </div>
+      </Tilt>
       <div className={`mt-2 ${large ? 'text-lg' : 'text-base'} leading-tight`}>{day.title}</div>
       <div className="font-mono text-[11px] text-muted">{day.date.split('-').reverse().join('.')}</div>
     </Link>

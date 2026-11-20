@@ -5,12 +5,14 @@ import type { DayRecord, VoicePreset } from '@/lib/types';
 import { ExportPanel } from './ExportPanel';
 import { MemoryPlayer } from './MemoryPlayer';
 import { PhotoStack } from './PhotoStack';
+import { PageAtmosphere } from './fx/PageAtmosphere';
 import { VoiceButton } from './VoiceButton';
 import { WhyPanel } from './WhyPanel';
 
 export function SharedDay({ day, preset }: { day: DayRecord; preset: VoicePreset | null }) {
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,440px)_1fr]">
+      {day.style && <PageAtmosphere style={day.style} />}
       <MemoryPlayer day={day} savePoster={false} />
       <div className="flex flex-col gap-6">
         <header>

@@ -11,6 +11,7 @@ import { MemoryPlayer, songLabel } from './MemoryPlayer';
 import { SharePanel } from './SharePanel';
 import { ExportPanel } from './ExportPanel';
 import { PhotoStack } from './PhotoStack';
+import { PageAtmosphere } from './fx/PageAtmosphere';
 import { VoiceRecorder } from './VoiceRecorder';
 import { songKeys } from '@/lib/music/songKey';
 import { humanDate } from '@/lib/archive';
@@ -105,6 +106,7 @@ export function DayView({ dayId, from = null }: { dayId: string; from?: string |
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,440px)_1fr]">
+      {(preview ?? day.style) && <PageAtmosphere style={(preview ?? day.style)!} />}
       {/* После сохранения поправки плеер собирается заново и сохраняет новый постер (старый сброшен на сервере). */}
       <MemoryPlayer key={`${day.moodOverride?.warmth ?? 0}:${day.moodOverride?.energy ?? 0}`} day={day} styleOverride={preview} ritual={ritualFor(day, from)} />
       <div className="flex flex-col gap-6">
