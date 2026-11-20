@@ -6,7 +6,7 @@ import { createEngine, type Engine } from './engine';
 import type { DayInfo } from './types';
 
 export function dayInfo(day: DayRecord, songLabel: string): DayInfo {
-  return { title: day.title ?? '', caption: day.analysis?.caption ?? '', date: day.date, dayNumber: day.dayNumber, songLabel, notes: day.analysis?.sensory };
+  return { title: day.title ?? '', caption: day.analysis?.caption ?? '', date: day.date, dayNumber: day.dayNumber, songLabel, notes: day.analysis?.sensory, decor: day.decor };
 }
 
 async function exportEngine(day: DayRecord, songLabel: string, noText: boolean): Promise<Engine> {

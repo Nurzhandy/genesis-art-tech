@@ -15,6 +15,7 @@ export function folderFiles(day: DayRecord): FolderFile[] {
   if (day.voice?.url) files.push({ name: day.voice.path.split('/').pop() || 'voice.mp3', kind: 'audio', url: day.voice.url });
   if (day.analysis) files.push({ name: 'analysis.json', kind: 'data', text: JSON.stringify(day.analysis, null, 2) });
   if (day.style) files.push({ name: 'style.json', kind: 'data', text: JSON.stringify(day.style, null, 2) });
+  if (day.decor?.items.length) files.push({ name: 'decor.json', kind: 'data', text: JSON.stringify(day.decor, null, 2) });
   return files;
 }
 

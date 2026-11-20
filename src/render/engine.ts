@@ -5,6 +5,7 @@ import { assemblyAt } from './assembly';
 import { createAtmosphere } from './atmosphere';
 import { drawNotes, placeNotes } from './notes';
 import { drawSongObject } from './songObject';
+import { drawDecor } from './decor';
 import { drawStamps } from './stamps';
 import { clamp } from './draw';
 import { drawGrain, drawVignette, makeGrainTile } from './fx';
@@ -138,6 +139,7 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
     }
     atmosphere.draw(rc, pt);   // слой 3.5: между оверлеем и текстом
     if (opts.noText) {
+      drawDecor(ctx, opts.info.decor, style.palette, fonts, 1, false);
       drawGrain(ctx, grain, W, H, style, frame++);
       drawVignette(ctx, W, H, 0.12 + 0.2 * style.texture.grain);
       return;
@@ -150,6 +152,7 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
     ctx.restore();
     drawConstants(ctx, W, H, style, opts.info, fonts, asm.caption);
     drawNotes(ctx, notes, notePlaces, style, fonts, pt, photos.length, !realtime);
+    drawDecor(ctx, opts.info.decor, style.palette, fonts, asm.caption);   // украшения человека (спека 2026-11-20)
     drawGrain(ctx, grain, W, H, style, frame++);
     drawVignette(ctx, W, H, 0.12 + 0.2 * style.texture.grain);
   }

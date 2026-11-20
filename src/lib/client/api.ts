@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { DayRecord, MoodOverride, MusicFeatures, PhotoFeatures, SongRef, VoicePreset } from '@/lib/types';
 import type { UploadFile } from '@/lib/validation';
 import type { DiaryKind, DiaryMeta } from '@/lib/shelf';
+import type { Decor } from '@/lib/decor/decor';
 import { ownerHeaders } from './diaryKey';
 
 export interface SignedUpload { kind: UploadFile['kind']; index?: number; path: string; token: string; signedUrl: string }
@@ -59,6 +60,9 @@ export const api = {
     call<DayRecord>(`/api/days/${dayId}/restyle`, { method: 'POST', headers: owner(), body: JSON.stringify(override) }),
   rename: (dayId: string, title: string) =>
     call<DayRecord>(`/api/days/${dayId}`, { method: 'PATCH', headers: owner(), body: JSON.stringify({ title }) }),
+  // Украшения страницы (спека 2026-11-20): только владелец.
+  saveDecor: (dayId: string, decor: Decor) =>
+    call<DayRecord>(`/api/days/${dayId}/decor`, { method: 'PUT', headers: owner(), body: JSON.stringify(decor) }),
   // Ссылка-подарок (план 20.11, A4).
   share: (dayId: string) => call<{ shareId: string; path: string }>(`/api/days/${dayId}/share`, { method: 'POST', headers: owner() }),
   async unshare(dayId: string) {

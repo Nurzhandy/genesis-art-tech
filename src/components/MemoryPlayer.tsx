@@ -39,7 +39,8 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
     const { day: d, styleOverride: preview, savePoster: canSave } = latest.current;
     // Гость по ссылке-подарку постер не сохраняет — это делает только плеер владельца.
     if (!canSave || !engineRef.current || preview || d.posterUrl || !d.style) return;
-    const key = JSON.stringify(d.style);
+    // Постер зависит и от стиля, и от украшений: после «Украсить» его нужно снять заново.
+    const key = JSON.stringify([d.style, d.decor ?? null]);
     // Снимаем постер только с холста, нарисованного именно этим стилем.
     if (engineRef.current.styleKey !== key || exportedFor.current === key) return;
     const { engine } = engineRef.current;
@@ -52,7 +53,7 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
   }, []);
   const onReady = useCallback((engine: Engine) => {
     const { day: d, styleOverride: preview } = latest.current;
-    engineRef.current = { engine, styleKey: JSON.stringify(preview ?? d.style) };
+    engineRef.current = { engine, styleKey: JSON.stringify([preview ?? d.style, d.decor ?? null]) };
     void tryExportPoster();
   }, [tryExportPoster]);
   // После «Сохранить» стиль тот же, что в превью, и холст не пересоздаётся — проверяем постер по смене дня.
@@ -126,7 +127,7 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
         <div style={{ opacity: open ? 1 : 0, filter: open ? 'blur(0px)' : 'blur(14px)', transition: 'opacity 1.5s ease, filter 1.5s ease' }}>
           <MemoryCanvas style={style} photos={photos} playing={open} onReady={onReady}
             liveEnergy={() => meter.current?.() ?? null}
-            info={{ title: day.title ?? '', caption: day.analysis?.caption ?? '', date: day.date, dayNumber: day.dayNumber, songLabel: songLabel(day), notes: day.analysis?.sensory }}
+            info={{ title: day.title ?? '', caption: day.analysis?.caption ?? '', date: day.date, dayNumber: day.dayNumber, songLabel: songLabel(day), notes: day.analysis?.sensory, decor: day.decor }}
             className="rounded-sm shadow-2xl" />
         </div>
         <button type="button" onClick={start} aria-hidden={open} tabIndex={open ? -1 : 0}

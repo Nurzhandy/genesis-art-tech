@@ -1,6 +1,7 @@
 // Доступ к таблице days и превращение строк в DayRecord с signed URLs.
 import type { DayRecord, DayStatus } from './types';
 import { HttpError } from './http';
+import { normalizeDecor } from './decor/decor';
 import { signRead } from './storage';
 import { supabaseAdmin } from './supabase/server';
 
@@ -14,6 +15,7 @@ export interface DayRow {
   weather?: DayRecord['weather'];
   sealed_until?: string | null;
   share_id?: string | null;
+  decor?: unknown;                             // миграция 0004
 }
 
 export function rowToDay(r: DayRow): DayRecord {
@@ -24,6 +26,7 @@ export function rowToDay(r: DayRow): DayRecord {
     moodOverride: r.mood_override ?? null,
     place: r.place ?? null, weather: r.weather ?? null,
     sealedUntil: r.sealed_until ?? null, shareId: r.share_id ?? null,
+    decor: r.decor ? normalizeDecor(r.decor) : null,
   };
 }
 

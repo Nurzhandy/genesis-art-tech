@@ -12,6 +12,7 @@ export interface DayInfo {
   dayNumber?: number;
   songLabel?: string;
   notes?: string[];       // детали из записи для заметок на полях (ресерч R2)
+  decor?: import('@/lib/decor/decor').Decor | null;   // стикеры, текст, кисть (спека 2026-11-20)
 }
 
 export interface RenderCtx {
