@@ -8,6 +8,10 @@
 | Gemini API (`gemini-3.8-flash`, ответ JSON по схеме), Google Gen AI SDK | анализ текста и фото дня, название папки, подпись, оценка песни (темп, лад, жанр, год) |
 | OpenAI TTS `gpt-4o-mini-tts` (опционально) / Web Speech API | озвучка записи голосом по правилам системы |
 | Web Speech API (`SpeechRecognition`, ru-RU) | диктовка записи голосом в форме, если браузер поддерживает |
+| Open-Meteo (Geocoding, Archive, Forecast) | погода того дня по городу записи, без ключа |
+| page-flip | режим «Книга» в архиве |
+| Web Audio API | процедурные звуки дня (шум, капли, треск), шорох страниц, громкость под озвучку |
+| MediaRecorder, `canvas.captureStream` | видео дня 15/30/60 с и запись своего голоса |
 | Deezer API | BPM, год и официальное 30-секундное превью трека |
 | oEmbed Spotify / YouTube | исполнитель и название по ссылке |
 | web-audio-beat-detector, Meyda | темп, энергия и «яркость» своего аудиофайла в браузере |

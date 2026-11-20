@@ -57,7 +57,7 @@ function OnThisDay({ days }: { days: DayRecord[] }) {
         {found.map((d) => (
           <div key={d.id} className="w-[150px] shrink-0">
             <p className="mb-2 font-hand text-2xl leading-none">{yearsWord(yearsAgo(d.date, today))} назад</p>
-            <DayCard day={d} />
+            <DayCard day={d} from="onthisday" />
           </div>
         ))}
       </div>
@@ -110,6 +110,12 @@ export function Archive({ diaryId, isDemo, songs = [] }: { diaryId: string; isDe
             className="rounded-full border border-foreground/20 px-3 py-1.5 font-mono text-xs text-muted transition hover:border-foreground/50 hover:text-foreground">
             ⚄ случайный день
           </button>
+        )}
+        {days && days.some((d) => !d.sealed) && (
+          <Link href={`/diary/${diaryId}/year/${days.find((d) => !d.sealed)!.date.slice(0, 4)}`} title="Все дни года одной картинкой"
+            className="rounded-full border border-foreground/20 px-3 py-1.5 font-mono text-xs text-muted transition hover:border-foreground/50 hover:text-foreground">
+            ▦ год в цветах
+          </Link>
         )}
         {!isDemo && (
           <Link href={`/diary/${diaryId}/new`} className="rounded-full bg-foreground px-5 py-2.5 font-mono text-xs uppercase tracking-[0.15em] text-background">+ Записать день</Link>

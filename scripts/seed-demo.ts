@@ -1,5 +1,5 @@
 // Прогон любимых дней команды через тот же пайплайн, что и браузер, в демо-дневник (A9).
-// Формат: fixtures/demo/<папка>/{text.md, date.txt, song.json, photos/*.jpg|png|heic}
+// Формат: fixtures/demo/<папка>/{text.md, date.txt, song.json, photos/*.jpg|png|heic}, необязательно place.txt (город для погоды)
 // Запуск: сервер с ALLOW_DEMO_WRITES=1 (например `ALLOW_DEMO_WRITES=1 npm run dev`), затем
 //   BASE_URL=http://localhost:3000 npx tsx scripts/seed-demo.ts
 import fs from 'node:fs';
@@ -38,6 +38,8 @@ async function main() {
     const text = fs.readFileSync(path.join(base, 'text.md'), 'utf8').trim();
     const date = fs.readFileSync(path.join(base, 'date.txt'), 'utf8').trim();
     const song = JSON.parse(fs.readFileSync(path.join(base, 'song.json'), 'utf8'));
+    const placeFile = path.join(base, 'place.txt');
+    const place = fs.existsSync(placeFile) ? fs.readFileSync(placeFile, 'utf8').trim() : '';
     const photoFiles = fs.readdirSync(path.join(base, 'photos')).filter((f) => /\.(jpe?g|png|webp|heic)$/i.test(f)).sort().slice(0, 5);
 
     // Песня-ссылка: распознаём так же, как форма.
@@ -58,7 +60,7 @@ async function main() {
       return { full: full.data, thumb, features };
     }));
 
-    const { dayId } = await call<{ dayId: string }>(`/api/diaries/${DIARY}/days`, { date, text, photoCount: photos.length, song: songRef });
+    const { dayId } = await call<{ dayId: string }>(`/api/diaries/${DIARY}/days`, { date, text, photoCount: photos.length, song: songRef, ...(place ? { place } : {}) });
     const files = photos.flatMap((_, i) => [{ kind: 'photo', index: i, ext: 'jpg' }, { kind: 'thumb', index: i, ext: 'jpg' }]);
     const { uploads } = await call<{ uploads: { kind: string; index?: number; path: string; token: string }[] }>(`/api/days/${dayId}/uploads`, { files });
     for (const u of uploads) {

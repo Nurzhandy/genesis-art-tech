@@ -9,13 +9,17 @@ import { GenerateProgress } from './GenerateProgress';
 import { useIsMyDiary } from '@/lib/client/diaryKey';
 import { MemoryPlayer, songLabel } from './MemoryPlayer';
 import { SharePanel } from './SharePanel';
+import { ExportPanel } from './ExportPanel';
+import { PhotoStack } from './PhotoStack';
+import { VoiceRecorder } from './VoiceRecorder';
 import { songKeys } from '@/lib/music/songKey';
 import { humanDate } from '@/lib/archive';
+import { ritualFor } from '@/lib/ritual';
 import { MoodTuner } from './MoodTuner';
 import { VoiceButton } from './VoiceButton';
 import { WhyPanel } from './WhyPanel';
 
-export function DayView({ dayId }: { dayId: string }) {
+export function DayView({ dayId, from = null }: { dayId: string; from?: string | null }) {
   const [day, setDay] = useState<DayRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
@@ -102,7 +106,7 @@ export function DayView({ dayId }: { dayId: string }) {
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,440px)_1fr]">
       {/* После сохранения поправки плеер собирается заново и сохраняет новый постер (старый сброшен на сервере). */}
-      <MemoryPlayer key={`${day.moodOverride?.warmth ?? 0}:${day.moodOverride?.energy ?? 0}`} day={day} styleOverride={preview} />
+      <MemoryPlayer key={`${day.moodOverride?.warmth ?? 0}:${day.moodOverride?.energy ?? 0}`} day={day} styleOverride={preview} ritual={ritualFor(day, from)} />
       <div className="flex flex-col gap-6">
         <header>
           <Link href={`/diary/${day.diaryId}`} className="font-mono text-xs uppercase tracking-[0.2em] text-muted hover:text-foreground">← дневник</Link>
@@ -116,12 +120,15 @@ export function DayView({ dayId }: { dayId: string }) {
           )}
         </header>
         <p className="whitespace-pre-line text-xl leading-relaxed">{day.text}</p>
-        <VoiceButton day={day} />
+        <VoiceButton key={day.voice?.path ?? 'none'} day={day} />
+        {mine && <VoiceRecorder day={day} onSaved={setDay} />}
+        <PhotoStack day={day} />
         {mine && day.analysis && day.style && (
           <MoodTuner day={day} value={override === undefined ? day.moodOverride ?? null : override}
             onChange={setOverride} onSaved={(d) => { setDay(d); setOverride(undefined); setSettled(undefined); }} />
         )}
         {(preview ?? day.style) && <WhyPanel style={(preview ?? day.style)!} />}
+        <ExportPanel day={day} />
         {mine && <SharePanel day={day} onChange={setDay} />}
         <FolderPanel day={day} onChange={setDay} />
         {day.analysis?.source === 'fallback' && <p className="text-xs text-muted">Настроение записи определено по словам и цветам — без AI-анализа.</p>}
