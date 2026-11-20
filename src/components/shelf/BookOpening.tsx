@@ -11,7 +11,7 @@ export interface OpeningFrom { meta: DiaryMeta; rect: DOMRect; example?: boolean
 export function BookOpening({ from, onDone }: { from: OpeningFrom; onDone?: () => void }) {
   const router = useRouter();
   const [step, setStep] = useState<0 | 1 | 2>(0);
-  const href = `/diary/${from.meta.id}/book?opened=1`;
+  const href = `/diary/${from.meta.id}/board?opened=1`;
 
   useEffect(() => {
     router.prefetch(href);
@@ -39,7 +39,7 @@ export function BookOpening({ from, onDone }: { from: OpeningFrom; onDone?: () =
 
   return (
     <div className="fixed inset-0 z-[70]" aria-hidden>
-      <div className="absolute inset-0 bg-[#14110d] transition-opacity duration-700" style={{ opacity: step === 0 ? 0 : 1 }} />
+      <div className="absolute inset-0 bg-[#f1ebe0] transition-opacity duration-700" style={{ opacity: step === 0 ? 0 : 1 }} />
       <div className="absolute [perspective:1800px]"
         style={{ ...box, transition: 'left 0.65s cubic-bezier(0.2,0.8,0.2,1), top 0.65s cubic-bezier(0.2,0.8,0.2,1), width 0.65s cubic-bezier(0.2,0.8,0.2,1), height 0.65s cubic-bezier(0.2,0.8,0.2,1), transform 0.9s cubic-bezier(0.3,0.7,0.2,1)' }}>
         {/* Первая страница под обложкой */}

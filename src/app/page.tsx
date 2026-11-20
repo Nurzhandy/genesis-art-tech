@@ -6,6 +6,7 @@ import { KineticTitle } from '@/components/home/KineticTitle';
 import { MemoryMachine } from '@/components/home/MemoryMachine';
 import { MoodMarquee } from '@/components/home/MoodMarquee';
 import { Desk } from '@/components/shelf/Desk';
+import { EntryIntro } from '@/components/fx/EntryIntro';
 
 const STEPS = [
   { n: '01', title: 'Расскажите о дне', text: 'Как другу: погода, свет, запахи, кто был рядом. Приложите 1–5 фото и песню — ссылкой или файлом.' },
@@ -17,6 +18,7 @@ export default function Home() {
   return (
     <PageFade>
       <main className="flex flex-1 flex-col">
+        <EntryIntro />
         <CursorLight className="overflow-hidden">
           <section className="mx-auto flex w-full max-w-6xl flex-wrap items-end justify-between gap-6 px-4 pb-8 pt-12 sm:pt-16">
             <div className="flex flex-col gap-4">

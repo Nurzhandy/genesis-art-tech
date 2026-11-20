@@ -153,3 +153,19 @@ body::after {
   body::after { animation: none; }
   .marquee-track { animation: none; }
 }
+
+/* Вход на сайт: капля чернил падает и растекается (новая концепция 20.11) */
+@keyframes ink-fall {
+  from { transform: translate(-50%, -60vh) scale(0.6, 1.4); }
+  to { transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes ink-splash {
+  from { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  to { transform: translate(-50%, -50%) scale(60); opacity: 0; }
+}
+/* Дневники падают на стол с лёгким отскоком */
+@keyframes drop-in {
+  0% { opacity: 0; transform: translateY(-70px) rotate(-6deg) scale(1.05); }
+  65% { opacity: 1; transform: translateY(8px) rotate(1deg); }
+  100% { opacity: 1; transform: none; }
+}

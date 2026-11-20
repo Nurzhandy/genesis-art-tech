@@ -5,6 +5,7 @@ import type { DayRecord, MoodOverride, MusicFeatures, PhotoFeatures, SongRef, Vo
 import type { UploadFile } from '@/lib/validation';
 import type { DiaryKind, DiaryMeta } from '@/lib/shelf';
 import type { Decor } from '@/lib/decor/decor';
+import type { Board } from '@/lib/board/board';
 import { ownerHeaders } from './diaryKey';
 
 export interface SignedUpload { kind: UploadFile['kind']; index?: number; path: string; token: string; signedUrl: string }
@@ -60,6 +61,12 @@ export const api = {
     call<DayRecord>(`/api/days/${dayId}/restyle`, { method: 'POST', headers: owner(), body: JSON.stringify(override) }),
   rename: (dayId: string, title: string) =>
     call<DayRecord>(`/api/days/${dayId}`, { method: 'PATCH', headers: owner(), body: JSON.stringify({ title }) }),
+  // Свободная доска дневника (новая концепция 20.11).
+  board: (diaryId: string) => call<{ board: Board; urls: Record<string, string> }>(`/api/diaries/${diaryId}/board`),
+  saveBoard: (diaryId: string, board: Board) =>
+    call<{ ok: true }>(`/api/diaries/${diaryId}/board`, { method: 'PUT', headers: owner(), body: JSON.stringify(board) }),
+  boardUpload: (diaryId: string) =>
+    call<{ path: string; token: string; signedUrl: string; readUrl: string | null }>(`/api/diaries/${diaryId}/board/upload`, { method: 'POST', headers: owner() }),
   // Украшения страницы (спека 2026-11-20): только владелец.
   saveDecor: (dayId: string, decor: Decor) =>
     call<DayRecord>(`/api/days/${dayId}/decor`, { method: 'PUT', headers: owner(), body: JSON.stringify(decor) }),

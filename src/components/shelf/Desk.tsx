@@ -7,6 +7,7 @@ import { api } from '@/lib/client/api';
 import { addToShelf, useShelf } from '@/lib/client/diaryKey';
 import type { DiaryMeta } from '@/lib/shelf';
 import { Tilt } from '@/components/fx/Tilt';
+import { introEndsAt } from '@/components/fx/EntryIntro';
 import { DiaryCover } from './DiaryCover';
 import { NewDiaryDialog } from './NewDiaryDialog';
 import { BookOpening, type OpeningFrom } from './BookOpening';
@@ -21,6 +22,7 @@ export function Desk() {
   const [dialog, setDialog] = useState(false);
   const [fresh, setFresh] = useState<string | null>(null);
   const [opening, setOpening] = useState<OpeningFrom | null>(null);
+  const [delay, setDelay] = useState(0.1);   // сек: дневники падают на стол после заставки входа
   // Клик по дневнику: не переходим сразу, а сначала открываем книгу в 3D (Ctrl/⌘-клик — как обычная ссылка).
   const open = (meta: DiaryMeta, example = false) => (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
@@ -43,7 +45,7 @@ export function Desk() {
     let alive = true;
     const ids = key ? key.split(',') : [];
     Promise.all([ids.length ? api.shelf(ids) : Promise.resolve([]), api.diary(DEMO).catch(() => null)]).then(
-      ([m, d]) => { if (alive) { setMetas(m); setDemo(d); } },
+      ([m, d]) => { if (alive) { setDelay(Math.max(0.1, (introEndsAt - performance.now()) / 1000)); setMetas(m); setDemo(d); } },
       () => alive && setMetas([]),
     );
     return () => { alive = false; };
@@ -69,22 +71,22 @@ export function Desk() {
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">
           {mine.map((m, i) => (
-            <Link key={m.id} href={`/diary/${m.id}/book`} onClick={open(m)} className="group block"
-              style={{ rotate: `${tilt(i)}deg`, opacity: opening?.meta.id === m.id ? 0 : undefined, animation: m.id === fresh ? 'polaroid-in 0.7s cubic-bezier(0.2,0.8,0.2,1.15) both' : `pop-in 0.6s ease-out ${i * 70}ms both` } as React.CSSProperties}>
+            <Link key={m.id} href={`/diary/${m.id}/board`} onClick={open(m)} className="group block"
+              style={{ rotate: `${tilt(i)}deg`, opacity: opening?.meta.id === m.id ? 0 : undefined, animation: m.id === fresh ? 'polaroid-in 0.7s cubic-bezier(0.2,0.8,0.2,1.15) both' : `drop-in 0.8s cubic-bezier(0.2,0.8,0.2,1) ${delay + i * 0.09}s both` } as React.CSSProperties}>
               <Tilt className="rounded-md transition-transform duration-300 group-hover:-translate-y-2"><DiaryCover meta={m} /></Tilt>
             </Link>
           ))}
 
           <button type="button" onClick={() => setDialog(true)} data-ink
             className="group flex aspect-[3/4] flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed border-foreground/25 text-muted transition hover:border-foreground/60 hover:text-foreground"
-            style={{ rotate: `${tilt(mine.length)}deg`, animation: 'pop-in 0.6s ease-out both' }}>
+            style={{ rotate: `${tilt(mine.length)}deg`, animation: `drop-in 0.8s cubic-bezier(0.2,0.8,0.2,1) ${delay + mine.length * 0.09}s both` }}>
             <span className="text-5xl leading-none transition-transform duration-300 group-hover:rotate-90">+</span>
             <span className="font-mono text-[11px] uppercase tracking-[0.2em]">новый дневник</span>
           </button>
 
           {demo && (
-            <Link href={`/diary/${DEMO}/book`} onClick={open(demo, true)} className="group block opacity-80 transition-opacity hover:opacity-100"
-              style={{ rotate: `${tilt(mine.length + 1)}deg`, animation: 'pop-in 0.6s ease-out 0.2s both' }}>
+            <Link href={`/diary/${DEMO}/board`} onClick={open(demo, true)} className="group block opacity-80 transition-opacity hover:opacity-100"
+              style={{ rotate: `${tilt(mine.length + 1)}deg`, animation: `drop-in 0.8s cubic-bezier(0.2,0.8,0.2,1) ${delay + 0.1 + mine.length * 0.09}s both` }}>
               <Tilt className="rounded-md transition-transform duration-300 group-hover:-translate-y-2"><DiaryCover meta={demo} example /></Tilt>
             </Link>
           )}
