@@ -8,6 +8,7 @@ import { useStored, writeStored } from '@/lib/client/diaryKey';
 import { dayColor, groupByMonth, humanDate, localToday, monthGrid, monthLabel, onThisDay, yearsAgo, yearsWord } from '@/lib/archive';
 import type { DayRecord } from '@/lib/types';
 import { BookView } from './BookView';
+import { songLabel } from './MemoryPlayer';
 import { DayCard } from './DayCard';
 import { DiaryKey } from './DiaryKey';
 
@@ -64,7 +65,9 @@ function OnThisDay({ days }: { days: DayRecord[] }) {
   );
 }
 
-export function Archive({ diaryId, isDemo }: { diaryId: string; isDemo: boolean }) {
+export function Archive({ diaryId, isDemo, songs = [] }: { diaryId: string; isDemo: boolean; songs?: string[] }) {
+  const songParam = songs.join('\n');
+  const song = songParam;
   const router = useRouter();
   const [days, setDays] = useState<DayRecord[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,10 +80,10 @@ export function Archive({ diaryId, isDemo }: { diaryId: string; isDemo: boolean 
   useEffect(() => {
     let alive = true;
     const t = setTimeout(() => {
-      api.listDays(diaryId, q.trim()).then((d) => { if (alive) { setDays(d); setError(null); } }, (e) => alive && setError(e instanceof Error ? e.message : 'Не удалось открыть дневник'));
+      api.listDays(diaryId, q.trim(), songParam ? songParam.split('\n') : []).then((d) => { if (alive) { setDays(d); setError(null); } }, (e) => alive && setError(e instanceof Error ? e.message : 'Не удалось открыть дневник'));
     }, q ? 300 : 0);
     return () => { alive = false; clearTimeout(t); };
-  }, [diaryId, q]);
+  }, [diaryId, q, songParam]);
 
   const groups = useMemo(() => groupByMonth(days ?? []), [days]);
 
@@ -113,6 +116,14 @@ export function Archive({ diaryId, isDemo }: { diaryId: string; isDemo: boolean 
         )}
       </div>
 
+      {song && (
+        <div className="mb-8 flex flex-wrap items-baseline gap-3 rounded-sm border border-foreground/15 px-4 py-3">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">все дни песни</p>
+          <p className="font-hand text-2xl">♪ {days?.filter((d) => !d.sealed).map(songLabel).find(Boolean) ?? '…'}</p>
+          {days && <p className="font-mono text-xs text-muted">{days.length} дн.</p>}
+          <Link href={`/diary/${diaryId}`} className="ml-auto font-mono text-xs text-muted underline-offset-4 hover:text-foreground hover:underline">показать все дни</Link>
+        </div>
+      )}
       {error && <p className="text-red-700">{error}</p>}
       {!days && !error && <p className="font-mono text-xs text-muted">листаю дневник…</p>}
       {days && days.length === 0 && (
@@ -122,7 +133,7 @@ export function Archive({ diaryId, isDemo }: { diaryId: string; isDemo: boolean 
         </div>
       )}
 
-      {days && days.length > 0 && !q && <OnThisDay days={days} />}
+      {days && days.length > 0 && !q && !song && <OnThisDay days={days} />}
 
       {days && days.length > 0 && view === 'feed' && (
         <div className="-mx-4 flex snap-x gap-5 overflow-x-auto px-4 pb-6">
@@ -132,7 +143,7 @@ export function Archive({ diaryId, isDemo }: { diaryId: string; isDemo: boolean 
 
       {days && days.length > 0 && view === 'calendar' && <Calendar days={days} />}
 
-      {days && days.length > 0 && view === 'book' && <BookView days={days} title={isDemo ? 'Демо-дневник' : 'Мой дневник'} />}
+      {days && days.length > 0 && view === 'book' && <BookView days={days.filter((d) => !d.sealed)} title={isDemo ? 'Демо-дневник' : 'Мой дневник'} />}
 
       {days && days.length > 0 && view === 'grid' && groups.map(([month, list]) => (
         <section key={month} className="mb-10">

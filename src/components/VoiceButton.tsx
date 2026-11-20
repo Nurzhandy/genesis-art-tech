@@ -4,7 +4,8 @@ import { api } from '@/lib/client/api';
 import { announceVoice } from '@/lib/client/fade';
 import type { DayRecord, VoicePreset } from '@/lib/types';
 
-export function VoiceButton({ day }: { day: DayRecord }) {
+/** loadVoice — откуда взять голос; по умолчанию API дня (на странице подарка — готовый голос без id дня). */
+export function VoiceButton({ day, loadVoice }: { day: DayRecord; loadVoice?: () => Promise<{ url: string | null; preset: VoicePreset }> }) {
   const [state, setState] = useState<'idle' | 'loading' | 'playing'>('idle');
   const [preset, setPreset] = useState<VoicePreset | null>(day.voice?.preset ?? null);
   const audio = useRef<HTMLAudioElement | null>(null);
@@ -19,7 +20,7 @@ export function VoiceButton({ day }: { day: DayRecord }) {
     }
     setState('loading');
     try {
-      const r = await api.voice(day.id);
+      const r = await (loadVoice ? loadVoice() : api.voice(day.id));
       setPreset(r.preset);
       if (r.url) {
         audio.current ??= new Audio();

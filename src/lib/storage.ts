@@ -53,6 +53,11 @@ export async function moveFile(from: string, to: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function copyFile(from: string, to: string): Promise<void> {
+  const { error } = await supabaseAdmin().storage.from(BUCKET).copy(from, to);
+  if (error) throw error;
+}
+
 export interface StoredFile { path: string; size: number }
 
 /** Все файлы папки дня с размерами, рекурсивно (photos/, photos/thumb/). */

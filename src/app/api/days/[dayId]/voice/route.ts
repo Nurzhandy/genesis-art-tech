@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { getDayRow, isUuid, updateDay } from '@/lib/db';
+import { isSealed, serverToday } from '@/lib/capsule';
 import { handle, HttpError } from '@/lib/http';
 import { dayFiles, dayFolder, putFile, signRead } from '@/lib/storage';
 import { pickVoice } from '@/lib/voice/pickVoice';
@@ -11,6 +12,7 @@ export const POST = handle(async (_req: NextRequest, ctx: RouteContext<'/api/day
   const { dayId } = await ctx.params;
   const day = isUuid(dayId) ? await getDayRow(dayId) : null;
   if (!day || day.status !== 'ready' || !day.analysis) throw new HttpError(404, 'День не найден или ещё не собран');
+  if (isSealed(day, serverToday())) throw new HttpError(403, 'Капсула ещё запечатана');
   const preset = pickVoice(day.analysis, day.music);
   if (day.voice?.path) {
     const urls = await signRead([day.voice.path]);

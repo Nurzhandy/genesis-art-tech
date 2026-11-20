@@ -21,21 +21,22 @@ export function songLabel(day: DayRecord): string {
   return parts.length ? parts.join(' — ') : s.kind === 'file' ? 'своя песня' : '';
 }
 
-export function MemoryPlayer({ day, styleOverride }: { day: DayRecord; styleOverride?: StyleParams | null }) {
+export function MemoryPlayer({ day, styleOverride, savePoster = true }: { day: DayRecord; styleOverride?: StyleParams | null; savePoster?: boolean }) {
   const [open, setOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const meter = useRef<(() => number) | null>(null);
   // Постер рисуем для сохранённого стиля дня: заново после «Сохранить» в «Не совсем так?»,
   // но никогда — для несохранённого превью ползунков.
   const exportedFor = useRef<string | null>(null);
-  const latest = useRef({ day, styleOverride });
-  useEffect(() => { latest.current = { day, styleOverride }; });
+  const latest = useRef({ day, styleOverride, savePoster });
+  useEffect(() => { latest.current = { day, styleOverride, savePoster }; });
   const embed = day.song.kind === 'link' ? day.song.embedUrl : undefined;
 
   const engineRef = useRef<{ engine: Engine; styleKey: string } | null>(null);
   const tryExportPoster = useCallback(async () => {
-    const { day: d, styleOverride: preview } = latest.current;
-    if (!engineRef.current || preview || d.posterUrl || !d.style) return;
+    const { day: d, styleOverride: preview, savePoster: canSave } = latest.current;
+    // Гость по ссылке-подарку постер не сохраняет — это делает только плеер владельца.
+    if (!canSave || !engineRef.current || preview || d.posterUrl || !d.style) return;
     const key = JSON.stringify(d.style);
     // Снимаем постер только с холста, нарисованного именно этим стилем.
     if (engineRef.current.styleKey !== key || exportedFor.current === key) return;

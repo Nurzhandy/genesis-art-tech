@@ -4,6 +4,7 @@ import { generateDay } from '@/lib/generateDay';
 import { realDeps } from '@/lib/generateDeps';
 import { handle, HttpError, readJson } from '@/lib/http';
 import { withUrls } from '@/lib/db';
+import { revealable } from '@/lib/capsule';
 import { GenerateBody } from '@/lib/validation';
 
 export const maxDuration = 60;
@@ -14,5 +15,5 @@ export const POST = handle(async (req: NextRequest, ctx: RouteContext<'/api/days
   const body = GenerateBody.parse(await readJson(req));
   const day = await generateDay(dayId, body, realDeps());
   const [signed] = await withUrls([day]);
-  return Response.json(signed);
+  return Response.json(revealable(signed));
 });

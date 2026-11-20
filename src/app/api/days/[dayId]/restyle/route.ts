@@ -1,6 +1,7 @@
 // «Не совсем так?» (R10): поправка настроения → тот же движок правил, без нового вызова модели.
 import type { NextRequest } from 'next/server';
 import { assertCanEdit, getDayRow, isUuid, updateDay, withUrls } from '@/lib/db';
+import { isSealed, serverToday } from '@/lib/capsule';
 import { MoodOverrideInput, restyle } from '@/lib/dayEdits';
 import { handle, HttpError, readJson } from '@/lib/http';
 import { dayFiles, dayFolder, putFile } from '@/lib/storage';
@@ -11,6 +12,7 @@ export const POST = handle(async (req: NextRequest, ctx: RouteContext<'/api/days
   const day = isUuid(dayId) ? await getDayRow(dayId) : null;
   if (!day) throw new HttpError(404, 'День не найден');
   assertCanEdit(req, day);
+  if (isSealed(day, serverToday())) throw new HttpError(409, 'Капсула ещё запечатана');
   const override = MoodOverrideInput.parse(await readJson(req));
   const { style, moodOverride } = restyle(day, override, buildStyle);
 
