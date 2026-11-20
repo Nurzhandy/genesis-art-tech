@@ -2,6 +2,7 @@
 // «Не совсем так?» (ресерч R10): человек поправляет настроение, стиль пересчитывается без AI.
 import { useState } from 'react';
 import { api } from '@/lib/client/api';
+import { MoodBlob } from './MoodBlob';
 import type { DayRecord, MoodOverride } from '@/lib/types';
 
 export function MoodTuner({ day, value, onChange, onSaved }: {
@@ -35,7 +36,8 @@ export function MoodTuner({ day, value, onChange, onSaved }: {
   return (
     <section className="rounded-sm border border-foreground/15 p-5">
       <h2 className="mb-1 font-mono text-xs uppercase tracking-[0.2em] text-muted">Не совсем так?</h2>
-      <p className="mb-4 text-sm text-muted">Сдвиньте ползунки — воспоминание пересоберётся по тем же правилам, без нового анализа.</p>
+      <p className="mb-4 text-sm text-muted">Перетащите каплю или сдвиньте ползунки — воспоминание пересоберётся по тем же правилам, без нового анализа.</p>
+      <div className="mb-4"><MoodBlob value={v} base={day.style?.palette.accents[0] ?? '#b5653a'} onChange={(nv) => { setState('idle'); onChange(nv); }} /></div>
       <div className="space-y-4">
         {slider('warmth', 'холоднее', 'теплее')}
         {slider('energy', 'спокойнее', 'живее')}
