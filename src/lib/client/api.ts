@@ -3,7 +3,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { DayRecord, MoodOverride, MusicFeatures, PhotoFeatures, SongRef, VoicePreset } from '@/lib/types';
 import type { UploadFile } from '@/lib/validation';
-import { readDiaryId } from './diaryKey';
+import type { DiaryKind, DiaryMeta } from '@/lib/shelf';
+import { ownerHeaders } from './diaryKey';
 
 export interface SignedUpload { kind: UploadFile['kind']; index?: number; path: string; token: string; signedUrl: string }
 
@@ -25,7 +26,13 @@ function anon() {
 export type NewSong = SongRef extends infer S ? (S extends { kind: 'file' } ? { kind: 'file'; ext?: string; title?: string; artist?: string } : S) : never;
 
 export const api = {
-  createDiary: () => call<{ diaryId: string }>('/api/diaries', { method: 'POST' }),
+  createDiary: (body?: { title: string; kind: DiaryKind }) =>
+    call<{ diaryId: string }>('/api/diaries', { method: 'POST', body: JSON.stringify(body ?? {}) }),
+  // Полка (спека 2026-11-20): карточки дневников этого устройства, переименование.
+  shelf: (ids: string[]) => call<DiaryMeta[]>(`/api/diaries?ids=${encodeURIComponent(ids.slice(0, 50).join(','))}`),
+  diary: (id: string) => call<DiaryMeta>(`/api/diaries/${id}`),
+  renameDiary: (id: string, title: string) =>
+    call<DiaryMeta>(`/api/diaries/${id}`, { method: 'PATCH', headers: owner(), body: JSON.stringify({ title }) }),
   listDays: (diaryId: string, q = '', songs: string[] = []) => {
     const params = new URLSearchParams([...(q ? [['q', q]] : []), ...songs.map((s) => ['song', s])]).toString();
     return call<DayRecord[]>(`/api/diaries/${diaryId}/days${params ? `?${params}` : ''}`);
@@ -64,7 +71,4 @@ export const api = {
   },
 };
 
-function owner(): Record<string, string> {
-  const key = readDiaryId();
-  return key ? { 'x-diary-key': key } : {};
-}
+const owner = ownerHeaders;

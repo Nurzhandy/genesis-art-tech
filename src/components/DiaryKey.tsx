@@ -1,15 +1,16 @@
 'use client';
 // Ссылка-ключ дневника (A10 / R7). Логина нет: потерять ссылку = потерять дневник, поэтому просим её сохранить.
 import { useEffect, useState } from 'react';
-import { diaryLink, markKeySaved, rememberDiaryId, useKeySaved, useMyDiaryId } from '@/lib/client/diaryKey';
+import { addToShelf, diaryLink, markKeySaved, useKeySaved, useShelf } from '@/lib/client/diaryKey';
 
 export function DiaryKey({ diaryId }: { diaryId: string }) {
-  const stored = useMyDiaryId();
+  const shelf = useShelf();
   const saved = useKeySaved(diaryId);
   const [copied, setCopied] = useState(false);
 
   // Открыли ссылку-ключ на устройстве без дневника — значит, это владелец на новом устройстве.
-  useEffect(() => { if (stored === null) rememberDiaryId(diaryId); }, [stored, diaryId]);
+  // Открыли ссылку-ключ на устройстве без дневников — это владелец на новом устройстве: кладём дневник на полку.
+  useEffect(() => { if (shelf && shelf.length === 0) addToShelf(diaryId); }, [shelf, diaryId]);
 
   async function copy() {
     const link = diaryLink(diaryId);
@@ -23,13 +24,13 @@ export function DiaryKey({ diaryId }: { diaryId: string }) {
     setTimeout(() => setCopied(false), 2500);
   }
 
-  if (stored === undefined || saved === undefined) return null;
+  if (shelf === undefined || saved === undefined) return null;
 
-  if (stored !== null && stored !== diaryId) {
+  if (shelf.length > 0 && !shelf.includes(diaryId)) {
     return (
-      <button type="button" onClick={() => rememberDiaryId(diaryId)}
+      <button type="button" onClick={() => addToShelf(diaryId)}
         className="mb-6 font-mono text-[11px] uppercase tracking-wider text-muted underline-offset-4 hover:text-foreground hover:underline">
-        Это мой дневник — запомнить на этом устройстве
+        Это мой дневник — положить на полку этого устройства
       </button>
     );
   }

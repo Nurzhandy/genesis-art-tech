@@ -38,7 +38,13 @@ export const DIARY_KEY_HEADER = 'x-diary-key';
  */
 export function assertCanEdit(req: Request, day: DayRecord): void {
   if (day.diaryId === demoDiaryId() && process.env.ALLOW_DEMO_WRITES !== '1') throw new HttpError(403, 'Демо-дневник только для просмотра');
-  if (req.headers.get(DIARY_KEY_HEADER) !== day.diaryId) throw new HttpError(403, 'Менять день может только владелец дневника');
+  // На устройстве может быть полка из нескольких дневников: в заголовке все её ключи через запятую.
+  if (!ownsDiary(req, day.diaryId)) throw new HttpError(403, 'Менять день может только владелец дневника');
+}
+
+/** Есть ли ключ этого дневника среди ключей, присланных браузером. */
+export function ownsDiary(req: Request, diaryId: string): boolean {
+  return (req.headers.get(DIARY_KEY_HEADER) ?? '').split(',').map((k) => k.trim()).includes(diaryId);
 }
 
 export function urlPaths(d: DayRecord): string[] {

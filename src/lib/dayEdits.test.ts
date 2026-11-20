@@ -131,4 +131,9 @@ describe('assertCanEdit', () => {
     expect(() => assertCanEdit(req(), ready())).toThrow(HttpError);
     expect(() => assertCanEdit(req('demo'), ready({ diaryId: 'demo' }))).toThrow('Демо');
   });
+  it('с полкой в заголовке идут все ключи устройства: подходит, если среди них есть ключ этого дневника', () => {
+    expect(() => assertCanEdit(req('d9, d1'), ready())).not.toThrow();
+    expect(() => assertCanEdit(req('d9,d2'), ready())).toThrow('владелец');
+    expect(() => assertCanEdit(req('d1x,xd1'), ready())).toThrow('владелец');
+  });
 });
