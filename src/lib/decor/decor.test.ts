@@ -26,6 +26,11 @@ describe('украшения страницы', () => {
     expect(DecorSchema.safeParse({ v: 1, source: 'user', items: [text('я'.repeat(80))] }).success).toBe(true);
     expect(DecorSchema.safeParse({ v: 1, source: 'user', items: [text('я'.repeat(81))] }).success).toBe(false);
   });
+  it('сияющая кисть: симметрия 1, 2, 4 или 6 лучей', () => {
+    const stroke = (sym: number) => ({ id: 'g', kind: 'stroke', points: [10, 10, 20, 20], width: 5, color: 'a0', glow: true, sym });
+    expect(DecorSchema.safeParse({ v: 1, source: 'user', items: [stroke(4)] }).success).toBe(true);
+    expect(DecorSchema.safeParse({ v: 1, source: 'user', items: [stroke(3)] }).success).toBe(false);
+  });
   it('координаты в пределах холста 1080×1920, неизвестная форма отклоняется', () => {
     expect(DecorSchema.safeParse({ v: 1, source: 'user', items: [{ ...sticker(0), x: 5000 }] }).success).toBe(false);
     expect(DecorSchema.safeParse({ v: 1, source: 'user', items: [{ ...sticker(0), shape: 'unicorn' }] }).success).toBe(false);

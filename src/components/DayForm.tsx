@@ -8,6 +8,7 @@ import type { UploadFile } from '@/lib/validation';
 import { processPhoto } from '@/lib/client/imageProcess';
 import { SAMPLE, samplePhotoFiles } from '@/lib/client/sample';
 import { DayTextInput } from './DayTextInput';
+import { RotatingQuestion } from './RotatingQuestion';
 import { GenerateProgress } from './GenerateProgress';
 import { PhotoPicker, type PickedPhoto } from './PhotoPicker';
 import { SongInput, type SongState } from './SongInput';
@@ -24,7 +25,7 @@ const addDays = (iso: string, n: number) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export function DayForm({ diaryId, prompt }: { diaryId: string; prompt?: string }) {
+export function DayForm({ diaryId, prompt, questions }: { diaryId: string; prompt?: string; questions?: string[] }) {
   const router = useRouter();
   const [date, setDate] = useState(today);
   const [text, setText] = useState('');
@@ -150,6 +151,7 @@ export function DayForm({ diaryId, prompt }: { diaryId: string; prompt?: string 
 
       <section>
         <label className="mb-2 block font-mono text-xs uppercase tracking-[0.2em] text-muted" htmlFor="text">как прошёл день</label>
+        {questions && <RotatingQuestion questions={questions} paused={text.length > 0} />}
         <DayTextInput value={text} onChange={setText} placeholder={prompt} />
       </section>
 

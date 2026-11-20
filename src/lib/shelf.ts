@@ -18,6 +18,16 @@ export const DIARY_KINDS: Record<DiaryKind, { label: string; icon: string; cover
   custom: { label: 'свой', icon: '❀', cover: '#7a4a6a', prompt: 'Расскажите о дне так, как хочется…', defaultTitle: 'Новый дневник' },
 };
 
+/** Вопросы над полем записи (ресерч 20.11, W9 по мотивам Stoic): сменяют друг друга и подсказывают детали. */
+const COMMON_QUESTIONS = ['Какая была погода?', 'Чем пахло?', 'Какой звук запомнился?', 'Кто был рядом?', 'Какой был свет?', 'Какая мелочь запомнилась?'];
+export const KIND_QUESTIONS: Record<DiaryKind, string[]> = {
+  memories: ['Что сегодня хочется запомнить?', ...COMMON_QUESTIONS],
+  travel: ['Где вы были сегодня?', 'Что удивило в дороге?', 'Как звучал этот город?', ...COMMON_QUESTIONS],
+  work: ['Что сегодня получилось?', 'Кто был в команде?', 'Что звучало в наушниках?', 'Какой был свет за окном?', 'Что хочется запомнить из этого дня?'],
+  insights: ['Какая мысль не отпускает?', 'Где она пришла?', 'Что звучало в этот момент?', 'Что было перед глазами?', 'Кому хочется её рассказать?'],
+  custom: ['Каким был ваш день?', ...COMMON_QUESTIONS],
+};
+
 export const DiaryKindSchema = z.enum(['memories', 'travel', 'work', 'insights', 'custom']);
 export const NewDiaryInput = z.object({ title: z.string().trim().min(1).max(60), kind: DiaryKindSchema });
 export const RenameDiaryInput = z.object({ title: z.string().trim().min(1).max(60) });

@@ -32,6 +32,9 @@ export const StrokeItem = z.object({
   id: Id, kind: z.literal('stroke'),
   points: z.array(z.number().min(-200).max(2120)).min(2).max(MAX_POINTS * 2).refine((p) => p.length % 2 === 0, 'точки парами x,y'),
   width: z.union([z.literal(2), z.literal(5), z.literal(10)]), color: Color,
+  // Сияющая кисть (ресерч 20.11, W8, по мотивам Silk): свечение и симметрия вокруг центра страницы.
+  glow: z.boolean().optional(),
+  sym: z.union([z.literal(1), z.literal(2), z.literal(4), z.literal(6)]).optional(),
 });
 export const DecorItemSchema = z.discriminatedUnion('kind', [StickerItem, TextItem, StrokeItem]);
 export const DecorSchema = z.object({ v: z.literal(1), source: z.enum(['auto', 'user']), items: z.array(DecorItemSchema).max(MAX_ITEMS) });

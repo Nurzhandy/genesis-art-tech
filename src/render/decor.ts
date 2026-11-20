@@ -58,6 +58,45 @@ function drawStroke(g: CanvasRenderingContext2D, pts: number[], width: number, c
   g.stroke();
 }
 
+const CANVAS_W = 1080, CANVAS_H = 1920;
+
+/**
+ * Сияющая кисть (W8): мазок повторяется n раз вокруг центра страницы и отражается, как узор в калейдоскопе;
+ * свечение — мягкий ореол цвета палитры и светлая сердцевина.
+ */
+function drawGlowStroke(g: CanvasRenderingContext2D, pts: number[], width: number, color: string, sym: number, glow: boolean) {
+  const passes: { mirror: boolean; angle: number }[] = [];
+  for (let k = 0; k < sym; k++) {
+    passes.push({ mirror: false, angle: (k / sym) * Math.PI * 2 });
+    if (sym > 1) passes.push({ mirror: true, angle: (k / sym) * Math.PI * 2 });
+  }
+  const each = (fn: () => void) => {
+    for (const p of passes) {
+      g.save();
+      g.translate(CANVAS_W / 2, CANVAS_H / 2);
+      g.rotate(p.angle);
+      if (p.mirror) g.scale(-1, 1);
+      g.translate(-CANVAS_W / 2, -CANVAS_H / 2);
+      fn();
+      g.restore();
+    }
+  };
+  if (glow) {
+    g.save();
+    g.shadowColor = color;
+    g.shadowBlur = 28 + width * 3;
+    g.globalAlpha = 0.55;
+    each(() => drawStroke(g, pts, width * 2.2, color));
+    g.restore();
+    g.save();
+    g.globalAlpha = 0.9;
+    each(() => drawStroke(g, pts, Math.max(1, width * 0.55), 'rgba(255,255,255,0.85)'));
+    g.restore();
+  } else {
+    each(() => drawStroke(g, pts, width, color));
+  }
+}
+
 export function drawDecorItem(g: CanvasRenderingContext2D, it: DecorItem, palette: StyleParams['palette'], fonts: Fonts) {
   const color = resolveColor(it.color, palette);
   g.save();
@@ -73,6 +112,8 @@ export function drawDecorItem(g: CanvasRenderingContext2D, it: DecorItem, palett
     g.textBaseline = 'middle';
     g.fillStyle = color;
     g.fillText(it.text, 0, 0);
+  } else if (it.glow || (it.sym ?? 1) > 1) {
+    drawGlowStroke(g, it.points, it.width, color, it.sym ?? 1, !!it.glow);
   } else {
     drawStroke(g, it.points, it.width, color);
   }

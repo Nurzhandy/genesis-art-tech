@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DIARY_KINDS, migrateShelf, NewDiaryInput, parseShelf } from './shelf';
+import { DIARY_KINDS, KIND_QUESTIONS, migrateShelf, NewDiaryInput, parseShelf } from './shelf';
 
 describe('полка дневников', () => {
   it('читает список ключей и не падает на мусоре', () => {
@@ -24,6 +24,13 @@ describe('полка дневников', () => {
     for (const k of Object.values(DIARY_KINDS)) {
       expect(k.label && k.icon && k.prompt && k.defaultTitle).toBeTruthy();
       expect(k.cover).toMatch(/^#[0-9a-f]{6}$/i);
+    }
+  });
+  it('у каждого вида есть хотя бы 5 вопросов-подсказок, без повторов', () => {
+    for (const list of Object.values(KIND_QUESTIONS)) {
+      expect(list.length).toBeGreaterThanOrEqual(5);
+      expect(new Set(list).size).toBe(list.length);
+      for (const q of list) expect(q.endsWith('?')).toBe(true);
     }
   });
 });

@@ -30,6 +30,8 @@ export function DecorEditor({ day, style, onSaved, onClose }: { day: DayRecord; 
   const [tool, setTool] = useState<Tool>('move');
   const [color, setColor] = useState<DecorColor>('a0');
   const [brush, setBrush] = useState<(typeof BRUSH)[number]>(5);
+  const [glow, setGlow] = useState(false);
+  const [sym, setSym] = useState<1 | 2 | 4 | 6>(1);
   const [text, setText] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export function DecorEditor({ day, style, onSaved, onClose }: { day: DayRecord; 
     g.clearRect(0, 0, W, H);
     for (const it of items) drawDecorItem(g, it, palette, fonts);
     if (live.current && live.current.length >= 2) {
-      drawDecorItem(g, { id: 'live', kind: 'stroke', points: live.current, width: brush, color }, palette, fonts);
+      drawDecorItem(g, { id: 'live', kind: 'stroke', points: live.current, width: brush, color, glow, sym }, palette, fonts);
     }
     if (sel && sel.kind !== 'stroke') {
       const r = radius(sel, g, fonts);
@@ -66,7 +68,7 @@ export function DecorEditor({ day, style, onSaved, onClose }: { day: DayRecord; 
       g.beginPath(); g.arc(sel.x, sel.y, r + 14, 0, Math.PI * 2); g.stroke();
       g.restore();
     }
-  }, [items, palette, fonts, sel, brush, color]);
+  }, [items, palette, fonts, sel, brush, color, glow, sym]);
   useEffect(redraw, [redraw]);
 
   const toCanvas = (e: React.PointerEvent) => {
@@ -121,7 +123,7 @@ export function DecorEditor({ day, style, onSaved, onClose }: { day: DayRecord; 
   function finishStroke(continueAfter = false) {
     const pts = live.current;
     live.current = continueAfter && pts ? [pts[pts.length - 2], pts[pts.length - 1]] : null;
-    if (pts && pts.length >= 2) commit([...items, { id: uid(), kind: 'stroke', points: pts, width: brush, color }]);
+    if (pts && pts.length >= 2) commit([...items, { id: uid(), kind: 'stroke', points: pts, width: brush, color, ...(glow ? { glow } : {}), ...(sym > 1 ? { sym } : {}) }]);
   }
 
   function onUp() {
@@ -195,6 +197,16 @@ export function DecorEditor({ day, style, onSaved, onClose }: { day: DayRecord; 
             <button key={b} type="button" aria-label={`Толщина ${b}`} onClick={() => setBrush(b)}
               className={`grid h-7 w-7 place-items-center rounded-full border ${brush === b ? 'border-foreground' : 'border-foreground/20'}`}>
               <span className="rounded-full bg-current" style={{ width: b + 2, height: b + 2 }} />
+            </button>
+          ))}
+          {tool === 'brush' && (
+            <button type="button" onClick={() => setGlow((v) => !v)} aria-pressed={glow} title="Сияющая кисть"
+              className={`${btn} ${glow ? 'bg-foreground text-background' : ''}`}>✦ сияние</button>
+          )}
+          {tool === 'brush' && ([1, 2, 4, 6] as const).map((n) => (
+            <button key={n} type="button" onClick={() => setSym(n)} aria-pressed={sym === n} title={n === 1 ? 'Без симметрии' : `Симметрия: ${n} ${n === 6 ? 'лучей' : 'луча'}`}
+              className={`grid h-7 min-w-7 place-items-center rounded-full border px-1.5 font-mono text-[11px] ${sym === n ? 'border-foreground bg-foreground text-background' : 'border-foreground/20'}`}>
+              {n === 1 ? '—' : `✳${n}`}
             </button>
           ))}
           <span className="ml-auto flex gap-1.5" role="radiogroup" aria-label="Цвет из палитры дня">

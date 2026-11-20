@@ -7,6 +7,7 @@ import { humanDate } from '@/lib/archive';
 import type { DayRecord } from '@/lib/types';
 import { songOfYear, warmestWeek, yearDays, yearGrid, yearsOf, type YearCell } from '@/lib/year';
 import { download } from '@/render/exportDay';
+import { YearMosaic } from './YearMosaic';
 
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 const shortDate = (d: string) => humanDate(d).replace(/ \d{4}$/, '');
@@ -45,6 +46,7 @@ async function yearPng(grid: YearCell[][], year: number, lines: string[]): Promi
 export function YearView({ diaryId, year }: { diaryId: string; year: number }) {
   const [days, setDays] = useState<DayRecord[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<'mosaic' | 'grid'>('mosaic');
   useEffect(() => {
     let alive = true;
     api.listDays(diaryId).then((d) => alive && setDays(d), (e) => alive && setError(e instanceof Error ? e.message : 'Не удалось открыть дневник'));
@@ -75,7 +77,14 @@ export function YearView({ diaryId, year }: { diaryId: string; year: number }) {
           ))}
         </div>
       )}
-      <div className="overflow-x-auto pb-4">
+      <div className="mb-4 inline-flex rounded-full border border-foreground/20 p-0.5 font-mono text-xs" role="tablist">
+        {([['mosaic', 'мозаика'], ['grid', 'сетка']] as const).map(([m, label]) => (
+          <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}
+            className={`rounded-full px-3 py-1 ${mode === m ? 'bg-foreground text-background' : 'text-muted hover:text-foreground'}`}>{label}</button>
+        ))}
+      </div>
+      {mode === 'mosaic' && <YearMosaic grid={data.grid} days={data.list} />}
+      <div className={`overflow-x-auto pb-4 ${mode === 'mosaic' ? 'hidden' : ''}`}>
         <div className="inline-grid min-w-[640px] grid-cols-[36px_repeat(31,minmax(14px,1fr))] gap-[3px]">
           <span />
           {Array.from({ length: 31 }, (_, i) => <span key={i} className="text-center font-mono text-[9px] text-muted">{(i + 1) % 5 === 0 || i === 0 ? i + 1 : ''}</span>)}
