@@ -13,6 +13,7 @@ import { ExportPanel } from './ExportPanel';
 import { PhotoStack } from './PhotoStack';
 import { PageAtmosphere } from './fx/PageAtmosphere';
 import { VoiceRecorder } from './VoiceRecorder';
+import { DecorEditor } from './decor/DecorEditor';
 import { songKeys } from '@/lib/music/songKey';
 import { humanDate } from '@/lib/archive';
 import { ritualFor } from '@/lib/ritual';
@@ -25,6 +26,7 @@ export function DayView({ dayId, from = null }: { dayId: string; from?: string |
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [override, setOverride] = useState<MoodOverride | null | undefined>(undefined);
+  const [decorating, setDecorating] = useState(false);
   // Холст пересобирается не на каждый шаг ползунка, а после паузы 300 мс.
   const [settled, setSettled] = useState<MoodOverride | null | undefined>(undefined);
   useEffect(() => {
@@ -108,7 +110,20 @@ export function DayView({ dayId, from = null }: { dayId: string; from?: string |
     <div className="grid gap-10 lg:grid-cols-[minmax(0,440px)_1fr]">
       {(preview ?? day.style) && <PageAtmosphere style={(preview ?? day.style)!} />}
       {/* После сохранения поправки плеер собирается заново и сохраняет новый постер (старый сброшен на сервере). */}
-      <MemoryPlayer key={`${day.moodOverride?.warmth ?? 0}:${day.moodOverride?.energy ?? 0}`} day={day} styleOverride={preview} ritual={ritualFor(day, from)} />
+      {decorating && day.style ? (
+        <DecorEditor day={day} style={day.style} onClose={() => setDecorating(false)} onSaved={(d) => { setDay(d); setDecorating(false); }} />
+      ) : (
+        <div className="flex flex-col gap-3">
+          <MemoryPlayer key={`${day.moodOverride?.warmth ?? 0}:${day.moodOverride?.energy ?? 0}:${day.decor?.items.length ?? 0}`} day={day} styleOverride={preview} ritual={ritualFor(day, from)} />
+          {mine && day.style && (
+            // Свободная страница (спека 2026-11-20): человек дополняет собранное системой своими стикерами, текстом и рисунком.
+            <button type="button" data-magnetic onClick={() => setDecorating(true)}
+              className="mx-auto rounded-full border border-foreground/30 px-5 py-2.5 font-mono text-xs uppercase tracking-[0.15em] transition-colors hover:bg-foreground hover:text-background">
+              ✎ Украсить страницу
+            </button>
+          )}
+        </div>
+      )}
       <div className="flex flex-col gap-6">
         <header>
           <Link href={`/diary/${day.diaryId}`} className="font-mono text-xs uppercase tracking-[0.2em] text-muted hover:text-foreground">← дневник</Link>
