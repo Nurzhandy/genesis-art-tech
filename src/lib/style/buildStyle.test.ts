@@ -256,3 +256,9 @@ describe('buildStyle: погода и обложка альбома (план 20
     expect(withWx('autumn-park', { tempC: -12 }).reasons.some((r) => r.param === 'weather' && /−12|-12/.test(r.because))).toBe(true);
   });
 });
+
+describe('buildStyle: звук дня в причинах (B4)', () => {
+  it('у атмосферы указан её звук', () => {
+    expect(s('rainy-alone').reasons.find((r) => r.param === 'atmosphere')?.because).toMatch(/звук: шум дождя и капли/);
+  });
+});

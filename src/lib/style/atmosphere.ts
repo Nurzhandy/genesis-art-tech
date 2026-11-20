@@ -1,5 +1,6 @@
 // Атмосферный слой (ресерч R3): листья, снег, дождь, пар, пыль в луче, огни — по правилу, с причиной.
 import type { AtmosphereKind, StyleInput, StyleReason } from '@/lib/types';
+import { soundscapeFor } from '@/lib/sound/recipes';
 import { clamp01, round, signals } from './signals';
 
 /** Слова дня: детали, сюжеты фото, слова настроения, подпись — разбитые на токены. */
@@ -49,6 +50,6 @@ export function buildAtmosphere(input: StyleInput): { atmosphere: { kind: Atmosp
   const amount = round(clamp01(0.3 + 0.5 * s.energy), 3);
   return {
     atmosphere: { kind, amount },
-    reason: { param: 'atmosphere', because: `${why}, плотность ${amount} от энергии песни, скорость — от ${s.bpm} BPM` },
+    reason: { param: 'atmosphere', because: `${why}, плотность ${amount} от энергии песни, скорость — от ${s.bpm} BPM; звук: ${soundscapeFor(kind).label}` },
   };
 }

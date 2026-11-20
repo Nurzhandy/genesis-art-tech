@@ -1,4 +1,5 @@
 'use client';
+import { playPageFlip } from '@/lib/sound/player';
 // Режим «Книга» (ресерч S1, docs/research/scrapbook-flipbook.md): дневник листается как настоящая книга.
 // Обложка — в среднем цвете всех дней; на развороте слева воспоминание дня, справа запись от руки.
 // Листание — библиотека StPageFlip (page-flip). Она переносит страницы в свой DOM, поэтому React рисует
@@ -57,6 +58,8 @@ export function BookView({ days, title }: { days: DayRecord[]; title: string }) 
       });
       flip.loadFromHTML(pages);
       flip.on('flip', (e) => setPage(Number(e.data)));
+      // Шорох страницы в начале перелистывания (план 20.11, B4).
+      flip.on('changeState', (e) => { if (e.data === 'flipping') playPageFlip(); });
       flipRef.current = flip;
       setTotal(pages.length);
     });

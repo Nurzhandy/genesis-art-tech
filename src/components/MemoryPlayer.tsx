@@ -3,6 +3,8 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/client/api';
 import { fadeVolume, VOICE_DUCK, VOICE_EVENT } from '@/lib/client/fade';
+import { playPageFlip, startSoundscape, type SoundscapePlayer } from '@/lib/sound/player';
+import { AMBIENT_LEVEL, soundscapeFor } from '@/lib/sound/recipes';
 import type { DayRecord, StyleParams } from '@/lib/types';
 import type { Engine } from '@/render/engine';
 import { exportPoster } from '@/render/poster';
@@ -53,8 +55,28 @@ export function MemoryPlayer({ day, styleOverride }: { day: DayRecord; styleOver
   // После «Сохранить» стиль тот же, что в превью, и холст не пересоздаётся — проверяем постер по смене дня.
   useEffect(() => { void tryExportPoster(); }, [day, styleOverride, tryExportPoster]);
 
+  // Звуки дня под атмосферный слой (план 20.11, B4); выбор человека помним.
+  const scapeRef = useRef<SoundscapePlayer | null>(null);
+  const [ambientOn, setAmbientOn] = useState(() => {
+    try { return localStorage.getItem('diary-ambient') !== 'off'; } catch { return true; }
+  });
+  const atmosphereKind = (styleOverride ?? day.style)?.atmosphere?.kind ?? 'none';
+  function startAmbient() {
+    scapeRef.current?.stop();
+    scapeRef.current = startSoundscape(soundscapeFor(atmosphereKind));
+    scapeRef.current?.setLevel(AMBIENT_LEVEL, 2000);
+  }
+  function toggleAmbient() {
+    const next = !ambientOn;
+    setAmbientOn(next);
+    try { localStorage.setItem('diary-ambient', next ? 'on' : 'off'); } catch { /* не критично */ }
+    if (next) startAmbient(); else { scapeRef.current?.stop(); scapeRef.current = null; }
+  }
+
   function start() {
     setOpen(true);
+    playPageFlip();
+    if (ambientOn) startAmbient();
     if (day.songUrl) {
       const a = audioRef.current ?? new Audio();
       audioRef.current = a;
@@ -68,7 +90,7 @@ export function MemoryPlayer({ day, styleOverride }: { day: DayRecord; styleOver
     }
   }
 
-  useEffect(() => () => { audioRef.current?.pause(); }, []);
+  useEffect(() => () => { audioRef.current?.pause(); scapeRef.current?.stop(); }, []);
 
   function toggleSong() {
     const a = audioRef.current;
@@ -80,9 +102,10 @@ export function MemoryPlayer({ day, styleOverride }: { day: DayRecord; styleOver
   // Пока звучит озвучка, музыка тише (25%), потом плавно возвращается.
   useEffect(() => {
     const onVoice = (e: Event) => {
+      const speaking = (e as CustomEvent<{ speaking: boolean }>).detail.speaking;
+      scapeRef.current?.setLevel(speaking ? AMBIENT_LEVEL * VOICE_DUCK : AMBIENT_LEVEL, speaking ? 600 : 1500);
       const a = audioRef.current;
       if (!a || a.paused) return;
-      const speaking = (e as CustomEvent<{ speaking: boolean }>).detail.speaking;
       fadeVolume(a, speaking ? VOICE_DUCK : 1, speaking ? 600 : 1500);
     };
     window.addEventListener(VOICE_EVENT, onVoice);
@@ -111,9 +134,16 @@ export function MemoryPlayer({ day, styleOverride }: { day: DayRecord; styleOver
           <span className="rounded-full border px-6 py-3 font-mono text-sm uppercase tracking-[0.15em]" style={{ borderColor: style.palette.ink }}>▶ Открыть день</span>
           {songLabel(day) && <span className="font-hand text-2xl opacity-80">♪ {songLabel(day)}</span>}
         </button>
-        {open && day.songUrl && (
-          <button type="button" onClick={toggleSong}
-            className="absolute right-3 top-3 rounded-full bg-black/50 px-3 py-1.5 font-mono text-[11px] text-white">♪ звук</button>
+        {open && (day.songUrl || atmosphereKind !== 'none') && (
+          <div className="absolute right-3 top-3 flex gap-1.5">
+            {atmosphereKind !== 'none' && (
+              <button type="button" onClick={toggleAmbient} aria-pressed={ambientOn} title={soundscapeFor(atmosphereKind).label}
+                className={`rounded-full px-3 py-1.5 font-mono text-[11px] text-white ${ambientOn ? 'bg-black/50' : 'bg-black/25 line-through'}`}>≈ звуки дня</button>
+            )}
+            {day.songUrl && (
+              <button type="button" onClick={toggleSong} className="rounded-full bg-black/50 px-3 py-1.5 font-mono text-[11px] text-white">♪ звук</button>
+            )}
+          </div>
         )}
         {/* Песня как предмет (S2): пластинка, кассета, CD или стикер на холсте — по клику песня играет или замолкает. */}
         {open && day.songUrl && style.songObject && (
