@@ -7,7 +7,7 @@ export type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
 const TIMEOUT_MS = 5000;
 /** Архив Open-Meteo отстаёт на несколько дней — свежие даты берём из прогноза с прошлыми днями. */
 const ARCHIVE_LAG_DAYS = 6;
-const DAILY = 'temperature_2m_mean,precipitation_sum,snowfall_sum,cloud_cover_mean';
+const DAILY = 'temperature_2m_mean,precipitation_sum,snowfall_sum,cloud_cover_mean,wind_speed_10m_max,wind_direction_10m_dominant';
 
 const r1 = (v: number) => Math.round(v * 10) / 10;
 
@@ -32,7 +32,7 @@ export async function geocode(place: string, fetcher: Fetcher = fetch): Promise<
 export function weatherUrl(lat: number, lon: number, date: string, now = new Date()): string {
   const ageDays = (now.getTime() - new Date(`${date}T00:00:00Z`).getTime()) / 86_400_000;
   const host = ageDays > ARCHIVE_LAG_DAYS ? 'https://archive-api.open-meteo.com/v1/archive' : 'https://api.open-meteo.com/v1/forecast';
-  return `${host}?latitude=${lat}&longitude=${lon}&start_date=${date}&end_date=${date}&daily=${DAILY}&timezone=auto`;
+  return `${host}?latitude=${lat}&longitude=${lon}&start_date=${date}&end_date=${date}&daily=${DAILY}&wind_speed_unit=ms&timezone=auto`;
 }
 
 export function parseDaily(body: unknown): Omit<DayWeather, 'place'> | null {
@@ -48,6 +48,9 @@ export function parseDaily(body: unknown): Omit<DayWeather, 'place'> | null {
     precipitationMm: r1(Math.max(0, first('precipitation_sum') ?? 0)),
     snowfallCm: r1(Math.max(0, first('snowfall_sum') ?? 0)),
     cloudCover: Math.round(Math.min(100, Math.max(0, first('cloud_cover_mean') ?? 50))),
+    // B11 V11: ветер двигает мазки и осадки. Нет данных — поля не пишем.
+    ...(first('wind_speed_10m_max') !== null ? { windMs: r1(first('wind_speed_10m_max')!) } : {}),
+    ...(first('wind_direction_10m_dominant') !== null ? { windDeg: Math.round(first('wind_direction_10m_dominant')!) } : {}),
   };
 }
 

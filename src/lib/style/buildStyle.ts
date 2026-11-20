@@ -92,6 +92,7 @@ export function buildStyle(input: StyleInput): StyleParams {
   const { visual, reasons: visualReasons } = buildVisual(input);
   const { songObject, reason: songObjectReason } = buildSongObject(input);
   reasons.push(songObjectReason, ...visualReasons);
+  if (t.primary === 'impressionist') reasons.push({ param: 'detail', because: 'Глаз смотрит на детали → там, где на фото края и лица, мазки мельче и гуще; фон — крупный подмалёвок' });
   if (s.energy > 0.6 || s.energy < 0.3)
     reasons.push({ param: 'jitter', because: `Энергия песни ${round(s.energy, 2)} → ${s.energy > 0.6 ? 'фигуры и мазки дрожат и пульсируют' : 'движение почти неподвижное'}` });
 

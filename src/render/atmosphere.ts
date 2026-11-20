@@ -38,12 +38,17 @@ export function createAtmosphere(style: StyleParams, W: number, H: number) {
     const g = rc.ctx;
     const t = motionTime(pt.t);
     const pulse = rc.energy(pt);
+    // B11 V11: ветер того дня сносит частицы и наклоняет дождь (без данных о ветре — как раньше).
+    const wind = style.visual?.wind ?? { angle: Math.PI / 2, strength: 0 };
+    const windX = Math.cos(wind.angle) * wind.strength;
+    const drift = windX * 160 * t;
+    const slant = 0.12 + windX * 0.6;
     g.save();
     switch (atm.kind) {
       case 'leaves':
         for (const p of parts) {
           const y = wrap(p.y + t * 70 * tempo * p.v, H + 60) - 30;
-          const x = wrap(p.x + Math.sin(t * 0.9 * p.v + p.ph) * 40 + t * 12, W);
+          const x = wrap(drift + p.x + Math.sin(t * 0.9 * p.v + p.ph) * 40 + t * 12, W);
           const size = 14 + p.s * 20;
           g.save();
           g.translate(x, y);
@@ -63,7 +68,7 @@ export function createAtmosphere(style: StyleParams, W: number, H: number) {
         g.fillStyle = 'rgba(255,255,255,0.85)';
         for (const p of parts) {
           const y = wrap(p.y + t * 45 * tempo * p.v, H + 20) - 10;
-          const x = wrap(p.x + Math.sin(t * 0.6 + p.ph) * 25, W);
+          const x = wrap(drift + p.x + Math.sin(t * 0.6 + p.ph) * 25, W);
           g.globalAlpha = 0.45 + 0.5 * p.s;
           g.beginPath(); g.arc(x, y, 1.5 + p.s * 4, 0, Math.PI * 2); g.fill();
         }
@@ -75,17 +80,17 @@ export function createAtmosphere(style: StyleParams, W: number, H: number) {
         for (const p of parts) {
           const len = 24 + p.s * 36;
           const y = wrap(p.y + t * 900 * tempo * p.v, H + len) - len;
-          const x = wrap(p.x + y * 0.12, W);
+          const x = wrap(drift + p.x + y * slant, W);
           g.globalAlpha = 0.25 + 0.45 * p.s;
           g.lineWidth = 1 + p.s * 1.6;
-          g.beginPath(); g.moveTo(x, y); g.lineTo(x + len * 0.12, y + len); g.stroke();
+          g.beginPath(); g.moveTo(x, y); g.lineTo(x + len * slant, y + len); g.stroke();
         }
         break;
       case 'mist':
         g.globalCompositeOperation = 'screen';
         for (const p of parts) {
           const r = 260 + p.s * 340;
-          const x = wrap(p.x + t * 18 * p.v, W + r * 2) - r;
+          const x = wrap(drift + p.x + t * 18 * p.v, W + r * 2) - r;
           const y = p.y * 0.8 + Math.sin(t * 0.3 + p.ph) * 40 - t * 6 * p.v % (H * 0.3);
           const gr = g.createRadialGradient(x, y, 0, x, y, r);
           gr.addColorStop(0, rgba(style.palette.paper, 0.16 * atm.amount + 0.06));
@@ -105,7 +110,7 @@ export function createAtmosphere(style: StyleParams, W: number, H: number) {
         g.fillRect(0, 0, W, H);
         g.fillStyle = 'rgba(255,245,220,0.9)';
         for (const p of parts) {
-          const x = wrap(p.x + noise2(p.ph, t * 0.08, 5) * 120 - 60 + t * 4, W);
+          const x = wrap(drift + p.x + noise2(p.ph, t * 0.08, 5) * 120 - 60 + t * 4, W);
           const y = wrap(p.y - t * 8 * p.v + noise2(t * 0.08, p.ph, 6) * 80, H);
           g.globalAlpha = clamp(0.2 + 0.7 * p.s * (0.6 + 0.4 * Math.sin(t * 2 + p.ph)));
           g.beginPath(); g.arc(x, y, 1 + p.s * 2.4, 0, Math.PI * 2); g.fill();
@@ -115,7 +120,7 @@ export function createAtmosphere(style: StyleParams, W: number, H: number) {
       case 'lights':
         g.globalCompositeOperation = 'screen';
         for (const p of parts) {
-          const x = wrap(p.x + Math.sin(t * 0.2 + p.ph) * 20, W);
+          const x = wrap(drift + p.x + Math.sin(t * 0.2 + p.ph) * 20, W);
           const y = wrap(p.y + Math.cos(t * 0.15 + p.ph) * 14, H);
           const r = (18 + p.s * 46) * (1 + 0.15 * pulse);
           const gr = g.createRadialGradient(x, y, 0, x, y, r);

@@ -4,7 +4,7 @@ import { ageEffect, ageReason } from '@/lib/style/visual';
 import { localToday } from '@/lib/archive';
 
 const LABELS: Record<string, string> = {
-  override: 'Ваша поправка', atmosphere: 'Атмосфера', weather: 'Погода', cover: 'Обложка', stamps: 'Штампы', technique: 'Техника', palette: 'Палитра', motion: 'Ритм', negativeSpace: 'Воздух', grain: 'Зерно', genre: 'Жанр', jitter: 'Движение', songObject: 'Песня', portrait: 'Люди', rhythm: 'Ритм песни', light: 'Свет', wind: 'Ветер', age: 'Возраст', decor: 'Стикеры',
+  override: 'Ваша поправка', atmosphere: 'Атмосфера', weather: 'Погода', cover: 'Обложка', stamps: 'Штампы', technique: 'Техника', palette: 'Палитра', motion: 'Ритм', negativeSpace: 'Воздух', grain: 'Зерно', genre: 'Жанр', jitter: 'Движение', songObject: 'Песня', portrait: 'Люди', rhythm: 'Ритм песни', light: 'Свет', wind: 'Ветер', age: 'Возраст', detail: 'Детали', decor: 'Стикеры',
 };
 
 export function WhyPanel({ style, date }: { style: StyleParams; date?: string }) {

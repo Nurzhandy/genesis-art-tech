@@ -10,6 +10,7 @@ import type { Engine } from '@/render/engine';
 import { exportPoster } from '@/render/poster';
 import { createRhythmMeter, type Rhythm } from '@/render/audioReactive';
 import { songObjectPlace } from '@/render/songObject';
+import { FogGlass } from './FogGlass';
 import { LAYOUT } from '@/lib/style/constants';
 import type { Ritual } from '@/lib/ritual';
 import { EnvelopeRitual } from './EnvelopeRitual';
@@ -52,7 +53,9 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
       await api.uploadFile(uploads[0], blob);
     } catch { /* постер — приятный бонус, не критично */ }
   }, []);
+  const [liveCanvas, setLiveCanvas] = useState<HTMLCanvasElement | null>(null);
   const onReady = useCallback((engine: Engine) => {
+    setLiveCanvas(engine.canvas);
     const { day: d, styleOverride: preview } = latest.current;
     engineRef.current = { engine, styleKey: JSON.stringify([preview ?? d.style, d.decor ?? null]) };
     void tryExportPoster();
@@ -132,6 +135,10 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
             info={{ title: day.title ?? '', caption: day.analysis?.caption ?? '', date: day.date, dayNumber: day.dayNumber, songLabel: songLabel(day), notes: day.analysis?.sensory, decor: day.decor }}
             className="rounded-sm shadow-2xl" />
         </div>
+        {/* B11 V10: запотевшее стекло — в дождь, туман, снег или мороз; протирается пальцем. */}
+        {open && liveCanvas && (['rain', 'mist', 'snow'].includes(style.atmosphere?.kind ?? '') || (day.weather?.tempC ?? 99) <= -5) && (
+          <FogGlass source={liveCanvas} seed={style.seed} rain={style.atmosphere?.kind === 'rain' || (day.weather?.precipitationMm ?? 0) >= 1} />
+        )}
         <button type="button" onClick={start} aria-hidden={open} tabIndex={open ? -1 : 0}
           className="absolute inset-0 flex flex-col items-center justify-center gap-6 rounded-sm px-8 text-center shadow-2xl ring-1 ring-black/10"
           style={{ background: style.palette.bg, color: style.palette.ink, opacity: open ? 0 : 1, pointerEvents: open ? 'none' : 'auto', transition: 'opacity 1.5s ease' }}>

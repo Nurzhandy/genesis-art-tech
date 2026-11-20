@@ -33,9 +33,16 @@ export function createImpressionist(): TechniqueRenderer {
       return lumOf(data[o], data[o + 1], data[o + 2]);
     };
     const order: { k: number; key: number }[] = [];
+    // B11 V1: значимость = плотность градиента. Тонкие мазки чаще ложатся туда, где детали (лица, края),
+    // и становятся там мельче; фон остаётся крупным подмалёвком.
+    const sal = (px: number, py: number) => clamp(Math.hypot(lum(px + 1.5, py) - lum(px - 1.5, py), lum(px, py + 1.5) - lum(px, py - 1.5)) * 5);
     for (let k = 0; k < n; k++) {
-      const x = rand() * zone.w, y = rand() * zone.h;
+      let x = rand() * zone.w, y = rand() * zone.h;
+      if (k >= n * 0.35) {
+        for (let tries = 0; tries < 3 && rand() > 0.3 + 0.7 * sal(x * SAMPLE, y * SAMPLE); tries++) { x = rand() * zone.w; y = rand() * zone.h; }
+      }
       const sx = x * SAMPLE, sy = y * SAMPLE;
+      const detail = sal(sx, sy);
       const o = ((Math.min(sh - 1, sy | 0)) * sw + Math.min(sw - 1, sx | 0)) * 4;
       const rgb: [number, number, number] = [data[o], data[o + 1], data[o + 2]];
       const near = nearest(rgb, pal);
@@ -48,8 +55,8 @@ export function createImpressionist(): TechniqueRenderer {
       s.x[k] = x; s.y[k] = y; s.a[k] = angle;
       // Первые 35% — крупный подмалёвок, остальные — тонкие мазки поверх.
       const coarse = k < n * 0.35;
-      s.len[k] = (8 + 30 * style.texture.brush * (1 - energy * 0.4)) * range(rand, 1.1, 1.9) * (coarse ? 1.7 : 1);
-      s.w[k] = range(rand, 3, 7) * (coarse ? 3.4 : 1.7);
+      s.len[k] = (8 + 30 * style.texture.brush * (1 - energy * 0.4)) * range(rand, 1.1, 1.9) * (coarse ? 1.7 : 1 - 0.5 * detail);
+      s.w[k] = range(rand, 3, 7) * (coarse ? 3.4 : 1.7 * (1 - 0.45 * detail));
       s.col[k] = `rgba(${c[0]},${c[1]},${c[2]},${range(rand, 0.6, 0.9).toFixed(2)})`;
       order.push({ k, key: (k < n * 0.35 ? 0 : 1) + x / zone.w * 0.55 + y / zone.h * 0.15 + noise2(x / 300, y / 300, style.seed + 7) * 0.5 });
     }
