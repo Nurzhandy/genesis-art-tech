@@ -5,7 +5,7 @@ import { DiaryStrip } from '@/components/home/DiaryStrip';
 import { KineticTitle } from '@/components/home/KineticTitle';
 import { MemoryMachine } from '@/components/home/MemoryMachine';
 import { MoodMarquee } from '@/components/home/MoodMarquee';
-import { OpenDiaryButton } from '@/components/OpenDiaryButton';
+import { Desk } from '@/components/shelf/Desk';
 
 const STEPS = [
   { n: '01', title: 'Расскажите о дне', text: 'Как другу: погода, свет, запахи, кто был рядом. Приложите 1–5 фото и песню — ссылкой или файлом.' },
@@ -18,27 +18,34 @@ export default function Home() {
     <PageFade>
       <main className="flex flex-1 flex-col">
         <CursorLight className="overflow-hidden">
-          <section className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-10 pt-14 sm:pt-20 xl:grid-cols-[1fr_minmax(0,600px)]">
-            <div className="flex flex-col items-start gap-7">
+          <section className="mx-auto flex w-full max-w-6xl flex-wrap items-end justify-between gap-6 px-4 pb-8 pt-12 sm:pt-16">
+            <div className="flex flex-col gap-4">
               <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted" style={{ animation: 'pop-in 0.6s ease-out both' }}>Make the Invisible Visible</p>
-              <KineticTitle lines={['Дневник', 'атмосферы']} className="text-6xl font-semibold leading-[0.95] sm:text-8xl xl:text-[7.5rem]" />
-              <p className="max-w-md text-xl leading-relaxed text-muted" style={{ animation: 'pop-in 0.8s ease-out 0.9s both' }}>
-                Фото помнят, как выглядел день. Этот дневник помнит, как он ощущался: запись, фото и песня
-                становятся живой страницей в цветах, погоде и ритме того дня.
-              </p>
-              <div className="flex flex-wrap items-center gap-4" style={{ animation: 'pop-in 0.8s ease-out 1.1s both' }}>
-                <OpenDiaryButton />
-                <Link href="/diary/demo" data-magnetic className="rounded-full border border-foreground/30 px-8 py-3.5 font-mono text-sm uppercase tracking-[0.15em] transition-colors hover:bg-foreground hover:text-background">
-                  Демо-дневник
-                </Link>
-              </div>
-              <p className="-rotate-2 font-hand text-2xl text-muted" style={{ animation: 'pop-in 0.8s ease-out 1.4s both' }}>откройте запись через год — и снова почувствуйте тот день</p>
+              <KineticTitle lines={['Дневник атмосферы']} className="text-5xl font-semibold leading-[0.95] sm:text-7xl" />
             </div>
-            <div className="flex justify-center" style={{ animation: 'pop-in 1s ease-out 0.4s both' }}>
-              <MemoryMachine />
-            </div>
+            <p className="max-w-sm text-lg leading-relaxed text-muted" style={{ animation: 'pop-in 0.8s ease-out 0.8s both' }}>
+              Заводите дневники для разных сфер жизни. День — запись, фото и песня — становится живой страницей,
+              а дальше вы украшаете её сами.
+            </p>
           </section>
+          <Desk />
         </CursorLight>
+
+        <section className="mx-auto mt-24 grid w-full max-w-6xl items-center gap-12 px-4 pb-10 xl:grid-cols-[1fr_minmax(0,600px)]">
+          <div className="reveal flex flex-col items-start gap-5">
+            <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">как это работает</p>
+            <h2 className="text-5xl font-semibold leading-tight">Фото помнят, как выглядел день. Дневник помнит, как он ощущался.</h2>
+            <p className="max-w-md text-xl leading-relaxed text-muted">
+              Запись, фото и песня становятся страницей в цветах, погоде и ритме того дня — по правилам, которые можно объяснить.
+            </p>
+            <Link href="/diary/demo" data-magnetic className="rounded-full border border-foreground/30 px-8 py-3.5 font-mono text-sm uppercase tracking-[0.15em] transition-colors hover:bg-foreground hover:text-background">
+              Демо-дневник
+            </Link>
+          </div>
+          <div className="flex justify-center">
+            <MemoryMachine />
+          </div>
+        </section>
 
         <MoodMarquee />
 
@@ -65,7 +72,7 @@ export default function Home() {
 
         <section className="reveal mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 pb-24 text-center">
           <p className="font-hand text-4xl">Каким был ваш день?</p>
-          <OpenDiaryButton />
+          <a href="#desk" data-magnetic className="rounded-full bg-foreground px-8 py-3.5 font-mono text-sm uppercase tracking-[0.15em] text-background">К столу ↑</a>
         </section>
       </main>
     </PageFade>

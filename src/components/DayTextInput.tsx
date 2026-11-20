@@ -37,7 +37,7 @@ export function appendPhrase(text: string, phrase: string): string {
   return t + sep + start;
 }
 
-export function DayTextInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function DayTextInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   const area = useRef<HTMLTextAreaElement>(null);
   const rec = useRef<Recognition | null>(null);
   const latest = useRef(value);
@@ -97,7 +97,7 @@ export function DayTextInput({ value, onChange }: { value: string; onChange: (v:
     <div>
       <div className="relative">
         <textarea ref={area} id="text" value={value} onChange={(e) => onChange(e.target.value)} rows={7} maxLength={5000}
-          placeholder="Расскажите как другу: погода, свет, запахи, звуки, кто был рядом, мелочи, которые запомнились…"
+          placeholder={placeholder ?? "Расскажите как другу: погода, свет, запахи, звуки, кто был рядом, мелочи, которые запомнились…"}
           className="w-full resize-y rounded-sm border border-foreground/15 bg-white/40 p-4 pr-14 text-xl leading-relaxed outline-none placeholder:text-muted/70 focus:border-foreground/40 dark:bg-white/5" />
         {canDictate && (
           <button type="button" onClick={toggleDictation} aria-pressed={listening}

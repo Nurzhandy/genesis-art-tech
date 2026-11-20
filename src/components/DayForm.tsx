@@ -24,7 +24,7 @@ const addDays = (iso: string, n: number) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export function DayForm({ diaryId }: { diaryId: string }) {
+export function DayForm({ diaryId, prompt }: { diaryId: string; prompt?: string }) {
   const router = useRouter();
   const [date, setDate] = useState(today);
   const [text, setText] = useState('');
@@ -150,7 +150,7 @@ export function DayForm({ diaryId }: { diaryId: string }) {
 
       <section>
         <label className="mb-2 block font-mono text-xs uppercase tracking-[0.2em] text-muted" htmlFor="text">как прошёл день</label>
-        <DayTextInput value={text} onChange={setText} />
+        <DayTextInput value={text} onChange={setText} placeholder={prompt} />
       </section>
 
       <section>

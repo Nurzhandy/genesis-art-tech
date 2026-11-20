@@ -65,7 +65,7 @@ function OnThisDay({ days }: { days: DayRecord[] }) {
   );
 }
 
-export function Archive({ diaryId, isDemo, songs = [] }: { diaryId: string; isDemo: boolean; songs?: string[] }) {
+export function Archive({ diaryId, isDemo, songs = [], title }: { diaryId: string; isDemo: boolean; songs?: string[]; title?: string }) {
   const songParam = songs.join('\n');
   const song = songParam;
   const router = useRouter();
@@ -149,7 +149,7 @@ export function Archive({ diaryId, isDemo, songs = [] }: { diaryId: string; isDe
 
       {days && days.length > 0 && view === 'calendar' && <Calendar days={days} />}
 
-      {days && days.length > 0 && view === 'book' && <BookView days={days.filter((d) => !d.sealed)} title={isDemo ? 'Демо-дневник' : 'Мой дневник'} />}
+      {days && days.length > 0 && view === 'book' && <BookView days={days.filter((d) => !d.sealed)} title={title ?? (isDemo ? 'Демо-дневник' : 'Мой дневник')} />}
 
       {days && days.length > 0 && view === 'grid' && groups.map(([month, list]) => (
         <section key={month} className="mb-10">
