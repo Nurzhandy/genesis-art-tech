@@ -60,8 +60,15 @@ export async function loadImage(url: string): Promise<RenderPhoto> {
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.decoding = 'async';
-  img.src = url;
-  await img.decode();
+  // Ждём обычную загрузку: в свёрнутой или скрытой вкладке img.decode() может не завершиться никогда
+  // (так «зависали» лаборатория и фильмы). decode — только бонус для плавности, не дольше 1,5 с.
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error(`Не удалось загрузить фото: ${url.slice(0, 80)}`));
+    img.src = url;
+    if (img.complete && img.naturalWidth) resolve();
+  });
+  await Promise.race([img.decode().catch(() => undefined), new Promise((r) => setTimeout(r, 1500))]);
   return { img, w: img.naturalWidth, h: img.naturalHeight };
 }
 
