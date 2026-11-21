@@ -15,6 +15,21 @@ import { GenerateProgress } from './GenerateProgress';
 import { PhotoPicker, type PickedPhoto } from './PhotoPicker';
 import { SongInput, type SongState } from './SongInput';
 import { StoryRecorder, type StoryOutcome } from './StoryRecorder';
+import { prepareAssembly } from './dayboard/AssembleBar';
+import { submitToDraft } from '@/lib/dayboard/formToDraft';
+
+/** Длительность записи в секундах (у webm браузер иногда не знает её — тогда 0). */
+function audioSeconds(blob: Blob): Promise<number> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const a = new Audio();
+    const done = (s: number) => { URL.revokeObjectURL(url); resolve(Number.isFinite(s) && s > 0 ? Math.round(s) : 0); };
+    a.onloadedmetadata = () => done(a.duration);
+    a.onerror = () => done(0);
+    setTimeout(() => done(0), 3000);
+    a.src = url;
+  });
+}
 
 const today = () => {
   const d = new Date();
@@ -28,7 +43,11 @@ const addDays = (iso: string, n: number) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export function DayForm({ diaryId, prompt, questions, startWithStory = false }: { diaryId: string; prompt?: string; questions?: string[]; startWithStory?: boolean }) {
+export function DayForm({ diaryId, prompt, questions, startWithStory = false, draftId }: {
+  diaryId: string; prompt?: string; questions?: string[]; startWithStory?: boolean;
+  /** Пришли с доски дня (план 21.11, C2): форма дописывает доску этого черновика и собирает его, новый день не создаётся. */
+  draftId?: string;
+}) {
   // Пришли с главной по «Рассказать о сегодня» — сразу показываем запись голосом.
   useEffect(() => { if (startWithStory) document.getElementById('story')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, [startWithStory]);
   const router = useRouter();
@@ -78,6 +97,21 @@ export function DayForm({ diaryId, prompt, questions, startWithStory = false }: 
   }, [gpsKey]);
   const suggestDate = shotDate && shotDate !== date && shotDate <= today() ? shotDate : null;
 
+  // Черновик доски дня: дата и город — те же, что в шапке доски (её правки лежат на устройстве).
+  useEffect(() => {
+    if (!draftId) return;
+    let alive = true;
+    api.dayBoard(draftId).then(({ day }) => {
+      if (!alive) return;
+      let saved: { date?: string; place?: string } = {};
+      try { saved = JSON.parse(localStorage.getItem(`dayboard-meta-${draftId}`) ?? '{}'); } catch { /* нет — и ладно */ }
+      setDate(saved.date || day.date);
+      const city = saved.place ?? day.place ?? '';
+      if (city) setPlace(city);
+    }).catch(() => undefined);
+    return () => { alive = false; };
+  }, [draftId]);
+
   async function fillSample() {
     setSampleBusy(true); setPhotosBusy(true); setError(null);
     try {
@@ -112,9 +146,14 @@ ${o.entry}` : o.entry).slice(0, 5000));
   // Фото и песня — по желанию: день можно записать одними словами.
   const songWait = (song.kind === 'link' && song.status === 'checking') || (song.kind === 'file' && song.status === 'checking');
   const songBroken = song.kind === 'file' && song.status === 'error';
-  const canSubmit = text.trim().length > 0 && !photosBusy && !songWait && !songBroken && stage === 'form' && !sealError;
+  // На доске дня песня — ссылкой (элемент «пластинка»), файл туда не кладётся.
+  const songFileOnBoard = !!draftId && song.kind === 'file';
+  // Для черновика доски хватит чего угодно: на доске уже могут лежать заметки.
+  const hasSomething = text.trim().length > 0 || (!!draftId && (photos.length > 0 || (song.kind === 'link' && !!song.url.trim()) || feeling.length > 0 || !!ownVoice));
+  const canSubmit = hasSomething && !photosBusy && !songWait && !songBroken && !songFileOnBoard && stage === 'form' && !sealError;
   const missing = [
-    !text.trim() && 'расскажите о дне',
+    !hasSomething && 'расскажите о дне',
+    songFileOnBoard && 'для доски дня песню — ссылкой',
     songWait && 'проверяю песню…',
     songBroken && 'файл песни не прочитался — замените или уберите его',
     sealError,
@@ -125,6 +164,29 @@ ${o.entry}` : o.entry).slice(0, 5000));
     if (!canSubmit) return;
     setError(null);
     setStage('upload');
+    if (draftId) {
+      try {
+        const link = song.kind === 'link' && song.url.trim() ? song : null;
+        const ref = link?.song?.kind === 'link' ? link.song : null;
+        await submitToDraft(draftId, {
+          date, place, text: text.trim(), feelings: feeling,
+          photos: photos.map((p) => ({ blob: p.full, ratio: p.features.height / Math.max(1, p.features.width) })),
+          song: link ? { url: ref?.url ?? link.url.trim(), title: [ref?.artist, ref?.title].filter(Boolean).join(' — ') || 'Песня дня', cover: ref?.coverUrl, preview: ref?.previewUrl } : null,
+          voice: ownVoice ? { blob: ownVoice.blob, ext: ownVoice.ext, sec: await audioSeconds(ownVoice.blob) } : null,
+        }, {
+          dayBoard: api.dayBoard, saveDayBoard: api.saveDayBoard,
+          dayBoardUpload: (id, ext) => api.dayBoardUpload(id, ext), uploadFile: (u, blob) => api.uploadFile(u, blob),
+          prepare: prepareAssembly, assembleDay: (id, body) => { setStage('generate'); return api.assembleDay(id, body); },
+        }, () => crypto.randomUUID().slice(0, 12));
+        try { if (place.trim()) localStorage.setItem(PLACE_KEY, place.trim()); } catch { /* не критично */ }
+        writeStored(draftKey, '');
+        router.push(`/day/${draftId}`);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Что-то пошло не так');
+        setStage('form');
+      }
+      return;
+    }
     try {
       const newSong: NewSong = song.kind === 'none' || (song.kind === 'link' && !song.url.trim())
         ? { kind: 'none' }
@@ -245,7 +307,8 @@ ${o.entry}` : o.entry).slice(0, 5000));
         <SongInput key={songKey} value={song} onChange={setSong} />
       </section>
 
-      <section className="rounded-sm border border-dashed border-foreground/20 px-4 py-3">
+      {/* Капсула запечатывает новый день; черновик доски собирается как есть. */}
+      {!draftId && <section className="rounded-sm border border-dashed border-foreground/20 px-4 py-3">
         <label className="flex cursor-pointer items-center gap-3">
           <input type="checkbox" checked={sealOn} onChange={(e) => setSealOn(e.target.checked)} className="h-4 w-4 accent-current" />
           <span className="text-lg">✉ Запечатать как капсулу времени</span>
@@ -258,7 +321,8 @@ ${o.entry}` : o.entry).slice(0, 5000));
             <p className="w-full text-sm text-muted">До этой даты в архиве будет только конверт с названием — даже для вас.</p>
           </div>
         )}
-      </section>
+      </section>}
+      {draftId && <p className="text-sm text-muted">Всё, что вы здесь заполните, ляжет на доску этого дня рядом с тем, что там уже есть, и день соберётся из всей доски.</p>}
 
       {error && <p className="rounded-sm bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950/40 dark:text-red-300">{error}</p>}
 

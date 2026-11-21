@@ -98,7 +98,15 @@ export function AssembleBar({ dayId, diaryId, date, place, items, assembled = fa
         className="ml-1 shrink-0 rounded-full bg-foreground px-4 py-2.5 font-mono text-[11px] uppercase tracking-wider text-background transition hover:scale-[1.03] disabled:opacity-60">
         ✦ {assembled ? 'Пересобрать день' : 'Собрать день'}
       </button>
-      <Link href={`/diary/${diaryId}/new`} title="Старая форма с полями" className="shrink-0 px-2 font-mono text-[10px] uppercase tracking-wider text-muted underline decoration-dotted underline-offset-4 hover:text-foreground">
+      {/* C2: форма дописывает эту же доску. Перед уходом сохраняем то, что видно (автосохранение отложено). */}
+      <Link href={`/diary/${diaryId}/new?draft=${dayId}`} title="Форма с полями — заполнит эту же доску"
+        onClick={async (e) => {
+          e.preventDefault();
+          if (running) return;
+          await api.saveDayBoard(dayId, { v: 1, items: items as BoardItem[] }).catch(() => undefined);
+          router.push(`/diary/${diaryId}/new?draft=${dayId}`);
+        }}
+        className="shrink-0 px-2 font-mono text-[10px] uppercase tracking-wider text-muted underline decoration-dotted underline-offset-4 hover:text-foreground">
         простая форма
       </Link>
     </>
