@@ -22,8 +22,9 @@ export function dayFiles(folder: string) {
   };
 }
 
-/** Signed URLs на чтение (по умолчанию на час). Пустые пути пропускаются. */
-export async function signRead(paths: (string | null | undefined)[], ttlSec = 3600): Promise<Record<string, string>> {
+/** Подписанные ссылки на чтение. 12 часов: страница, открытая с вечера, не теряет постеры и фото. Пустые пути пропускаются. */
+export const READ_TTL_SEC = 12 * 3600;
+export async function signRead(paths: (string | null | undefined)[], ttlSec = READ_TTL_SEC): Promise<Record<string, string>> {
   const list = [...new Set(paths.filter((p): p is string => !!p))];
   if (!list.length) return {};
   const { data, error } = await supabaseAdmin().storage.from(BUCKET).createSignedUrls(list, ttlSec);

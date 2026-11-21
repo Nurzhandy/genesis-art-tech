@@ -1,6 +1,11 @@
+'use client';
 import Link from 'next/link';
+import { createContext, useContext } from 'react';
 import type { DayRecord } from '@/lib/types';
 import { Tilt } from './fx/Tilt';
+
+/** Постер не загрузился (истекла ссылка) — архив перезапросит свежие ссылки. */
+export const StaleLinksContext = createContext<() => void>(() => undefined);
 
 /** Наклон карточки, когда её «кладут на стол» по прокрутке (ресерч 20.11, M5): свой для каждого дня. */
 const tiltFrom = (date: string) => `${((Number(date.slice(8, 10)) * 7) % 13) - 6}deg`;
@@ -19,6 +24,7 @@ function Envelope({ day }: { day: DayRecord }) {
 }
 
 export function DayCard({ day, large = false, from }: { day: DayRecord; large?: boolean; from?: string }) {
+  const onStale = useContext(StaleLinksContext);
   const href = `/day/${day.id}${from ? `?from=${from}` : ''}`;
   if (day.sealed) {
     return (
@@ -36,7 +42,7 @@ export function DayCard({ day, large = false, from }: { day: DayRecord; large?: 
       <Tilt className="rounded-sm">
       <div className="relative aspect-[9/16] overflow-hidden rounded-sm shadow-md ring-1 ring-black/5 transition-shadow group-hover:shadow-2xl" style={{ background: bg }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {cover && <img src={cover} alt="" loading="lazy" className={`h-full w-full ${day.posterUrl ? 'object-cover' : 'object-cover opacity-80'}`} />}
+        {cover && <img src={cover} alt="" loading="lazy" onError={onStale} className={`h-full w-full ${day.posterUrl ? 'object-cover' : 'object-cover opacity-80'}`} />}
         {!day.posterUrl && (
           <div className="absolute inset-x-0 top-0 p-3" style={{ color: day.style?.palette.ink }}>
             <p className="font-mono text-[10px] tracking-widest">{day.date.split('-').reverse().join('.')}</p>

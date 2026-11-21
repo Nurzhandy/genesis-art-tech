@@ -2,7 +2,7 @@
 // Архив дневника (A8): сетка по месяцам, лента, календарь (R12), «В этот день» (R12), случайный день (R12), поиск.
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/client/api';
 import { useStored, writeStored } from '@/lib/client/diaryKey';
 import { dayColor, groupByMonth, humanDate, localToday, monthGrid, monthLabel, onThisDay, yearsAgo, yearsWord } from '@/lib/archive';
@@ -11,7 +11,7 @@ import { AtlasView } from './AtlasView';
 import { ThemeFilms } from './ThemeFilms';
 import { BookView } from './BookView';
 import { songLabel } from './MemoryPlayer';
-import { DayCard } from './DayCard';
+import { DayCard, StaleLinksContext } from './DayCard';
 import { DiaryKey } from './DiaryKey';
 
 type View = 'grid' | 'book' | 'atlas' | 'films' | 'feed' | 'calendar';
@@ -74,6 +74,9 @@ export function Archive({ diaryId, isDemo, songs = [], title }: { diaryId: strin
   const [days, setDays] = useState<DayRecord[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState('');
+  // Ссылки на файлы временные: перезапрос списка даёт свежие.
+  const [reload, setReload] = useState(0);
+  const loadedAt = useRef(0);
   // Выбранный вид архива запоминается на устройстве.
   const savedView = useStored(VIEW_KEY);
   const view: View = VIEWS.some(([v]) => v === savedView) ? (savedView as View) : 'grid';
@@ -82,10 +85,22 @@ export function Archive({ diaryId, isDemo, songs = [], title }: { diaryId: strin
   useEffect(() => {
     let alive = true;
     const t = setTimeout(() => {
-      api.listDays(diaryId, q.trim(), songParam ? songParam.split('\n') : []).then((d) => { if (alive) { setDays(d); setError(null); } }, (e) => alive && setError(e instanceof Error ? e.message : 'Не удалось открыть дневник'));
+      api.listDays(diaryId, q.trim(), songParam ? songParam.split('\n') : []).then((d) => { if (alive) { loadedAt.current = Date.now(); setDays(d); setError(null); } }, (e) => alive && setError(e instanceof Error ? e.message : 'Не удалось открыть дневник'));
     }, q ? 300 : 0);
     return () => { alive = false; clearTimeout(t); };
-  }, [diaryId, q, songParam]);
+  }, [diaryId, q, songParam, reload]);
+
+  // Вкладка долго висела открытой (полчаса и больше) — при возвращении берём свежие ссылки на постеры.
+  useEffect(() => {
+    const onBack = () => { if (document.visibilityState === 'visible' && loadedAt.current && Date.now() - loadedAt.current > 30 * 60_000) setReload((r) => r + 1); };
+    document.addEventListener('visibilitychange', onBack);
+    window.addEventListener('focus', onBack);
+    return () => { document.removeEventListener('visibilitychange', onBack); window.removeEventListener('focus', onBack); };
+  }, []);
+  // Постер не загрузился (истекла ссылка) — перезапрашиваем список, но не чаще раза в минуту.
+  const refreshLinks = useCallback(() => {
+    if (Date.now() - loadedAt.current > 60_000) { loadedAt.current = Date.now(); setReload((r) => r + 1); }
+  }, []);
 
   const groups = useMemo(() => groupByMonth(days ?? []), [days]);
 
@@ -95,6 +110,7 @@ export function Archive({ diaryId, isDemo, songs = [], title }: { diaryId: strin
   }
 
   return (
+    <StaleLinksContext.Provider value={refreshLinks}>
     <div>
       {/* Ключ показываем, только когда сервер подтвердил, что такой дневник есть. */}
       {!isDemo && days && !error && <DiaryKey diaryId={diaryId} />}
@@ -169,5 +185,6 @@ export function Archive({ diaryId, isDemo, songs = [], title }: { diaryId: strin
         </section>
       ))}
     </div>
+    </StaleLinksContext.Provider>
   );
 }
