@@ -17,6 +17,7 @@ export interface DayRow {
   share_id?: string | null;
   decor?: unknown;                             // миграция 0004
   feeling?: string | null;                     // миграция 0006
+  board?: unknown;                             // миграция 0008: доска дня
 }
 
 export function rowToDay(r: DayRow): DayRecord {

@@ -29,7 +29,7 @@ const DEFAULTS: Record<keyof Tables, () => Row> = {
   days: () => ({
     id: randomUUID(), created_at: new Date().toISOString(), title: null, slug: null, photos: [], music: null, analysis: null,
     style: null, voice: null, poster_path: null, status: 'draft', error: null, mood_override: null, place: null,
-    weather: null, sealed_until: null, share_id: null, decor: null,
+    weather: null, sealed_until: null, share_id: null, decor: null, feeling: null, board: null,   // board — доска дня (0008)
   }),
 };
 

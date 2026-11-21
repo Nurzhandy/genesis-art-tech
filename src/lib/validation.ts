@@ -37,6 +37,15 @@ export const NewDayInput = z.object({
 });
 export type NewDayInput = z.infer<typeof NewDayInput>;
 
+/** Пустой черновик дня под доску (план 21.11): только дата, всё остальное человек положит на доску. */
+export const NewDraftInput = z.object({
+  draft: z.literal(true),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  place: z.string().trim().max(80).optional(),
+});
+export type NewDraftInput = z.infer<typeof NewDraftInput>;
+
+
 const PHOTO_EXT = ['jpg', 'jpeg', 'png', 'webp'] as const;
 const AUDIO_EXT = ['mp3', 'm4a', 'wav', 'ogg'] as const;
 
@@ -81,3 +90,15 @@ export const GenerateBody = z.object({
   photoHour: z.number().int().min(0).max(23).optional(), // час съёмки из EXIF (A2)
 });
 export type GenerateBody = z.infer<typeof GenerateBody>;
+
+
+/** Сборка дня из доски: признаки фото считает браузер, в том же порядке, что collectDay отдаёт фото. */
+export const AssembleBody = z.object({
+  photoFeatures: z.array(PhotoFeaturesSchema).max(5),
+  music: MusicFeaturesSchema.nullable().default(null),
+  coverPalette: z.array(z.string().regex(/^#[0-9a-fA-F]{6}$/)).max(5).optional(),
+  photoHour: z.number().int().min(0).max(23).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),     // шапка доски: дату можно сменить
+  place: z.string().trim().max(80).optional(),
+});
+export type AssembleBody = z.infer<typeof AssembleBody>;

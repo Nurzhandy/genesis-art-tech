@@ -4,7 +4,8 @@ import { revealable, sealDateError, serverToday } from '@/lib/capsule';
 import { handle, HttpError, readJson } from '@/lib/http';
 import { sameSong } from '@/lib/music/songKey';
 import { supabaseAdmin } from '@/lib/supabase/server';
-import { NewDayInput } from '@/lib/validation';
+import { emptyBoard } from '@/lib/board/board';
+import { NewDayInput, NewDraftInput } from '@/lib/validation';
 
 const DEMO = () => process.env.DEMO_DIARY_ID ?? 'demo';
 
@@ -29,7 +30,18 @@ export const POST = handle(async (req: NextRequest, ctx: RouteContext<'/api/diar
   const { diaryId } = await ctx.params;
   if (diaryId === DEMO() && process.env.ALLOW_DEMO_WRITES !== '1') throw new HttpError(403, 'Демо-дневник только для просмотра');
   if (!isDiaryId(diaryId) || !(await diaryExists(diaryId))) throw new HttpError(404, 'Дневник не найден');
-  const input = NewDayInput.parse(await readJson(req));
+  const raw = await readJson(req);
+  // Черновик под доску дня (план 21.11): пустой день, всё остальное — на доске.
+  const draft = NewDraftInput.safeParse(raw);
+  if (draft.success) {
+    const { data, error } = await supabaseAdmin().from('days')
+      .insert({ diary_id: diaryId, date: draft.data.date, text: '', song: { kind: 'none' }, photos: [], status: 'draft',
+        place: draft.data.place || null, board: emptyBoard() })
+      .select('id').single();
+    if (error) throw error;
+    return Response.json({ dayId: data.id }, { status: 201 });
+  }
+  const input = NewDayInput.parse(raw);
   const sealError = input.sealedUntil ? sealDateError(input.sealedUntil, serverToday()) : null;
   if (sealError) throw new HttpError(400, sealError);
   const song = input.song.kind === 'file'

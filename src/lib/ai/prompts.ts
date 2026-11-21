@@ -43,5 +43,5 @@ export function userBlock(text: string, date: string, song: SongRef, photoHour?:
     : `свой аудиофайл${song.artist || song.title ? `: ${[song.artist, song.title].filter(Boolean).join(' — ')}` : ''}`;
   // Час съёмки из EXIF (план 20.11, A2) подсказывает время суток, если в тексте его нет.
   const shot = photoHour === undefined ? '' : `\nФото сняты около ${String(photoHour).padStart(2, '0')}:00`;
-  return `Дата: ${date}${shot}\nПесня дня: ${songLine}\n\nЗапись:\n${text}`;
+  return `Дата: ${date}${shot}\nПесня дня: ${songLine}\n\nЗапись:\n${text.trim() || "(слов нет: человек оставил только фото, песню или рисунки — опирайся на них)"}`;
 }
