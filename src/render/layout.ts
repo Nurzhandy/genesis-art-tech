@@ -55,6 +55,20 @@ function wrap(g: CanvasRenderingContext2D, text: string, maxW: number): string[]
   return lines;
 }
 
+/** Обрезает название песни многоточием, чтобы строка с BPM влезла в maxW (BPM не теряем). */
+export function fitSongLine(measure: (t: string) => number, label: string | undefined, bpm: number, maxW: number): string {
+  const tail = ` · ${Math.round(bpm)} BPM`;
+  if (!label) return `♪${tail}`;
+  const full = `♪ ${label}${tail}`;
+  if (measure(full) <= maxW) return full;
+  const chars = Array.from(label);
+  for (let n = chars.length - 1; n > 0; n--) {
+    const t = `♪ ${chars.slice(0, n).join('').trimEnd()}…${tail}`;
+    if (measure(t) <= maxW) return t;
+  }
+  return `♪${tail}`;
+}
+
 const fmtDate = (iso: string) => {
   const [y, m, d] = iso.split('-');
   return `${d}.${m}.${y}`;
@@ -109,11 +123,14 @@ export function drawConstants(g: CanvasRenderingContext2D, W: number, H: number,
   setSpacing(g, 2);
   g.fillStyle = rgba(ink, 0.5);
   const fy = LAYOUT.footer.y * H + LAYOUT.sizes.footer;
+  const brand = 'ДНЕВНИК АТМОСФЕРЫ';
+  // Песня занимает место слева до подписи бренда с зазором — длинное название обрезается, а не наезжает.
+  const songMax = W - 2 * m - g.measureText(brand).width - LAYOUT.sizes.footer * 2;
+  const songLine = fitSongLine((t) => g.measureText(t).width, info.songLabel, style.motion.bpm, songMax);
   g.textAlign = 'left';
-  const song = info.songLabel ? `♪ ${info.songLabel}` : '♪';
-  g.fillText(`${song} · ${Math.round(style.motion.bpm)} BPM`, m, fy, W * 0.62);
+  g.fillText(songLine, m, fy);
   g.textAlign = 'right';
-  g.fillText('ДНЕВНИК АТМОСФЕРЫ', W - m, fy);
+  g.fillText(brand, W - m, fy);
   setSpacing(g, 0);
   g.restore();
 }
