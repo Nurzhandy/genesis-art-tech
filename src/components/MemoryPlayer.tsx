@@ -2,6 +2,7 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/client/api';
+import { useStored, writeStored } from '@/lib/client/diaryKey';
 import { fadeVolume, VOICE_DUCK, VOICE_EVENT } from '@/lib/client/fade';
 import { playPageFlip, startSoundscape, type SoundscapePlayer } from '@/lib/sound/player';
 import { AMBIENT_LEVEL, soundscapeFor } from '@/lib/sound/recipes';
@@ -54,11 +55,16 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
     } catch { /* постер — приятный бонус, не критично */ }
   }, []);
   const [liveCanvas, setLiveCanvas] = useState<HTMLCanvasElement | null>(null);
+  // «Фото» или «Рисунок» — выбор человека запоминается для каждого дня.
+  const modeKey = `atmosphere-mode:${day.id}`;
+  const mode: 'photo' | 'drawing' = useStored(modeKey) === 'drawing' ? 'drawing' : 'photo';
+  const modeRef = useRef(mode);
+  useEffect(() => { modeRef.current = mode; });
   const onReady = useCallback((engine: Engine) => {
     setLiveCanvas(engine.canvas);
     const { day: d, styleOverride: preview } = latest.current;
     engineRef.current = { engine, styleKey: JSON.stringify([preview ?? d.style, d.decor ?? null]) };
-    void tryExportPoster();
+    if (modeRef.current === 'photo') void tryExportPoster();   // постер — всегда с фото дня
   }, [tryExportPoster]);
   // После «Сохранить» стиль тот же, что в превью, и холст не пересоздаётся — проверяем постер по смене дня.
   useEffect(() => { void tryExportPoster(); }, [day, styleOverride, tryExportPoster]);
@@ -126,10 +132,16 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
 
   return (
     <div className="flex flex-col gap-4">
+      <div role="radiogroup" aria-label="Вид страницы" className="mx-auto inline-flex rounded-full border border-foreground/20 bg-background/70 p-1 backdrop-blur">
+        {([['photo', 'Фото'], ['drawing', 'Рисунок']] as const).map(([m, label]) => (
+          <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => writeStored(modeKey, m)}
+            className={`rounded-full px-5 py-1.5 text-base transition ${mode === m ? 'bg-foreground text-background' : 'text-muted hover:text-foreground'}`}>{label}</button>
+        ))}
+      </div>
       <div className="relative mx-auto w-full max-w-[420px]">
         {/* Ритуал открытия: кадр проявляется из цвета дня за 1,5 с, уходя из размытия. */}
         <div style={{ opacity: open ? 1 : 0, filter: open ? 'blur(0px)' : 'blur(14px)', transition: 'opacity 1.5s ease, filter 1.5s ease' }}>
-          <MemoryCanvas style={style} photos={photos} playing={open} onReady={onReady}
+          <MemoryCanvas style={style} photos={photos} playing={open} onReady={onReady} mode={mode}
             liveEnergy={() => meter.current?.() ?? null}
             liveRhythm={() => rhythmMeter.current?.() ?? null}
             info={{ title: day.title ?? '', caption: day.analysis?.caption ?? '', date: day.date, dayNumber: day.dayNumber, songLabel: songLabel(day), notes: day.analysis?.sensory, decor: day.decor }}

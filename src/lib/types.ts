@@ -102,6 +102,8 @@ export interface StyleParams {
   songObject?: { kind: SongObjectKind; year: number | null; revPerSec: number };
   // Живой кадр (B11): люди, ритм, свет часа, ветер. Необязательно: старые дни берут DEFAULT_VISUAL.
   visual?: import('./style/visual').VisualParams;
+  // Режим «Рисунок»: что нарисовать на странице (небо, место, сезон, люди). У старых дней — из атмосферы.
+  scene?: import('./style/scene').SceneParams;
   // Марка сезона и штампы из анализа (план 20.11, B3). Необязательно: у старых дней нет.
   stamps?: { shape: 'circle' | 'square' | 'ticket'; season: DayAnalysis['season']; date: string; tags: { kind: 'weather' | 'place' | 'people'; text: string }[] };
   reasons: StyleReason[];

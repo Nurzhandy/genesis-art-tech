@@ -14,13 +14,15 @@ export interface MemoryCanvasProps {
   /** B11 V2: полосы и удары живого звука. */
   liveRhythm?: () => import('./audioReactive').Rhythm | null;
   overrideTechnique?: { primary?: Technique; secondary?: Technique | null; mix?: number };
+  /** «Фото» или «Рисунок» (нарисованная сцена дня). */
+  mode?: 'photo' | 'drawing';
   /** Момент для статичного кадра, когда playing=false (по умолчанию — постерный кадр). */
   stillAt?: number;
   onReady?: (engine: Engine) => void;
   className?: string;
 }
 
-export default function MemoryCanvas({ style, photos, info, playing, liveEnergy, liveRhythm, overrideTechnique, stillAt, onReady, className }: MemoryCanvasProps) {
+export default function MemoryCanvas({ style, photos, info, playing, liveEnergy, liveRhythm, overrideTechnique, mode = 'photo', stillAt, onReady, className }: MemoryCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const [state, setState] = useState<{ key: string; ready: boolean; error: string | null }>({ key: '', ready: false, error: null });
@@ -29,14 +31,14 @@ export default function MemoryCanvas({ style, photos, info, playing, liveEnergy,
   const onReadyRef = useRef(onReady);
   useEffect(() => { live.current = liveEnergy; liveR.current = liveRhythm; onReadyRef.current = onReady; });
 
-  const key = JSON.stringify([style, photos, info, overrideTechnique]);
+  const key = JSON.stringify([style, photos, info, overrideTechnique, mode]);
   const ready = state.key === key && state.ready;
   const error = state.key === key ? state.error : null;
   useEffect(() => {
     let cancelled = false;
     const canvas = ref.current;
     if (!canvas) return;
-    createEngine(canvas, { style, photoUrls: photos, info, overrideTechnique, liveEnergy: () => live.current?.() ?? null, liveRhythm: () => liveR.current?.() ?? null })
+    createEngine(canvas, { style, photoUrls: photos, info, overrideTechnique, mode, liveEnergy: () => live.current?.() ?? null, liveRhythm: () => liveR.current?.() ?? null })
       .then((engine) => {
         if (cancelled) { engine.destroy(); return; }
         engineRef.current = engine;

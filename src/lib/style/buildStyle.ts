@@ -4,6 +4,7 @@ import type { StyleInput, StyleParams, StyleReason, Technique } from '@/lib/type
 import { buildAtmosphere } from './atmosphere';
 import { buildSongObject } from './songObject';
 import { buildVisual } from './visual';
+import { buildScene } from './scene';
 import { buildMotion, photoInterval } from './motion';
 import { buildStamps } from './stamps';
 import { buildPalette } from './palette';
@@ -90,8 +91,9 @@ export function buildStyle(input: StyleInput): StyleParams {
   const { atmosphere, reason: atmosphereReason } = buildAtmosphere(input);
   if (atmosphereReason) reasons.push(atmosphereReason);
   const { visual, reasons: visualReasons } = buildVisual(input);
+  const { scene, reason: sceneReason } = buildScene(input);
   const { songObject, reason: songObjectReason } = buildSongObject(input);
-  reasons.push(songObjectReason, ...visualReasons);
+  reasons.push(songObjectReason, ...visualReasons, sceneReason);
   if (t.primary === 'impressionist') reasons.push({ param: 'detail', because: 'Глаз смотрит на детали → там, где на фото края и лица, мазки мельче и гуще; фон — крупный подмалёвок' });
   if (s.energy > 0.6 || s.energy < 0.3)
     reasons.push({ param: 'jitter', because: `Энергия песни ${round(s.energy, 2)} → ${s.energy > 0.6 ? 'фигуры и мазки дрожат и пульсируют' : 'движение почти неподвижное'}` });
@@ -118,6 +120,7 @@ export function buildStyle(input: StyleInput): StyleParams {
     atmosphere,
     songObject,
     visual,
+    scene,
     stamps,
     reasons,
   };

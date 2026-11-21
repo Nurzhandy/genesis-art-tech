@@ -26,6 +26,7 @@ const SLIDERS: Num[] = [
 export default function Lab() {
   const [fixture, setFixture] = useState(FIXTURES[0].name);
   const [overrides, setOverrides] = useState<StyleParams | null>(null);
+  const [pageView, setPageView] = useState<'photo' | 'drawing'>('photo');
   const [tech, setTech] = useState<Technique | 'auto'>('auto');
   const [playing, setPlaying] = useState(true);
   const [engine, setEngine] = useState<Engine | null>(null);
@@ -63,7 +64,13 @@ export default function Lab() {
     <main className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 lg:grid-cols-[minmax(0,420px)_1fr]">
       <div className="lg:col-span-2">{modeSwitch}</div>
       <div>
-        <MemoryCanvas style={style} photos={f.photos} playing={playing} onReady={setEngine}
+        <div role="radiogroup" aria-label="Вид страницы" className="mb-3 inline-flex rounded-full border border-foreground/20 p-1">
+          {([['photo', 'Фото'], ['drawing', 'Рисунок']] as const).map(([m, label]) => (
+            <button key={m} type="button" role="radio" aria-checked={pageView === m} onClick={() => setPageView(m)}
+              className={`rounded-full px-4 py-1 text-sm ${pageView === m ? 'bg-foreground text-background' : 'text-muted'}`}>{label}</button>
+          ))}
+        </div>
+        <MemoryCanvas style={style} photos={f.photos} playing={playing} onReady={setEngine} mode={pageView}
           info={{ title: f.input.analysis.title, caption: f.input.analysis.caption, date: f.input.date, dayNumber: FIXTURES.indexOf(f) + 1, songLabel: f.song, notes: f.input.analysis.sensory }}
           overrideTechnique={tech === 'auto' ? undefined : { primary: tech, secondary: null }} className="rounded-sm shadow-xl" />
         <div className="mt-3 flex gap-2 font-mono text-xs">

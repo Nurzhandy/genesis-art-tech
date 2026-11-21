@@ -6,6 +6,7 @@ import { createAtmosphere } from './atmosphere';
 import { drawNotes, placeNotes } from './notes';
 import { drawSongObject } from './songObject';
 import { createPhotoFirst } from './photoFirst';
+import { createScene } from './scene';
 import { personMask } from './segment';
 import { rhythmFromBeat, type Rhythm } from './audioReactive';
 import { ageEffect } from '@/lib/style/visual';
@@ -41,6 +42,8 @@ export interface EngineOptions {
   noText?: boolean;
   /** Экспорт (обои, видео): всегда 1080×1920, даже на телефоне. */
   fullRes?: boolean;
+  /** «Фото» — фото дня в технике; «Рисунок» — нарисованная сцена дня (небо, место, люди) с фото-полароидом. */
+  mode?: 'photo' | 'drawing';
   /** B11 V2: живой ритм песни (полосы и удары); без него ритм берётся из BPM. */
   liveRhythm?: () => Rhythm | null;
   /** B11 V6: «сегодня» для возраста дня (yyyy-mm-dd); по умолчанию — дата устройства. */
@@ -127,6 +130,7 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
   // V8: маски людей — только если на фото люди; модель не ответила за 6 с — рисуем как раньше.
   const masks = style.visual?.portrait.focusPeople ? await Promise.all(photos.map((p) => personMask(p).catch(() => null))) : [];
   const photoFirst = createPhotoFirst(style, photos, rc.zone, masks);
+  const drawing = opts.mode === 'drawing' ? createScene(style, rc.zone, photos) : null;
   // V6: возраст дня на момент просмотра.
   const age = ageEffect(opts.info.date, opts.today ?? localToday());
   const agedStyle: StyleParams = age.grain > 0 ? { ...style, texture: { ...style.texture, grain: Math.min(1, style.texture.grain + age.grain) } } : style;
@@ -151,14 +155,19 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(paper, 0, 0);
-    primary.drawPhoto(rc, pt, { realtime });
-    primary.drawOverlay(rc, pt, 1);
-    if (secondary) secondary.drawOverlay(rc, pt, secondaryAlpha);
-    // Фото главное: поверх техники — настоящее фото, чёткое, с наездом камеры (техника остаётся фоном и рамкой).
     const rh = rhythm(pt);
-    // V2: бас — кадр дышит (на постере и при «меньше движения» — без дыхания).
-    const breath = realtime && !reduced && vis ? vis.rhythm.breath * (rh.bass * 2 - 1) : 0;
-    photoFirst.draw(ctx, pt, opts.info.date, { breath, desat: age.desat });
+    if (drawing) {
+      // Режим «Рисунок»: сцена дня вместо техники; фото — полароидом внутри.
+      drawing.draw(ctx, t, pt.index, realtime && !reduced ? rh.beat : 0);
+    } else {
+      primary.drawPhoto(rc, pt, { realtime });
+      primary.drawOverlay(rc, pt, 1);
+      if (secondary) secondary.drawOverlay(rc, pt, secondaryAlpha);
+      // Фото главное: поверх техники — настоящее фото, чёткое, с наездом камеры (техника остаётся фоном и рамкой).
+      // V2: бас — кадр дышит (на постере и при «меньше движения» — без дыхания).
+      const breath = realtime && !reduced && vis ? vis.rhythm.breath * (rh.bass * 2 - 1) : 0;
+      photoFirst.draw(ctx, pt, opts.info.date, { breath, desat: age.desat });
+    }
     // Страница собирается на глазах (B5): фото проявляется из бумаги, затем марка, подпись, песня.
     const asm = assemblyAt(t, style.motion, realtime);
     if (asm.photo < 1) {
