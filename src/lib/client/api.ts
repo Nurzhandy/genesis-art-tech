@@ -1,12 +1,13 @@
 'use client';
 // Обёртки над нашим API для браузера.
-import { createClient } from '@supabase/supabase-js';
 import type { DayRecord, MoodOverride, MusicFeatures, PhotoFeatures, SongRef, VoicePreset } from '@/lib/types';
 import type { UploadFile } from '@/lib/validation';
 import type { DiaryKind, DiaryMeta } from '@/lib/shelf';
 import type { Decor } from '@/lib/decor/decor';
 import type { Board } from '@/lib/board/board';
 import { ownerHeaders } from './diaryKey';
+import { authHeaders } from './auth';
+import { browserSupabase } from './supabase';
 
 export interface SignedUpload { kind: UploadFile['kind']; index?: number; path: string; token: string; signedUrl: string }
 
@@ -17,19 +18,19 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
-let storage: ReturnType<typeof createClient> | null = null;
+// Один клиент Supabase на браузер: тот же, что держит вход (иначе два клиента спорят за сессию).
 function anon() {
-  storage ??= createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-    auth: { persistSession: false },
-  });
-  return storage;
+  const sb = browserSupabase();
+  if (!sb) throw new Error('Хранилище не подключено: нет ключей Supabase');
+  return sb;
 }
 
 export type NewSong = SongRef extends infer S ? (S extends { kind: 'file' } ? { kind: 'file'; ext?: string; title?: string; artist?: string } : S) : never;
 
 export const api = {
   createDiary: (body?: { title: string; kind: DiaryKind }) =>
-    call<{ diaryId: string }>('/api/diaries', { method: 'POST', body: JSON.stringify(body ?? {}) }),
+    // Дневник заводится только после входа (план 21.11, часть A): токен говорит серверу, чей он.
+    call<{ diaryId: string }>('/api/diaries', { method: 'POST', headers: authHeaders(), body: JSON.stringify(body ?? {}) }),
   // Полка (спека 2026-11-20): карточки дневников этого устройства, переименование.
   shelf: (ids: string[]) => call<DiaryMeta[]>(`/api/diaries?ids=${encodeURIComponent(ids.slice(0, 50).join(','))}`),
   diary: (id: string) => call<DiaryMeta>(`/api/diaries/${id}`),

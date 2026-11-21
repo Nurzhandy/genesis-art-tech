@@ -39,6 +39,11 @@ export function removeFromShelf(id: string): void {
   writeStored(SHELF, JSON.stringify(readShelf().filter((x) => x !== id)));
   if (read(KEY) === id) { try { localStorage.removeItem(KEY); } catch { /* не критично */ } listeners.forEach((l) => l()); }
 }
+/** Выход из аккаунта (план 21.11, часть A): полка этого устройства пустеет, дневники остаются в аккаунте. */
+export function clearShelf(): void {
+  try { localStorage.removeItem(KEY); } catch { /* не критично */ }
+  writeStored(SHELF, '[]');
+}
 /** Полка как React-состояние; undefined — ещё на сервере. */
 export function useShelf(): string[] | undefined {
   const raw = useStored(SHELF);
