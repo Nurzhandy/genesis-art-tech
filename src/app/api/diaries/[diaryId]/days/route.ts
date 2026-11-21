@@ -13,7 +13,9 @@ export const GET = handle(async (req: NextRequest, ctx: RouteContext<'/api/diari
   const { diaryId } = await ctx.params;
   if (!isDiaryId(diaryId) || (diaryId !== DEMO() && !(await diaryExists(diaryId)))) throw new HttpError(404, 'Дневник не найден');
   const q = (req.nextUrl.searchParams.get('q') ?? '').replace(/[%,()*\\]/g, ' ').trim().slice(0, 80);
-  let query = supabaseAdmin().from('days').select('*').eq('diary_id', diaryId).eq('status', 'ready')
+  // ?drafts=1 (план 21.11, доска дня): доска дневника показывает и пустые черновики с подписью «черновик».
+  const statuses = req.nextUrl.searchParams.get('drafts') === '1' ? ['ready', 'draft'] : ['ready'];
+  let query = supabaseAdmin().from('days').select('*').eq('diary_id', diaryId).in('status', statuses)
     .order('date', { ascending: false }).order('created_at', { ascending: false }).limit(200);
   if (q) query = query.or(`title.ilike.%${q}%,text.ilike.%${q}%`);
   const { data, error } = await query;

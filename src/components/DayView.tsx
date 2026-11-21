@@ -20,6 +20,8 @@ import { ritualFor } from '@/lib/ritual';
 import { MoodTuner } from './MoodTuner';
 import { VoiceButton } from './VoiceButton';
 import { WhyPanel } from './WhyPanel';
+import { DayBoardSection } from './dayboard/DayBoardSection';
+import { isBoardDraft } from '@/lib/client/dayBoard';
 
 export function DayView({ dayId, from = null }: { dayId: string; from?: string | null }) {
   const [day, setDay] = useState<DayRecord | null>(null);
@@ -71,6 +73,16 @@ export function DayView({ dayId, from = null }: { dayId: string; from?: string |
 
   if (error) return <p className="py-20 text-center text-lg">{error}</p>;
   if (!day) return <p className="py-20 text-center font-mono text-xs text-muted">открываю день…</p>;
+  // Черновик доски дня (план 21.11): день ещё не собран — ведём туда, где он лежит.
+  if (isBoardDraft(day) && !retrying) {
+    return (
+      <div className="flex flex-col items-center gap-5 py-20 text-center">
+        <p className="font-hand text-4xl">Этот день ещё на доске</p>
+        <p className="max-w-md text-muted">Положите туда заметки, фото и песню — и нажмите «Собрать день».</p>
+        <Link href={`/day/${day.id}/board`} className="rounded-full bg-foreground px-6 py-3 font-mono text-sm uppercase tracking-wider text-background">Открыть доску дня →</Link>
+      </div>
+    );
+  }
   if (day.status === 'draft' || day.status === 'generating' || retrying) return <GenerateProgress />;
   if (day.sealed) {
     // Капсула времени (план 20.11, A5): до даты открытия — только конверт.
@@ -150,6 +162,7 @@ export function DayView({ dayId, from = null }: { dayId: string; from?: string |
         <FolderPanel day={day} onChange={setDay} />
         {day.analysis?.source === 'fallback' && <p className="text-xs text-muted">Настроение записи определено по словам и цветам — без AI-анализа.</p>}
       </div>
+      <div className="lg:col-span-2"><DayBoardSection dayId={day.id} mine={mine} /></div>
     </div>
   );
 }
