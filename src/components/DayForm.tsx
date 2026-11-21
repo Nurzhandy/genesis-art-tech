@@ -9,6 +9,7 @@ import type { UploadFile } from '@/lib/validation';
 import { processPhoto } from '@/lib/client/imageProcess';
 import { SAMPLE, samplePhotoFiles } from '@/lib/client/sample';
 import { DayTextInput } from './DayTextInput';
+import { FeelingPicker } from './FeelingPicker';
 import { RotatingQuestion } from './RotatingQuestion';
 import { GenerateProgress } from './GenerateProgress';
 import { PhotoPicker, type PickedPhoto } from './PhotoPicker';
@@ -52,6 +53,8 @@ export function DayForm({ diaryId, prompt, questions, startWithStory = false }: 
   }, [text, draftKey]);
   const offerDraft = !text && savedDraft && savedDraft.trim() ? savedDraft : null;
   // Город для погоды того дня (план 20.11, A1) — запоминаем на устройстве.
+  // Трекер эмоций: одно слово-чувство человека.
+  const [feeling, setFeeling] = useState<string | null>(null);
   const [place, setPlace] = useState(() => { try { return localStorage.getItem(PLACE_KEY) ?? ''; } catch { return ''; } });
   // Капсула времени (A5).
   const [sealOn, setSealOn] = useState(false);
@@ -115,7 +118,7 @@ ${o.entry}` : o.entry).slice(0, 5000));
       try { if (city) localStorage.setItem(PLACE_KEY, city); else localStorage.removeItem(PLACE_KEY); } catch { /* не критично */ }
       const { dayId } = await api.createDay(diaryId, {
         date, text: text.trim(), photoCount: photos.length, song: newSong,
-        ...(city ? { place: city } : {}), ...(sealOn ? { sealedUntil } : {}),
+        ...(city ? { place: city } : {}), ...(sealOn ? { sealedUntil } : {}), ...(feeling ? { feeling } : {}),
       });
 
       const files: UploadFile[] = photos.flatMap((_, i) => [
@@ -198,6 +201,11 @@ ${o.entry}` : o.entry).slice(0, 5000));
         <DayTextInput value={text} onChange={setText} placeholder={prompt} />
         {text.trim() && <p className="mt-1 text-sm text-muted">Черновик сохраняется на этом устройстве — можно вернуться позже.</p>}
         {ownVoice && <p className="mt-2 text-sm text-muted">Ваш рассказ голосом ляжет в папку дня. <button type="button" onClick={() => setOwnVoice(null)} className="underline underline-offset-4 hover:text-foreground">Не сохранять голос</button></p>}
+      </section>
+
+      <section>
+        <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-muted">что вы чувствовали</p>
+        <FeelingPicker value={feeling} onChange={setFeeling} />
       </section>
 
       <section>

@@ -2,6 +2,7 @@
 import type { DayAnalysis, DayRecord, DayWeather, MusicFeatures, PhotoFeatures, SongRef, StyleInput, StyleParams } from './types';
 import type { AnalyzeInput } from './ai/analyzeDay';
 import { HttpError } from './http';
+import { applyFeeling } from './feelings';
 import { mergeMusic } from './music/resolve';
 import { autoDecor } from './decor/autoDecor';
 import { dayFiles, dayFolder } from './storage';
@@ -67,12 +68,13 @@ export async function generateDay(dayId: string, body: GenerateBody, deps: Gener
     // Погоду спрашиваем параллельно с анализом: она не нужна модели, только правилам стиля.
     const weatherP = deps.weather(day.place, day.date).catch(() => null);
     const thumbs = await deps.loadThumbs(features.map((f) => draft.thumb(f.index))).catch(() => []);
-    const analysis = await deps.analyze({ text: day.text, date: day.date, photos: thumbs, photoFeatures: features, song, photoHour: body.photoHour });
+    // Чувство, отмеченное человеком, важнее догадки модели (трекер эмоций).
+    const analysis = applyFeeling(await deps.analyze({ text: day.text, date: day.date, photos: thumbs, photoFeatures: features, song, photoHour: body.photoHour }), day.feeling);
     const music = mergeMusic(audio, deezer, analysis.songGuess);
     const cover = body.coverPalette ?? body.music?.coverPalette;
     if (cover?.length) music.coverPalette = cover;
     const weather = await weatherP;
-    const built = deps.buildStyle({ analysis, photos: features, music, date: day.date, seed: seedFromId(day.id), weather });
+    const built = deps.buildStyle({ analysis, photos: features, music, date: day.date, seed: seedFromId(day.id), weather, feeling: day.feeling ?? null });
     // Авто-стикеры (спека 2026-11-20): человек, у которого нет времени, получает уже украшенную страницу.
     const auto = day.decor?.source === 'user' ? null : autoDecor(analysis, day.text, seedFromId(day.id));
     const style = auto ? { ...built, reasons: [...(built.reasons ?? []), { param: 'decor', because: auto.because }] } : built;

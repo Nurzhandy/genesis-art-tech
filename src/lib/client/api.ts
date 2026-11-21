@@ -39,7 +39,7 @@ export const api = {
     const params = new URLSearchParams([...(q ? [['q', q]] : []), ...songs.map((s) => ['song', s])]).toString();
     return call<DayRecord[]>(`/api/diaries/${diaryId}/days${params ? `?${params}` : ''}`);
   },
-  createDay: (diaryId: string, body: { date: string; text: string; photoCount: number; song: NewSong; place?: string; sealedUntil?: string }) =>
+  createDay: (diaryId: string, body: { date: string; text: string; photoCount: number; song: NewSong; place?: string; sealedUntil?: string; feeling?: string }) =>
     call<{ dayId: string }>(`/api/diaries/${diaryId}/days`, { method: 'POST', body: JSON.stringify(body) }),
   getDay: (dayId: string) => call<DayRecord>(`/api/days/${dayId}`),
   requestUploads: (dayId: string, files: UploadFile[]) =>

@@ -16,6 +16,7 @@ export interface DayRow {
   sealed_until?: string | null;
   share_id?: string | null;
   decor?: unknown;                             // миграция 0004
+  feeling?: string | null;                     // миграция 0006
 }
 
 export function rowToDay(r: DayRow): DayRecord {
@@ -27,6 +28,7 @@ export function rowToDay(r: DayRow): DayRecord {
     place: r.place ?? null, weather: r.weather ?? null,
     sealedUntil: r.sealed_until ?? null, shareId: r.share_id ?? null,
     decor: r.decor ? normalizeDecor(r.decor) : null,
+    feeling: r.feeling ?? null,
   };
 }
 

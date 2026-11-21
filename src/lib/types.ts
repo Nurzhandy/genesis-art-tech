@@ -76,6 +76,7 @@ export interface StyleInput {
   date: string;          // ISO yyyy-mm-dd
   seed: number;          // стабильный, из dayId
   moodOverride?: MoodOverride | null;   // поправка человека «Не совсем так?»
+  feeling?: string | null;              // чувство, которое человек отметил сам (трекер эмоций), см. src/lib/feelings.ts
   weather?: DayWeather | null;          // погода того дня (план 20.11, #3)
 }
 
@@ -128,6 +129,7 @@ export interface DayRecord {
   moodOverride?: MoodOverride | null;   // ресерч R10, null = как решила система (колонка mood_override — часть A)
   place?: string | null;                // город, который ввёл человек (план 20.11, A1)
   weather?: DayWeather | null;          // план 20.11 #3 (колонка weather — часть A)
+  feeling?: string | null;              // трекер эмоций: слово из FEELINGS (миграция 0006)
   sealedUntil?: string | null;          // план 20.11 #12, капсула времени (часть A)
   sealed?: boolean;
   decor?: import('./decor/decor').Decor | null;   // украшения страницы (спека 2026-11-20)                     // true — капсула ещё запечатана, содержимое скрыто сервером

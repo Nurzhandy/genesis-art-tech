@@ -37,7 +37,7 @@ export const POST = handle(async (req: NextRequest, ctx: RouteContext<'/api/diar
     : input.song;
   const { data, error } = await supabaseAdmin().from('days')
     .insert({ diary_id: diaryId, date: input.date, text: input.text, song, photos: [], status: 'draft',
-      place: input.place || null, sealed_until: input.sealedUntil ?? null })
+      place: input.place || null, sealed_until: input.sealedUntil ?? null, ...(input.feeling ? { feeling: input.feeling } : {}) })
     .select('id').single();
   if (error) throw error;
   return Response.json({ dayId: data.id }, { status: 201 });

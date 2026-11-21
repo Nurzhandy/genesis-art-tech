@@ -32,6 +32,7 @@ export const NewDayInput = z.object({
   song: SongInput,
   place: z.string().trim().max(80).optional(),                          // город для погоды (план 20.11, A1)
   sealedUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),     // капсула времени (A5)
+  feeling: z.string().trim().max(40).optional(),                        // трекер эмоций
 });
 export type NewDayInput = z.infer<typeof NewDayInput>;
 
