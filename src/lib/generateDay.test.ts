@@ -152,3 +152,14 @@ describe('generateDay', () => {
   });
 });
 
+
+describe('день одними словами', () => {
+  it('без фото и без песни день собирается, пластинки на странице нет', async () => {
+    const { deps, log } = fakeDeps(draft({ song: { kind: 'none' } }));
+    const res = await generateDay(ID, { photoFeatures: [], music: null }, deps);
+    expect(res.status).toBe('ready');
+    expect(res.photos).toEqual([]);
+    expect(res.style?.songObject).toBeUndefined();
+    expect(log.moves).toEqual([]);
+  });
+});

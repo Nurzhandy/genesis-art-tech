@@ -109,12 +109,14 @@ ${o.entry}` : o.entry).slice(0, 5000));
   }
 
   const sealError = sealOn && !(sealedUntil > today()) ? 'дата капсулы — в будущем' : null;
-  const songReady = (song.kind === 'link' && song.status !== 'checking') || (song.kind === 'file' && song.status === 'ok');
-  const canSubmit = text.trim().length > 0 && photos.length > 0 && !photosBusy && songReady && stage === 'form' && !sealError;
+  // Фото и песня — по желанию: день можно записать одними словами.
+  const songWait = (song.kind === 'link' && song.status === 'checking') || (song.kind === 'file' && song.status === 'checking');
+  const songBroken = song.kind === 'file' && song.status === 'error';
+  const canSubmit = text.trim().length > 0 && !photosBusy && !songWait && !songBroken && stage === 'form' && !sealError;
   const missing = [
     !text.trim() && 'расскажите о дне',
-    !photos.length && 'добавьте хотя бы одно фото',
-    !songReady && 'добавьте песню',
+    songWait && 'проверяю песню…',
+    songBroken && 'файл песни не прочитался — замените или уберите его',
     sealError,
   ].filter(Boolean);
 
@@ -124,7 +126,9 @@ ${o.entry}` : o.entry).slice(0, 5000));
     setError(null);
     setStage('upload');
     try {
-      const newSong: NewSong = song.kind === 'file'
+      const newSong: NewSong = song.kind === 'none' || (song.kind === 'link' && !song.url.trim())
+        ? { kind: 'none' }
+        : song.kind === 'file'
         ? { kind: 'file', ext: song.ext, title: song.title }
         : song.kind === 'link' && song.song?.kind === 'link'
           ? song.song
@@ -141,11 +145,13 @@ ${o.entry}` : o.entry).slice(0, 5000));
         { kind: 'thumb' as const, index: i, ext: 'jpg' as const },
       ]);
       if (song.kind === 'file') files.push({ kind: 'audio', ext: song.ext as 'mp3' });
-      const { uploads } = await api.requestUploads(dayId, files);
-      await Promise.all(uploads.map((u) => {
-        const blob = u.kind === 'photo' ? photos[u.index!].full : u.kind === 'thumb' ? photos[u.index!].thumb : song.kind === 'file' ? song.file : null;
-        return blob ? api.uploadFile(u, blob) : Promise.resolve();
-      }));
+      if (files.length) {
+        const { uploads } = await api.requestUploads(dayId, files);
+        await Promise.all(uploads.map((u) => {
+          const blob = u.kind === 'photo' ? photos[u.index!].full : u.kind === 'thumb' ? photos[u.index!].thumb : song.kind === 'file' ? song.file : null;
+          return blob ? api.uploadFile(u, blob) : Promise.resolve();
+        }));
+      }
 
       setStage('generate');
       await api.generate(dayId, {
@@ -169,7 +175,7 @@ ${o.entry}` : o.entry).slice(0, 5000));
     }
   }
 
-  if (stage === 'upload') return <GenerateProgress label="Складываю фото и песню в папку…" />;
+  if (stage === 'upload') return <GenerateProgress label={photos.length || song.kind !== 'none' ? 'Складываю фото и песню в папку…' : 'Складываю запись в папку…'} />;
   if (stage === 'generate') return <GenerateProgress />;
 
   return (
@@ -230,12 +236,12 @@ ${o.entry}` : o.entry).slice(0, 5000));
       </section>
 
       <section>
-        <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-muted">фото дня · 1–5</p>
+        <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-muted">фото дня · до 5 · по желанию</p>
         <PhotoPicker photos={photos} onChange={setPhotos} onBusy={setPhotosBusy} />
       </section>
 
       <section>
-        <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-muted">песня дня</p>
+        <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-muted">песня дня · по желанию</p>
         <SongInput key={songKey} value={song} onChange={setSong} />
       </section>
 

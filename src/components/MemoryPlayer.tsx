@@ -21,6 +21,7 @@ const OBJ = songObjectPlace(LAYOUT.width, LAYOUT.height).box;
 
 export function songLabel(day: DayRecord): string {
   const s = day.song;
+  if (s.kind === 'none') return '';
   const parts = [s.artist, s.title].filter(Boolean);
   return parts.length ? parts.join(' — ') : s.kind === 'file' ? 'своя песня' : '';
 }

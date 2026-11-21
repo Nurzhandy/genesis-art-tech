@@ -80,7 +80,7 @@ export function normalize(raw: DayAnalysisRaw, input: AnalyzeInput): DayAnalysis
     photoScenes: raw.photoScenes.filter((s) => s.index >= 0 && s.index < Math.max(1, input.photos.length)),
     title: title.ok ? title.title : fb().title,
     caption: userCaption(raw.caption, input.text),
-    songGuess: raw.songGuess
+    songGuess: raw.songGuess && input.song.kind !== 'none'
       ? {
           bpm: clamp(raw.songGuess.bpm, 50, 200),
           energy: clamp(raw.songGuess.energy, 0, 1),

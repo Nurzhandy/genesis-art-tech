@@ -100,6 +100,30 @@ export async function loadFonts(): Promise<Fonts> {
 
 const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
+/** Абстрактная «акварель» из палитры дня — картинка для дня, где только слова. */
+export function paletteWash(style: StyleParams): RenderPhoto {
+  const w = 900, h = 1200;
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const g = c.getContext('2d')!;
+  const { bg, accents } = style.palette;
+  g.fillStyle = bg;
+  g.fillRect(0, 0, w, h);
+  let seed = style.seed || 1;
+  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  g.globalCompositeOperation = 'multiply';
+  for (let i = 0; i < 9; i++) {
+    const x = rand() * w, y = rand() * h, r = 220 + rand() * 420;
+    const grad = g.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, accents[i % accents.length] + 'cc');
+    grad.addColorStop(1, accents[i % accents.length] + '00');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, w, h);
+  }
+  g.globalCompositeOperation = 'source-over';
+  return { img: c, w, h };
+}
+
 export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOptions): Promise<Engine> {
   const W = LAYOUT.width, H = LAYOUT.height;
   const lowPower = typeof window !== 'undefined' && window.innerWidth < 500 && window.devicePixelRatio > 2;
@@ -108,12 +132,13 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
   canvas.height = H * k;
   const ctx = canvas.getContext('2d')!;
 
-  const [photos, fonts] = await Promise.all([Promise.all(opts.photoUrls.map(loadImage)), loadFonts()]);
-  if (!photos.length) throw new Error('Нет фото для воспоминания');
+  const [loaded, fonts] = await Promise.all([Promise.all(opts.photoUrls.map(loadImage)), loadFonts()]);
 
   const style: StyleParams = opts.overrideTechnique
     ? { ...opts.style, techniques: { ...opts.style.techniques, ...opts.overrideTechnique } }
     : opts.style;
+  // День без фото — тоже день: вместо снимка акварель из цветов настроения.
+  const photos = loaded.length ? loaded : [paletteWash(style)];
   const energyBase = clamp((style.motion.jitter - 0.1) / 0.6);
   const energy = (pt: PhotoTime) => {
     const live = opts.liveEnergy?.();

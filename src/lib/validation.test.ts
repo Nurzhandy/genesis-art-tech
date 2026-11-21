@@ -18,8 +18,8 @@ describe('NewDayInput', () => {
   it('отклоняет текст длиннее 5000 символов', () => {
     expect(NewDayInput.safeParse({ ...ok, text: 'а'.repeat(5001) }).success).toBe(false);
   });
-  it('требует от 1 до 5 фото', () => {
-    expect(NewDayInput.safeParse({ ...ok, photoCount: 0 }).success).toBe(false);
+  it('фото и песня необязательны: день можно записать одними словами', () => {
+    expect(NewDayInput.safeParse({ ...ok, photoCount: 0, song: { kind: 'none' } }).success).toBe(true);
     expect(NewDayInput.safeParse({ ...ok, photoCount: 6 }).success).toBe(false);
   });
   it('отклоняет ссылку на песню, которая не URL', () => {

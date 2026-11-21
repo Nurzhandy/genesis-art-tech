@@ -60,7 +60,7 @@ export function urlPaths(d: DayRecord): string[] {
 }
 
 export function attachUrls(d: DayRecord, urls: Record<string, string>): DayRecord {
-  const songUrl = d.song.kind === 'file' ? (d.song.path ? urls[d.song.path] : undefined) : d.song.previewUrl;
+  const songUrl = d.song.kind === 'file' ? (d.song.path ? urls[d.song.path] : undefined) : d.song.kind === 'link' ? d.song.previewUrl : undefined;
   return {
     ...d,
     photos: d.photos.map((p) => ({ ...p, url: urls[p.path], thumbUrl: urls[p.thumbPath] })),

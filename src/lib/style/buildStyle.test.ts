@@ -262,3 +262,14 @@ describe('buildStyle: звук дня в причинах (B4)', () => {
     expect(s('rainy-alone').reasons.find((r) => r.param === 'atmosphere')?.because).toMatch(/звук: шум дождя и капли/);
   });
 });
+
+describe('день без фото', () => {
+  it('палитра не серая: цвета из сезона и настроения', async () => {
+    const { buildPalette } = await import('./palette');
+    const { FIXTURES } = await import('@/lib/fixtures');
+    const input = { ...FIXTURES[0].input, photos: [], music: { ...FIXTURES[0].input.music, coverPalette: undefined } };
+    const { palette } = buildPalette(input);
+    expect(palette.accents.length).toBeGreaterThanOrEqual(3);
+    expect(palette.accents.some((h) => h !== '#8a8a8a')).toBe(true);
+  });
+});

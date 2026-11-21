@@ -140,7 +140,7 @@ export function BookView({ days, title, cover: coverColor, large = false, startO
                 {d.analysis?.caption && <p className="mt-2 font-hand text-2xl leading-tight opacity-90">«{d.analysis.caption}»</p>}
                 <p className="mt-4 flex-1 overflow-hidden font-hand text-[22px] leading-snug opacity-85">{excerpt(d.text)}</p>
                 <div className="mt-4 flex items-end justify-between gap-3 border-t pt-3 font-mono text-[11px]" style={{ borderColor: `${ink}33` }}>
-                  <span className="min-w-0 truncate opacity-70">{[d.song.artist, d.song.title].filter(Boolean).join(' — ') ? `♪ ${[d.song.artist, d.song.title].filter(Boolean).join(' — ')}` : '♪ песня дня'}</span>
+                  <span className="min-w-0 truncate opacity-70">{[d.song.artist, d.song.title].filter(Boolean).join(' — ') ? `♪ ${[d.song.artist, d.song.title].filter(Boolean).join(' — ')}` : d.song.kind === 'none' ? '' : '♪ песня дня'}</span>
                   <a href={`/day/${d.id}`} className="shrink-0 underline underline-offset-4">открыть день →</a>
                 </div>
               </div>

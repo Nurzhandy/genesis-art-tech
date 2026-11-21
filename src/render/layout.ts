@@ -128,7 +128,8 @@ export function drawConstants(g: CanvasRenderingContext2D, W: number, H: number,
   const songMax = W - 2 * m - g.measureText(brand).width - LAYOUT.sizes.footer * 2;
   const songLine = fitSongLine((t) => g.measureText(t).width, info.songLabel, style.motion.bpm, songMax);
   g.textAlign = 'left';
-  g.fillText(songLine, m, fy);
+  // День без песни — без строки «♪ · BPM».
+  if (info.songLabel || style.songObject) g.fillText(songLine, m, fy);
   g.textAlign = 'right';
   g.fillText(brand, W - m, fy);
   setSpacing(g, 0);

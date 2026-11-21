@@ -35,7 +35,7 @@ export function Board({ diaryId, title, cover, opened }: { diaryId: string; titl
   const [items, setItems] = useState<BoardItem[] | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [days, setDays] = useState<Map<string, DayRecord>>(new Map());
-  const [view, setView] = useState<View>({ x: 0, y: 0, s: opened ? 0.35 : 1 });
+  const [view, setView] = useState<View>({ x: 0, y: 0, s: opened ? 0.6 : 1 });
   const [anim, setAnim] = useState(false);
   const [tool, setTool] = useState<Tool>('select');
   const [color, setColor] = useState(COLORS[0]);
@@ -81,7 +81,7 @@ export function Board({ diaryId, title, cover, opened }: { diaryId: string; titl
     const s = Math.min(1.2, Math.max(0.15, Math.min((W - 160) / (maxX - minX || 1), (H - 220) / (maxY - minY || 1))));
     const target = { s, x: W / 2 - ((minX + maxX) / 2) * s, y: H / 2 - ((minY + maxY) / 2) * s + 10 };
     if (fly) {
-      setView({ ...target, s: s * 0.35 });
+      setView({ ...target, s: s * 0.6 });   // продолжаем наезд камеры из книги
       requestAnimationFrame(() => { setAnim(true); setView(target); setTimeout(() => setAnim(false), 1300); });
     } else setView(target);
   }

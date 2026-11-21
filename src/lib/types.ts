@@ -7,7 +7,8 @@ export type SongProvider = 'spotify' | 'youtube' | 'yandex' | 'apple' | 'deezer'
 export type SongRef =
   | { kind: 'link'; url: string; provider: SongProvider; title?: string; artist?: string;
       embedUrl?: string; previewUrl?: string; coverUrl?: string; year?: number }
-  | { kind: 'file'; path: string; title?: string; artist?: string };
+  | { kind: 'file'; path: string; title?: string; artist?: string }
+  | { kind: 'none'; title?: undefined; artist?: undefined };          // день без песни — тоже день
 
 /** Считается в браузере (часть A) из сжатого фото. */
 export interface PhotoFeatures {

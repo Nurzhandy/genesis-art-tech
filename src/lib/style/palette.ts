@@ -20,8 +20,23 @@ function anchors(input: StyleInput, n = 6): string[] {
     if (out.every((o) => colorDistance(o, hex) > 0.06)) out.push(hex);
     if (out.length === n) break;
   }
-  if (out.length === 0) out.push('#8a8a8a');
+  if (out.length === 0) out.push(...moodAnchors(input));
   return out;
+}
+
+/**
+ * День без фото: цвета берём из обложки песни, а если и её нет — из сезона и настроения текста,
+ * чтобы страница не становилась серой.
+ */
+function moodAnchors(input: StyleInput): string[] {
+  const cover = (input.music.coverPalette ?? []).filter((c) => /^#[0-9a-f]{6}$/i.test(c)).map((c) => c.toLowerCase());
+  if (cover.length) return cover.slice(0, 4);
+  const s = signals(input);
+  const seasonHue: Record<string, number> = { autumn: 55, winter: 235, spring: 350, summer: 85, unknown: 30 };
+  const h0 = seasonHue[input.analysis.season] ?? 30;
+  const c = 0.06 + 0.08 * s.arousal;
+  const l = s.valence >= 0 ? 0.68 : 0.52;
+  return [0, 35, -40, 160].map((dh, i) => oklchToHex({ l: l - i * 0.05, c, h: (h0 + dh + 360) % 360 }));
 }
 
 export interface PaletteResult { palette: StyleParams['palette']; warmShift: number; coolShift: number; dark: boolean }

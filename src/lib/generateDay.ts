@@ -77,7 +77,9 @@ export async function generateDay(dayId: string, body: GenerateBody, deps: Gener
     const built = deps.buildStyle({ analysis, photos: features, music, date: day.date, seed: seedFromId(day.id), weather, feeling: day.feeling ?? null });
     // Авто-стикеры (спека 2026-11-20): человек, у которого нет времени, получает уже украшенную страницу.
     const auto = day.decor?.source === 'user' ? null : autoDecor(analysis, day.text, seedFromId(day.id));
-    const style = auto ? { ...built, reasons: [...(built.reasons ?? []), { param: 'decor', because: auto.because }] } : built;
+    const withDecor = auto ? { ...built, reasons: [...(built.reasons ?? []), { param: 'decor', because: auto.because }] } : built;
+    // Без песни нет и пластинки на странице.
+    const style = song.kind === 'none' ? { ...withDecor, songObject: undefined } : withDecor;
     const decor = auto?.decor ?? day.decor ?? null;
 
     // Название и уникальная папка.

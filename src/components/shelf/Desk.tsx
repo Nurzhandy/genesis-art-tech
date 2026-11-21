@@ -31,6 +31,17 @@ export function Desk() {
   };
   const key = shelf?.join(',') ?? '';
 
+  // Заставка открытия держится, пока не загрузится доска (иначе на миг мелькает стол).
+  // Снимаем её, только если человек вернулся «назад» или доска так и не открылась.
+  useEffect(() => {
+    if (!opening) return;
+    const clear = () => setOpening(null);
+    const fallback = setTimeout(clear, 9000);
+    window.addEventListener('popstate', clear);
+    window.addEventListener('pageshow', clear);
+    return () => { clearTimeout(fallback); window.removeEventListener('popstate', clear); window.removeEventListener('pageshow', clear); };
+  }, [opening]);
+
   // Ссылка на всю полку с другого устройства: /?shelf=id1,id2
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get('shelf');
@@ -100,7 +111,7 @@ export function Desk() {
       </div>
 
       {/* Next сохраняет состояние стола при возврате «назад» — убираем оверлей после перехода, иначе он висел бы поверх. */}
-      {opening && <BookOpening from={opening} onDone={() => setTimeout(() => setOpening(null), 700)} />}
+      {opening && <BookOpening from={opening} />}
       <NewDiaryDialog open={dialog} onClose={() => setDialog(false)}
         onCreated={(id) => { setDialog(false); setFresh(id); }} />
     </section>

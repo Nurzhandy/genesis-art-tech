@@ -23,12 +23,13 @@ export const SongInput = z.discriminatedUnion('kind', [
     title: z.string().max(200).optional(),
     artist: z.string().max(200).optional(),
   }),
+  z.object({ kind: z.literal('none') }),     // песня необязательна
 ]);
 
 export const NewDayInput = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   text: z.string().trim().min(1).max(5000),
-  photoCount: z.number().int().min(1).max(5),
+  photoCount: z.number().int().min(0).max(5),
   song: SongInput,
   place: z.string().trim().max(80).optional(),                          // город для погоды (план 20.11, A1)
   sealedUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),     // капсула времени (A5)
@@ -74,7 +75,7 @@ export const MusicFeaturesSchema = z.object({
 });
 
 export const GenerateBody = z.object({
-  photoFeatures: z.array(PhotoFeaturesSchema).min(1).max(5),
+  photoFeatures: z.array(PhotoFeaturesSchema).max(5),
   music: MusicFeaturesSchema.nullable(),
   coverPalette: z.array(HEX).max(5).optional(),        // цвета обложки альбома (план 20.11, A3)
   photoHour: z.number().int().min(0).max(23).optional(), // час съёмки из EXIF (A2)
