@@ -4,7 +4,7 @@
 // Двигать — перетаскивать фон, приближать — колесо или щипок двумя пальцами. Двойной щелчок — заметка.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, type SignedUpload } from '@/lib/client/api';
-import { processPhoto } from '@/lib/client/imageProcess';
+import { processPhoto, type ProcessedPhoto } from '@/lib/client/imageProcess';
 import { STICKER_SHAPES, type StickerShape } from '@/lib/decor/decor';
 import { SHAPE_NAMES } from '@/lib/decor/shapes';
 import type { Board, BoardItem } from '@/lib/board/board';
@@ -67,9 +67,11 @@ export interface BoardCanvasProps {
   onItemsChange?: (items: BoardItem[]) => void;
   /** Клик по элементу в режиме «двигать» без перетаскивания (открыть выбор чувств у капли и т. п.). */
   onItemClick?: (it: BoardItem) => void;
+  /** Фото легло на доску: обёртка может взять из него дату или место съёмки. */
+  onPhoto?: (p: ProcessedPhoto) => void;
 }
 
-export function BoardCanvas({ load, save, upload, editable, opened = false, header, headerRight, tools, primary, empty: emptyHint, renderItem, sizeOf, controls, onItemsChange, onItemClick }: BoardCanvasProps) {
+export function BoardCanvas({ load, save, upload, editable, opened = false, header, headerRight, tools, primary, empty: emptyHint, renderItem, sizeOf, controls, onItemsChange, onItemClick, onPhoto }: BoardCanvasProps) {
   const [items, setItems] = useState<BoardItem[] | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [view, setView] = useState<View>({ x: 0, y: 0, s: opened ? 0.6 : 1 });
@@ -322,6 +324,7 @@ export function BoardCanvas({ load, save, upload, editable, opened = false, head
         const up = await upload();
         await api.uploadFile({ kind: 'photo', path: up.path, token: up.token, signedUrl: up.signedUrl } as SignedUpload, p.full);
         if (up.readUrl) setUrls((u) => ({ ...u, [up.path]: up.readUrl! }));
+        onPhoto?.(p);
         const ratio = p.features.height / p.features.width;
         const it: BoardItem = { id: uid(), kind: 'photo', path: up.path, x: c.x - 140 + i * 40, y: c.y - 140 * ratio + i * 30, rot: tilt(), w: 280, ratio };
         setItems((list) => [...(list ?? []), it]);
