@@ -43,6 +43,10 @@ import { cleanTranscript } from './cleanTranscript';
 export { cleanTranscript };
 
 const clean = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim();
+const AUDIO_INTRO = 'Это запись рассказа о дне.';
+/** В записи без слов (тишина, музыка) модель повторяет нашу же вводную фразу вместо расшифровки. */
+const isEcho = (s: string) => s.toLowerCase().replace(/[.!…\s]+$/, '') === AUDIO_INTRO.toLowerCase().replace(/\.$/, '');
+export const NO_WORDS_ERROR = 'В записи не слышно слов — запишите ещё раз, поближе к микрофону';
 
 export async function storyToEntry(input: StoryInput, llm: LlmLike | null): Promise<StoryResult> {
   const transcript = clean(input.transcript);
@@ -57,15 +61,18 @@ export async function storyToEntry(input: StoryInput, llm: LlmLike | null): Prom
         system: STORY_PROMPT,
         images: input.audio && input.mime ? [{ base64: input.audio, mediaType: input.mime.split(';')[0] }] : [],
         text: input.audio
-          ? `Это запись рассказа о дне.${transcript ? `\n\nЧерновая расшифровка браузера (может содержать ошибки, сверяйся с записью):\n${transcript}` : ''}`
+          ? `${AUDIO_INTRO}${transcript ? `\n\nЧерновая расшифровка браузера (может содержать ошибки, сверяйся с записью):\n${transcript}` : ''}`
           : `Расшифровка рассказа о дне:\n${transcript}`,
         schema: SCHEMA,
       });
       const parsed = out ? StoryResultSchema.safeParse(parseModelJson(out)) : null;
       if (parsed?.success && clean(parsed.data.entry)) {
         const d = parsed.data;
+        const said = isEcho(clean(d.transcript)) ? '' : clean(d.transcript);
+        // Ни модель, ни браузер не услышали слов: запись дня из ничего была бы выдумкой.
+        if (!said && !transcript) throw new Error(NO_WORDS_ERROR);
         return {
-          transcript: clean(d.transcript) || transcript,
+          transcript: said || transcript,
           entry: d.entry.trim().slice(0, 5000),
           place: clean(d.place) || null,
           song: clean(d.song) || null,
@@ -74,6 +81,7 @@ export async function storyToEntry(input: StoryInput, llm: LlmLike | null): Prom
         };
       }
     } catch (e) {
+      if (e instanceof Error && e.message === NO_WORDS_ERROR) throw e;
       console.error('story: модель недоступна, чистим расшифровку сами', e instanceof Error ? e.message : e);
     }
   }

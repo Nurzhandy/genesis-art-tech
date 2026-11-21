@@ -29,7 +29,7 @@ export function Board({ diaryId, title, cover, opened }: { diaryId: string; titl
         return { items: placeMissingDays(b.board, list.map((d) => d.id)).items, urls: b.urls };
       }}
       save={(board) => api.saveBoard(diaryId, board)}
-      upload={() => api.boardUpload(diaryId)}
+      upload={(ext) => api.boardUpload(diaryId, ext)}
       header={<>
         <Link href="/" className="rounded-full bg-background/80 px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-muted shadow-sm backdrop-blur hover:text-foreground">← стол</Link>
         <div className="flex min-w-0 items-center gap-2 rounded-full bg-background/80 px-3 py-1.5 shadow-sm backdrop-blur">
@@ -48,6 +48,7 @@ export function Board({ diaryId, title, cover, opened }: { diaryId: string; titl
           <div className="flex flex-wrap justify-center gap-4 font-mono text-[11px] uppercase tracking-wider opacity-60">
             <span className="rounded-md border-2 border-dashed border-current px-5 py-6">двойной щелчок —<br />заметка</span>
             <span className="rounded-md border-2 border-dashed border-current px-5 py-6">перетащите сюда<br />фото</span>
+            <span className="rounded-md border-2 border-dashed border-current px-5 py-6">🎙 удерживайте —<br />голосовое</span>
             <span className="rounded-md border-2 border-dashed border-current px-5 py-6">«+ день» — система<br />соберёт воспоминание</span>
           </div>
         </div>

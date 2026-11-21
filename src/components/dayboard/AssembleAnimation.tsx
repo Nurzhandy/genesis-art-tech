@@ -82,7 +82,7 @@ function plan(items: AnyItem[], W: number, H: number) {
   const fit = box ? fitInto(box, W, H, 60) : { s: 1, dx: 0, dy: 0 };
   const picks = assemblyPicks(items);
   const photoIdx = new Map(picks.photos.map((p, i) => [p.id, i]));
-  const lines = picks.notes.flatMap((n) => n.text.split(/\n+/)).map((s) => s.trim()).filter(Boolean).slice(0, 5);
+  const lines = [...picks.notes.map((n) => n.text), ...picks.voices.map((v) => v.transcript ?? '')].flatMap((t) => t.split(/\n+/)).map((s) => s.trim()).filter(Boolean).slice(0, 5);
   const moods = items.filter((i) => i.kind === 'mood');
   const tint = moods.length ? moods.flatMap((m) => moodColors((m as { feelings?: unknown }).feelings)).slice(0, 3) : ['#efe7da'];
 
@@ -102,7 +102,7 @@ function plan(items: AnyItem[], W: number, H: number) {
     if (it.kind === 'photo') {
       const k = photoIdx.get(it.id) ?? 4;
       tx = cx + (k - 2) * 5; ty = cy - ph * 0.17 + k * 5; ts = (pw * 0.8) / w; tr = [-3, 2, -1.5, 3, -2][k] ?? 0; fade = k > 4;
-    } else if (it.kind === 'note') {
+    } else if (it.kind === 'note' || it.kind === 'voice') {
       tx = cx; ty = cy + ph * 0.25; ts = (pw * 0.5) / w; tr = 0;
     } else if (it.kind === 'song' && picks.song?.id === it.id) {
       tx = cx + pw * 0.3; ty = cy + ph * 0.36; ts = (pw * 0.36) / w; tr = 0; fade = false; spin = true;

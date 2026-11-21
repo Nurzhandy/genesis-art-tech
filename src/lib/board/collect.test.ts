@@ -39,6 +39,16 @@ describe('collectDay', () => {
     expect(d.feeling).toBe('радость, уют');
   });
 
+  it('голосовые: расшифровка встаёт между заметками по порядку, первое голосовое — голос дня', () => {
+    const voice = (id: string, y: number, transcript?: string): BoardItem => ({ id, kind: 'voice', x: 0, y, rot: 0, path: `d/_dayboard/x/${id}.webm`, sec: 5, peaks: [0.5], w: 300, ...(transcript ? { transcript } : {}) });
+    const d = collectDay(board(note('b', 0, 600, 'вечер'), voice('v2', 900), voice('v1', 300, 'днём гуляли'), note('a', 0, 0, 'утро')));
+    expect(d.text).toBe('утро\n\nднём гуляли\n\nвечер');
+    expect(d.voicePath).toBe('d/_dayboard/x/v1.webm');
+    // Голосовое без расшифровки — тоже не пустая доска.
+    expect(collectDay(board(voice('v', 0))).text).toBe('');
+    expect(BoardSchema.safeParse(board(voice('v', 0, 'да'))).success).toBe(true);
+  });
+
   it('пустая доска — понятная ошибка', () => {
     expect(() => collectDay(board())).toThrow(EMPTY_BOARD_ERROR);
     expect(() => collectDay(board(note('a', 0, 0, '   ')))).toThrow(EMPTY_BOARD_ERROR);

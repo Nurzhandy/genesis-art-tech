@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '@/lib/client/api';
 import type { PhotoFeatures } from '@/lib/types';
 import { extractCoverPalette } from '@/lib/client/coverPalette';
@@ -58,7 +59,7 @@ export function AssembleBar({ dayId, diaryId, date, place, items, assembled = fa
 
   async function assemble() {
     if (!hasMaterial(items)) {
-      setNote({ text: 'Положите на доску хоть что-то: заметку (двойной щелчок), фото или песню ♪ — и соберём день.', error: false });
+      setNote({ text: 'Положите на доску хоть что-то: заметку (двойной щелчок), голосовое 🎙, фото или песню ♪ — и соберём день.', error: false });
       return;
     }
     setNote(null);
@@ -84,12 +85,14 @@ export function AssembleBar({ dayId, diaryId, date, place, items, assembled = fa
 
   return (
     <>
-      {running && <AssembleAnimation items={snapshot} urls={urls} done={done} onDone={finish} />}
-      {note && (
+      {/* Кнопка стоит внутри панели доски (backdrop-blur + прокрутка): fixed там обрезается панелью,
+          поэтому анимация и подсказка рисуются прямо в body. */}
+      {running && createPortal(<div className="contents [--background:#f6f1e8] [--foreground:#2b241c] [--muted:#7a7064] text-[#2b241c]"><AssembleAnimation items={snapshot} urls={urls} done={done} onDone={finish} /></div>, document.body)}
+      {note && createPortal(<div className="contents [--background:#f6f1e8] [--foreground:#2b241c] [--muted:#7a7064] text-[#2b241c]">
         <p role="alert" onClick={() => setNote(null)}
           className={`fixed inset-x-4 bottom-24 z-30 mx-auto max-w-sm rounded-2xl bg-background/95 px-4 py-2.5 text-center text-sm shadow-xl ring-1 ring-black/5 backdrop-blur ${note.error ? 'text-red-700' : ''}`}>
           {note.text}
-        </p>
+        </p></div>, document.body,
       )}
       <button type="button" onClick={assemble} disabled={running} data-magnetic
         className="ml-1 shrink-0 rounded-full bg-foreground px-4 py-2.5 font-mono text-[11px] uppercase tracking-wider text-background transition hover:scale-[1.03] disabled:opacity-60">

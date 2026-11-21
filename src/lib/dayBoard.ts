@@ -1,6 +1,6 @@
 // Доска дня (план 21.11, человек 1): где лежат её фото и как её прочитать вместе с днём.
 import type { DayRecord } from './types';
-import { normalizeBoard, type Board } from './board/board';
+import { boardFilePaths, normalizeBoard, type Board } from './board/board';
 import { isUuid, rowToDay, type DayRow } from './db';
 import { HttpError } from './http';
 import { supabaseAdmin } from './supabase/server';
@@ -16,8 +16,8 @@ export async function loadDayBoard(dayId: string): Promise<{ day: DayRecord; boa
   return { day: rowToDay(data as DayRow), board: normalizeBoard((data as DayRow).board) };
 }
 
-/** Чужие фото на доске дня запрещены: только из папки этого дня. */
+/** Чужие фото и голосовые на доске дня запрещены: только из папки этого дня. */
 export function assertOwnPhotos(board: Board, day: Pick<DayRecord, 'diaryId' | 'id'>): void {
   const prefix = `${dayBoardFolder(day.diaryId, day.id)}/`;
-  if (board.items.some((i) => i.kind === 'photo' && (!i.path.startsWith(prefix) || i.path.includes('..')))) throw new HttpError(400, 'Чужое фото на доске');
+  if (boardFilePaths(board).some((p) => !p.startsWith(prefix) || p.includes('..'))) throw new HttpError(400, 'Чужой файл на доске');
 }

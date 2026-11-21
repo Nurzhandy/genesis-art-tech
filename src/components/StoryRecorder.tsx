@@ -9,7 +9,7 @@ import { pickRecordingType, recordingExt, type RecordingExt } from '@/lib/voice/
 
 export const MAX_STORY_SEC = 180;
 
-interface Recognition {
+export interface Recognition {
   lang: string; continuous: boolean; interimResults: boolean;
   start(): void; stop(): void; abort(): void;
   onresult: ((e: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
@@ -17,7 +17,7 @@ interface Recognition {
   onend: (() => void) | null;
 }
 type RecognitionCtor = new () => Recognition;
-const recognitionCtor = (): RecognitionCtor | null => {
+export const recognitionCtor = (): RecognitionCtor | null => {
   const w = window as unknown as { SpeechRecognition?: RecognitionCtor; webkitSpeechRecognition?: RecognitionCtor };
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 };

@@ -11,7 +11,7 @@ import { parseSongUrl } from '@/lib/music/parseSongUrl';
 import type { Board, BoardItem } from './board';
 
 export const MAX_PHOTOS = 5;
-export const EMPTY_BOARD_ERROR = 'Положите на доску хоть что-то: заметку, фото или песню';
+export const EMPTY_BOARD_ERROR = 'Положите на доску хоть что-то: заметку, голосовое, фото или песню';
 
 const CANVAS = { w: 1080, h: 1920 };
 // Украшения не залезают на подпись и шапку постера: рабочая зона страницы.
@@ -21,6 +21,8 @@ type Of<K extends BoardItem['kind']> = Extract<BoardItem, { kind: K }>;
 
 export interface CollectedDay {
   text: string;
+  /** Первое голосовое на доске — оно станет «голосом дня» (плеер дня играет его вместо синтеза). */
+  voicePath: string | null;
   photoPaths: string[];
   song: SongRef;
   feeling: string | undefined;
@@ -100,16 +102,20 @@ export function boardSong(it: Of<'song'> | undefined): SongRef {
 /** Всё, что нужно для сборки дня. Пустая доска (нет ни слов, ни фото, ни песни) — ошибка. */
 export function collectDay(board: Board): CollectedDay {
   const items = board.items;
-  const notes = readingOrder(items.filter((i): i is Of<'note'> => i.kind === 'note' && i.text.trim().length > 0));
+  // Заметки и расшифровки голосовых — одни и те же «слова дня», читаются вместе по порядку на доске.
+  const words = readingOrder(items.filter((i): i is Of<'note'> | Of<'voice'> =>
+    (i.kind === 'note' && i.text.trim().length > 0) || (i.kind === 'voice' && !!i.transcript?.trim())));
+  const voices = readingOrder(items.filter((i): i is Of<'voice'> => i.kind === 'voice'));
   const photos = readingOrder(items.filter((i): i is Of<'photo'> => i.kind === 'photo'));
   const song = readingOrder(items.filter((i): i is Of<'song'> => i.kind === 'song'))[0];
   const mood = readingOrder(items.filter((i): i is Of<'mood'> => i.kind === 'mood'))[0];
   // Подписи к фото — тоже слова дня.
   const captions = photos.map((p) => p.caption?.trim()).filter((c): c is string => !!c);
-  const text = [...notes.map((n) => n.text.trim()), ...captions].join('\n\n').slice(0, 5000);
-  if (!text && !photos.length && !song) throw new Error(EMPTY_BOARD_ERROR);
+  const text = [...words.map((w) => (w.kind === 'note' ? w.text : w.transcript ?? '').trim()), ...captions].join('\n\n').slice(0, 5000);
+  if (!text && !photos.length && !song && !voices.length) throw new Error(EMPTY_BOARD_ERROR);
   return {
     text,
+    voicePath: voices[0]?.path ?? null,
     photoPaths: photos.slice(0, MAX_PHOTOS).map((p) => p.path),
     song: boardSong(song),
     feeling: mood ? [...new Set(mood.feelings)].join(', ') : undefined,

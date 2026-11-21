@@ -29,6 +29,7 @@ export function itemBox(it: AnyItem): Box {
     case 'song': { const s = num(r.size, 160); return { x: it.x, y: it.y, w: s, h: s + 40 }; }
     case 'day': { const w = num(r.w, 260); return { x: it.x, y: it.y, w, h: (w * 16) / 9 + 50 }; }
     case 'frame': return { x: it.x, y: it.y, w: num(r.w, 400), h: num(r.h, 300) };
+    case 'voice': { const t = typeof r.transcript === 'string' ? r.transcript : ''; return { x: it.x, y: it.y, w: num(r.w, 340), h: 80 + (t ? 30 + Math.ceil(t.length / 32) * 26 : 0) }; }
     default: { const s = num(r.size, 120); return { x: it.x, y: it.y, w: s, h: s }; } // sticker, mood и всё новое
   }
 }
@@ -54,9 +55,9 @@ export { readingOrder };
 /** Черновик, созданный «＋ день»: текста ещё нет, всё лежит на доске дня. Сломанные дни старой формы сюда не попадают. */
 export const isBoardDraft = (d: { status: string; text?: string | null }) => d.status === 'draft' && !d.text?.trim();
 
-/** Есть ли на доске хоть что-то, из чего можно собрать день: заметка с текстом, фото или песня. */
+/** Есть ли на доске хоть что-то, из чего можно собрать день: заметка с текстом, голосовое, фото или песня (как в collectDay). */
 export function hasMaterial(items: AnyItem[]): boolean {
-  return items.some((it) => (it.kind === 'note' && String((it as { text?: unknown }).text ?? '').trim().length > 0) || it.kind === 'photo' || it.kind === 'song');
+  return items.some((it) => (it.kind === 'note' && String((it as { text?: unknown }).text ?? '').trim().length > 0) || it.kind === 'voice' || it.kind === 'photo' || it.kind === 'song');
 }
 
 /** Что именно пойдёт в сборку: первые 5 фото и первая песня в порядке чтения. */
@@ -64,6 +65,8 @@ export function assemblyPicks(items: AnyItem[]) {
   const ordered = readingOrder(items);
   return {
     notes: ordered.filter((i) => i.kind === 'note' && String((i as { text?: unknown }).text ?? '').trim()) as Extract<BoardItem, { kind: 'note' }>[],
+    /** Голосовые с расшифровкой: их слова тоже ложатся строками на лист. */
+    voices: ordered.filter((i) => i.kind === 'voice') as Extract<BoardItem, { kind: 'voice' }>[],
     photos: ordered.filter((i) => i.kind === 'photo').slice(0, MAX_PHOTOS) as Extract<BoardItem, { kind: 'photo' }>[],
     song: (ordered.find((i) => i.kind === 'song') ?? null) as Extract<BoardItem, { kind: 'song' }> | null,
   };

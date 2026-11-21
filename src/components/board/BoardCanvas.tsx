@@ -9,11 +9,13 @@ import { STICKER_SHAPES, type StickerShape } from '@/lib/decor/decor';
 import { SHAPE_NAMES } from '@/lib/decor/shapes';
 import type { Board, BoardItem } from '@/lib/board/board';
 import { StickerIcon } from '../decor/StickerIcon';
+import { cleanTranscript } from '@/lib/ai/cleanTranscript';
+import { toBase64, VoiceBubble, voiceFromFile, VoiceMic, type Recording } from './VoiceNote';
 
 export type Tool = 'select' | 'note' | 'pen' | 'arrow' | 'frame';
 interface View { x: number; y: number; s: number }
 
-/** Подписанная загрузка фото на доску (у доски дневника и у доски дня — свои роуты). */
+/** Подписанная загрузка фото или голосового (ext) на доску (у доски дневника и у доски дня — свои роуты). */
 export interface BoardUpload { path: string; token: string; signedUrl: string; readUrl: string | null }
 
 /** Ручка управления доской снаружи: положить элемент (заметку из голоса, настроение…), узнать центр экрана. */
@@ -47,7 +49,8 @@ export interface BoardCanvasProps {
   /** Загрузить доску: элементы и подписанные ссылки на фото. */
   load: () => Promise<{ items: BoardItem[]; urls: Record<string, string> }>;
   save: (board: Board) => Promise<unknown>;
-  upload: () => Promise<BoardUpload>;
+  /** ext — расширение голосового (webm, ogg, m4a…); без него — фото. */
+  upload: (ext?: string) => Promise<BoardUpload>;
   editable: boolean;
   /** Пришли из книги: камера продолжает наезд и элементы «влетают». */
   opened?: boolean;
@@ -92,6 +95,7 @@ export function BoardCanvas({ load, save, upload, editable, opened = false, head
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const audio = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
+  const [transcribing, setTranscribing] = useState<Set<string>>(new Set());
   const loaded = useRef(false);
   const sizeRef = useRef(sizeOf);
   useEffect(() => { sizeRef.current = sizeOf; });
@@ -274,7 +278,9 @@ export function BoardCanvas({ load, save, upload, editable, opened = false, head
       const v = Math.max(40, (a.ow ?? 100) + d);
       if (it && 'size' in it) update(a.id, { size: Math.min(800, v) } as Partial<BoardItem>);
       else if (it?.kind === 'frame') update(a.id, { w: v, h: Math.max(100, (a.oy ?? 100) + (e.clientY - a.sy) / view.s) } as Partial<BoardItem>);
-      else update(a.id, { w: Math.min(2000, Math.max(80, v)) } as Partial<BoardItem>);
+      else if (it?.kind === 'voice') update(a.id, { w: Math.min(900, Math.max(200, v)) } as Partial<BoardItem>);
+      // Пределы ширины — как в схеме доски, иначе сохранение отклонится.
+      else update(a.id, { w: Math.min(it?.kind === 'note' ? 1200 : 2000, Math.max(80, v)) } as Partial<BoardItem>);
     }
   }
 
@@ -346,6 +352,37 @@ export function BoardCanvas({ load, save, upload, editable, opened = false, head
     }
   }
 
+  // Голосовое (как в WhatsApp): файл → папка доски, пузырь → на доску, расшифровка догоняет в фоне.
+  async function addVoice(r: Recording, at?: { x: number; y: number }) {
+    if (!editable) return;
+    const c = at ?? center();
+    const up = await upload(r.ext);
+    await api.uploadFile({ kind: 'voice', path: up.path, token: up.token, signedUrl: up.signedUrl } as SignedUpload, r.blob);
+    setUrls((u) => ({ ...u, [up.path]: up.readUrl ?? URL.createObjectURL(r.blob) }));
+    const it: BoardItem = { id: uid(), kind: 'voice', path: up.path, sec: Math.round(r.sec * 10) / 10, peaks: r.peaks, x: c.x - 170, y: c.y - 50, rot: tilt() / 2, w: 340,
+      ...(r.said ? { transcript: cleanTranscript(r.said).slice(0, 4000) } : {}) };
+    add(it);
+    void transcribe(it.id, r);
+  }
+
+  async function transcribe(id: string, r: Recording) {
+    setTranscribing((s) => new Set(s).add(id));
+    try {
+      const res = await api.story({ audio: await toBase64(r.blob), mime: r.blob.type || 'audio/webm', ...(r.said ? { transcript: r.said } : {}) });
+      // Только дословная расшифровка: пересказ модели без слов (тишина, музыка) — выдумка, её не берём.
+      const text = cleanTranscript(res.transcript).trim();
+      if (text) update(id, { transcript: text.slice(0, 4000) } as Partial<BoardItem>);
+    } catch { /* расшифровка не получилась — останется живая из браузера, её можно дописать руками */ }
+    setTranscribing((s) => { const n = new Set(s); n.delete(id); return n; });
+  }
+
+  async function addVoiceFiles(files: File[], at: { x: number; y: number }) {
+    for (const [i, f] of files.slice(0, 3).entries()) {
+      try { await addVoice(await voiceFromFile(f), { x: at.x + i * 40, y: at.y + i * 140 }); }
+      catch (e) { window.alert(e instanceof Error ? e.message : 'Не получилось добавить голосовое'); }
+    }
+  }
+
   function playSong(it: Extract<BoardItem, { kind: 'song' }>) {
     if (!it.preview) { window.open(it.url, '_blank', 'noopener'); return; }
     if (playing === it.id) { audio.current?.pause(); setPlaying(null); return; }
@@ -379,7 +416,13 @@ export function BoardCanvas({ load, save, upload, editable, opened = false, head
         onPointerDown={onBgDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
         onDoubleClick={(e) => { if (!editable || e.target !== e.currentTarget) return; const p = toBoard(e.clientX, e.clientY); const it: BoardItem = { id: uid(), kind: 'note', x: p.x - 110, y: p.y - 30, rot: tilt(), text: '', w: 240, color, font: 'hand' }; add(it); setEditing(it.id); }}
         onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => { e.preventDefault(); void addPhotos(e.dataTransfer.files, toBoard(e.clientX, e.clientY)); }}>
+        onDrop={(e) => {
+          e.preventDefault();
+          const at = toBoard(e.clientX, e.clientY), files = Array.from(e.dataTransfer.files);
+          const isAudio = (f: File) => f.type.startsWith('audio/') || /\.(m4a|mp3|ogg|oga|opus|wav|webm|aac)$/i.test(f.name);
+          void addPhotos(files.filter((f) => !isAudio(f)), at);
+          if (editable) void addVoiceFiles(files.filter(isAudio), at);
+        }}>
         <div className="absolute left-0 top-0 origin-top-left" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.s})`, transition: anim ? 'transform 1.2s cubic-bezier(0.2,0.8,0.2,1)' : undefined }}>
 
           {[...list, ...(draft?.kind === 'frame' ? [draft] : [])].map((it, idx) => {
@@ -388,7 +431,7 @@ export function BoardCanvas({ load, save, upload, editable, opened = false, head
             const sel = selected === it.id;
             const common = {
               className: `absolute ${sel ? 'outline outline-2 outline-offset-4 outline-[#c8892b]' : ''}`,
-              style: { left: it.x, top: it.y, width: s.w, height: it.kind === 'note' ? undefined : s.h, rotate: `${it.rot}deg`, animation: opened ? `pop-in 0.6s ease-out ${0.5 + Math.min(idx, 20) * 0.05}s both` : undefined } as React.CSSProperties,
+              style: { left: it.x, top: it.y, width: s.w, height: it.kind === 'note' || it.kind === 'voice' ? undefined : s.h, rotate: `${it.rot}deg`, animation: opened ? `pop-in 0.6s ease-out ${0.5 + Math.min(idx, 20) * 0.05}s both` : undefined } as React.CSSProperties,
               onPointerDown: (e: React.PointerEvent) => startMove(e, it),
             };
             const handle = sel && editable && (
@@ -437,6 +480,13 @@ export function BoardCanvas({ load, save, upload, editable, opened = false, head
                   </span>
                 </button>
                 <p className="mt-2 text-center font-hand text-xl leading-tight">♪ {it.title}</p>
+                {handle}
+              </div>
+            );
+            if (it.kind === 'voice') return (
+              <div key={it.id} {...common}>
+                <VoiceBubble item={it} url={urls[it.path]} transcribing={transcribing.has(it.id)} editable={editable}
+                  onTranscript={(text) => commit((items ?? []).map((i) => (i.id === it.id ? { ...i, transcript: text || undefined } as BoardItem : i)))} />
                 {handle}
               </div>
             );
@@ -499,6 +549,7 @@ export function BoardCanvas({ load, save, upload, editable, opened = false, head
             <button type="button" onClick={() => fileRef.current?.click()} className={iconBtn}>▣<Tip>Фото</Tip></button>
             <button type="button" onClick={() => setStickers((v) => !v)} aria-pressed={stickers} className={iconBtn}>✦<Tip>Стикер</Tip></button>
             <button type="button" onClick={addSong} className={iconBtn}>◉<Tip>Песня</Tip></button>
+            <VoiceMic onRecorded={(r) => addVoice(r)} className={iconBtn} />
             {tools}
             {primary && <><span className="mx-1 h-6 w-px shrink-0 bg-foreground/15" />{primary}</>}
             <span className="mx-1 h-6 w-px shrink-0 bg-foreground/15" />
@@ -536,6 +587,7 @@ export function size(it: BoardItem): { w: number; h: number } {
     case 'day': return { w: it.w, h: (it.w * 16) / 9 + 50 };
     case 'frame': return { w: it.w, h: it.h };
     case 'mood': return { w: it.size, h: it.size };
+    case 'voice': return voiceSize(it);
     case 'arrow': return { w: Math.abs(it.x2 - it.x), h: Math.abs(it.y2 - it.y) };
     case 'stroke': {
       const xs = it.points.filter((_, i) => i % 2 === 0), ys = it.points.filter((_, i) => i % 2 === 1);
@@ -547,4 +599,9 @@ export function size(it: BoardItem): { w: number; h: number } {
       return { w: s, h: s };
     }
   }
+}
+
+/** Пузырь голосового + строки расшифровки под ним (примерно: ~32 знака в строке). */
+export function voiceSize(it: { w: number; transcript?: string }): { w: number; h: number } {
+  return { w: it.w, h: 80 + (it.transcript ? 30 + Math.ceil(it.transcript.length / 32) * 26 : 0) };
 }

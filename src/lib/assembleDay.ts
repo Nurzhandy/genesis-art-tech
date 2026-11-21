@@ -7,6 +7,7 @@ import type { DayRow } from './db';
 import { HttpError } from './http';
 import { dayFiles, dayFolder } from './storage';
 import type { AssembleBody, GenerateBody } from './validation';
+import { ownVoicePreset } from './voice/ownVoice';
 
 export interface AssembleDeps {
   load(dayId: string): Promise<{ day: DayRecord; board: Board }>;
@@ -46,6 +47,9 @@ export async function assembleDay(dayId: string, body: AssembleBody, deps: Assem
   await deps.updateDay(day.id, {
     status: 'draft', error: null, photos: [], poster_path: null,
     text: got.text, song: got.song, feeling: got.feeling ?? null, decor: got.decor,
+    // Голосовое с доски — голос дня: плеер играет его, а не синтез. Без голосового сбрасываем старую озвучку:
+    // текст дня мог поменяться, синтез соберётся заново по новому тексту.
+    voice: got.voicePath ? { path: got.voicePath, preset: ownVoicePreset() } : null,
     ...(body.date ? { date: body.date } : {}),
     ...(body.place !== undefined ? { place: body.place || null } : {}),
   });

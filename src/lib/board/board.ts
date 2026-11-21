@@ -8,6 +8,16 @@ const Num = z.number().min(-200000).max(200000);
 const Color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const Id = z.string().min(1).max(40);
 const base = { id: Id, x: Num, y: Num, rot: z.number().min(-360).max(360).default(0) };
+/** Столбиков в волне голосового. */
+export const VOICE_BARS = 48;
+/** Голосовое на доске — до 3 минут, файл до 8 МБ. */
+export const MAX_VOICE_SEC = 180;
+export const VOICE_EXT = ['webm', 'ogg', 'm4a', 'mp4', 'mp3', 'wav'] as const;
+export type VoiceExt = (typeof VOICE_EXT)[number];
+/** Расширение файла для загрузки на доску: голосовое — из белого списка, всё остальное — фото (jpg). */
+export const boardFileExt = (ext: string | null): VoiceExt | 'jpg' => ((VOICE_EXT as readonly string[]).includes(ext ?? '') ? (ext as VoiceExt) : 'jpg');
+/** Пути файлов доски (фото и голосовые), которым нужны подписанные ссылки на чтение. */
+export const boardFilePaths = (b: { items: BoardItem[] }) => b.items.flatMap((i) => (i.kind === 'photo' || i.kind === 'voice' ? [i.path] : []));
 
 export const BoardItemSchema = z.discriminatedUnion('kind', [
   z.object({ ...base, kind: z.literal('note'), text: z.string().max(2000), w: z.number().min(80).max(1200), color: Color, font: z.enum(['hand', 'serif', 'mono']).default('hand') }),
@@ -20,6 +30,11 @@ export const BoardItemSchema = z.discriminatedUnion('kind', [
   z.object({ ...base, kind: z.literal('frame'), w: z.number().min(100).max(10000), h: z.number().min(100).max(10000), title: z.string().max(80), color: Color }),
   // Настроение дня (план 21.11, доска дня): капля с 1–3 чувствами из трекера эмоций (слова из src/lib/feelings.ts).
   z.object({ ...base, kind: z.literal('mood'), feelings: z.array(z.string().trim().min(1).max(40)).min(1).max(3), size: z.number().min(60).max(600) }),
+  // Голосовое, как в WhatsApp (21.11): запись своим голосом, волна громкости, расшифровка — слова дня.
+  z.object({
+    ...base, kind: z.literal('voice'), path: z.string().min(1).max(300), sec: z.number().min(0).max(600),
+    peaks: z.array(z.number().min(0).max(1)).max(VOICE_BARS), transcript: z.string().max(4000).optional(), w: z.number().min(200).max(900),
+  }),
 ]);
 export const BoardSchema = z.object({ v: z.literal(1), items: z.array(BoardItemSchema).max(400) });
 

@@ -107,7 +107,7 @@ export function DayBoard({ dayId, opened = false, primary }: { dayId: string; op
           return { items: r.board.items, urls: r.urls };
         }}
         save={(board) => api.saveDayBoard(dayId, board)}
-        upload={() => api.dayBoardUpload(dayId)}
+        upload={(ext) => api.dayBoardUpload(dayId, ext)}
         // Город из GPS фото (айфон пишет координаты), если человек его ещё не вписал.
         onPhoto={(p) => {
           if (!p.gps || place.trim()) return;
@@ -132,7 +132,7 @@ export function DayBoard({ dayId, opened = false, primary }: { dayId: string; op
             <span className="h-5 w-5 rounded-[58%_42%_55%_45%/52%_60%_40%_48%]" style={{ background: 'conic-gradient(#f6c445, #e8574a, #5b7fd1, #5cb88a, #f6c445)' }} />
             <Tip>Настроение (M)</Tip>
           </button>
-          <button type="button" onClick={() => setVoice((v) => !v)} aria-pressed={voice} className={iconBtn} aria-label="Рассказать голосом">🎙<Tip>Рассказать голосом</Tip></button>
+          <button type="button" onClick={() => setVoice((v) => !v)} aria-pressed={voice} className={iconBtn} aria-label="Рассказ голосом → заметка">🗣<Tip>Рассказ → заметка</Tip></button>
         </>}
         primary={day && primary ? primary({ day, date, place, items }) : undefined}
         renderItem={(it) => (it.kind === 'mood' ? <MoodDrop feelings={it.feelings} size={it.size} /> : null)}
@@ -143,6 +143,7 @@ export function DayBoard({ dayId, opened = false, primary }: { dayId: string; op
               <span className="rounded-md border-2 border-dashed border-current px-5 py-6">двойной щелчок —<br />заметка</span>
               <span className="rounded-md border-2 border-dashed border-current px-5 py-6">перетащите<br />фото</span>
               <span className="rounded-md border-2 border-dashed border-current px-5 py-6">◉ —<br />песня дня</span>
+              <span className="rounded-md border-2 border-dashed border-current px-5 py-6">🎙 удерживайте —<br />голосовое</span>
             </div>
           </div>
         }

@@ -50,6 +50,20 @@ describe('assembleDay', () => {
     expect(log.gen?.photoFeatures).toEqual([]);
   });
 
+  it('голосовое с доски: расшифровка — текст дня, запись — голос дня', async () => {
+    const path = `diary/_dayboard/${ID}/v.webm`;
+    const { deps, log } = fake(day(), { v: 1, items: [{ id: 'v', kind: 'voice', x: 0, y: 0, rot: 0, path, sec: 12, peaks: [0.2, 0.8], transcript: 'сегодня был хороший день', w: 300 }] });
+    await assembleDay(ID, { photoFeatures: [], music: null }, deps, owner);
+    expect(log.patch).toMatchObject({ text: 'сегодня был хороший день', voice: { path, preset: { voice: 'own' } } });
+  });
+
+  it('без голосового старая озвучка сбрасывается', async () => {
+    const { deps, log } = fake(day({ voice: { path: 'diary/x/voice.mp3', preset: { voice: 'alloy', speed: 1, instructions: '', because: '' } } }),
+      { v: 1, items: [{ id: 'n', kind: 'note', x: 0, y: 0, rot: 0, text: 'идея', w: 200, color: '#fff3b0', font: 'hand' }] });
+    await assembleDay(ID, { photoFeatures: [], music: null }, deps, owner);
+    expect(log.patch?.voice).toBeNull();
+  });
+
   it('пустая доска — 400 с понятным текстом, ничего не трогаем', async () => {
     const { deps, log } = fake(day(), { v: 1, items: [] });
     await expect(assembleDay(ID, { photoFeatures: [], music: null }, deps, owner)).rejects.toMatchObject({ status: 400 });

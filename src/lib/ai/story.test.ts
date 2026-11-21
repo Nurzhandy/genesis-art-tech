@@ -48,6 +48,14 @@ describe('storyToEntry', () => {
     expect((await storyToEntry({ transcript: RAW }, null)).entry).toContain('набережной');
   });
 
+  it('в записи нет слов: модель повторила вводную — ошибка, а не выдуманная запись', async () => {
+    const echo = { transcript: 'Это запись рассказа о дне.', entry: 'Это запись рассказа о дне.', place: null, song: null, details: [] };
+    await expect(storyToEntry({ audio: 'AAAA', mime: 'audio/wav' }, llm(echo))).rejects.toThrow('не слышно слов');
+    await expect(storyToEntry({ audio: 'AAAA', mime: 'audio/wav' }, llm({ ...echo, transcript: '' }))).rejects.toThrow('не слышно слов');
+    // Браузер слова расслышал — берём их.
+    expect((await storyToEntry({ audio: 'AAAA', mime: 'audio/wav', transcript: RAW }, llm(echo))).transcript).toContain('набережной');
+  });
+
   it('только аудио и модель недоступна → понятная ошибка', async () => {
     await expect(storyToEntry({ audio: 'AAAA', mime: 'audio/mp4' }, null)).rejects.toThrow('GEMINI_API_KEY');
   });

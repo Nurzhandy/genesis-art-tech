@@ -75,8 +75,9 @@ export const api = {
   board: (diaryId: string) => call<{ board: Board; urls: Record<string, string> }>(`/api/diaries/${diaryId}/board`),
   saveBoard: (diaryId: string, board: Board) =>
     call<{ ok: true }>(`/api/diaries/${diaryId}/board`, { method: 'PUT', headers: owner(), body: JSON.stringify(board) }),
-  boardUpload: (diaryId: string) =>
-    call<{ path: string; token: string; signedUrl: string; readUrl: string | null }>(`/api/diaries/${diaryId}/board/upload`, { method: 'POST', headers: owner() }),
+  /** ext — для голосового (webm, ogg, m4a, mp3, wav); без него — фото. */
+  boardUpload: (diaryId: string, ext?: string) =>
+    call<{ path: string; token: string; signedUrl: string; readUrl: string | null }>(`/api/diaries/${diaryId}/board/upload${ext ? `?ext=${ext}` : ''}`, { method: 'POST', headers: owner() }),
   // ── Доска дня (план 21.11): «＋ день» → черновик → доска → «Собрать день» ──
   createDraftDay: (diaryId: string, date: string, place?: string) =>
     call<{ dayId: string }>(`/api/diaries/${diaryId}/days`, { method: 'POST', headers: { 'content-type': 'application/json', ...owner() }, body: JSON.stringify({ draft: true, date, ...(place ? { place } : {}) }) }),
@@ -84,8 +85,8 @@ export const api = {
     call<{ board: Board; urls: Record<string, string>; day: { id: string; diaryId: string; date: string; place: string | null; status: DayRecord['status']; title: string | null } }>(`/api/days/${dayId}/board`),
   saveDayBoard: (dayId: string, board: Board) =>
     call<{ ok: true }>(`/api/days/${dayId}/board`, { method: 'PUT', headers: owner(), body: JSON.stringify(board) }),
-  dayBoardUpload: (dayId: string) =>
-    call<{ path: string; token: string; signedUrl: string; readUrl: string | null }>(`/api/days/${dayId}/board/upload`, { method: 'POST', headers: owner() }),
+  dayBoardUpload: (dayId: string, ext?: string) =>
+    call<{ path: string; token: string; signedUrl: string; readUrl: string | null }>(`/api/days/${dayId}/board/upload${ext ? `?ext=${ext}` : ''}`, { method: 'POST', headers: owner() }),
   /** photoFeatures — в порядке фото доски (сверху вниз, слева направо, первые 5): см. collectDay. */
   assembleDay: (dayId: string, body: { photoFeatures: PhotoFeatures[]; music?: MusicFeatures | null; coverPalette?: string[]; photoHour?: number; date?: string; place?: string }) =>
     call<DayRecord>(`/api/days/${dayId}/assemble`, { method: 'POST', headers: { 'content-type': 'application/json', ...owner() }, body: JSON.stringify(body) }),

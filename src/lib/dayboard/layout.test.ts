@@ -38,4 +38,12 @@ describe('layout доски дня', () => {
     expect(p.song?.id).toBe('first');
     expect(p.photos.map((x) => x.id)).toEqual(['f0', 'f1', 'f2', 'f3', 'f4']);
   });
+
+  it('голосовое: есть из чего собрать день, рамка по ширине пузыря и расшифровке', () => {
+    const v: AnyItem = { id: 'v', kind: 'voice', x: 0, y: 0, rot: 0, path: 'p/v.webm', sec: 4, peaks: [0.5], w: 340 };
+    expect(hasMaterial([v])).toBe(true);
+    expect(itemBox(v)).toEqual({ x: 0, y: 0, w: 340, h: 80 });
+    expect(itemBox({ ...v, transcript: 'а'.repeat(64) }).h).toBe(80 + 30 + 2 * 26);
+    expect(assemblyPicks([v]).voices.map((x) => x.id)).toEqual(['v']);
+  });
 });

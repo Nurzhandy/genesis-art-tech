@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { isSealed, serverToday } from '@/lib/capsule';
 import { assertCanEdit } from '@/lib/db';
 import { assertOwnPhotos, loadDayBoard } from '@/lib/dayBoard';
-import { BoardSchema, MAX_BOARD_BYTES } from '@/lib/board/board';
+import { boardFilePaths, BoardSchema, MAX_BOARD_BYTES } from '@/lib/board/board';
 import { handle, HttpError } from '@/lib/http';
 import { signRead } from '@/lib/storage';
 import { supabaseAdmin } from '@/lib/supabase/server';
@@ -12,7 +12,7 @@ export const GET = handle(async (_req: NextRequest, ctx: RouteContext<'/api/days
   const { dayId } = await ctx.params;
   const { day, board } = await loadDayBoard(dayId);
   if (isSealed(day, serverToday())) throw new HttpError(409, 'Капсула ещё запечатана');
-  const urls = await signRead(board.items.flatMap((i) => (i.kind === 'photo' ? [i.path] : [])), 6 * 3600);
+  const urls = await signRead(boardFilePaths(board), 6 * 3600);
   return Response.json({ board, urls, day: { id: day.id, diaryId: day.diaryId, date: day.date, place: day.place ?? null, status: day.status, title: day.title } });
 });
 

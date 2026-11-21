@@ -5,6 +5,8 @@ import type { StickerShape } from '@/lib/decor/decor';
 import { findFeeling, ZONES } from '@/lib/feelings';
 import { itemBox, type AnyItem } from '@/lib/dayboard/layout';
 import { StickerIcon } from '../decor/StickerIcon';
+import { VoiceBubble } from '../board/VoiceNote';
+import type { BoardItem } from '@/lib/board/board';
 
 const FONTS: Record<string, string> = { hand: 'font-hand text-2xl leading-snug', serif: 'text-lg leading-snug', mono: 'font-mono text-sm' };
 
@@ -29,7 +31,8 @@ export function ItemFace({ it, urls }: { it: AnyItem; urls: Record<string, strin
     case 'note':
       return (
         <div className={`h-full min-h-[90px] whitespace-pre-wrap rounded-sm px-4 py-3 shadow-md ${FONTS[String(r.font)] ?? FONTS.hand}`}
-          style={{ background: String(r.color ?? '#f4efe6'), color: isDark(String(r.color)) ? '#f4efe6' : '#2b241c' }}>
+          // Как на доске-редакторе (BoardCanvas): цвет заметки — оттенок бумаги, чернильный — просто бумага.
+          style={{ background: r.color === '#2b241c' || !r.color ? '#fbf8f1' : `color-mix(in srgb, ${String(r.color)} 22%, #fbf8f1)`, color: '#2b241c' }}>
           {String(r.text ?? '')}
         </div>
       );
@@ -99,16 +102,13 @@ export function ItemFace({ it, urls }: { it: AnyItem; urls: Record<string, strin
         </div>
       );
     }
+    case 'voice': {
+      const v = it as Extract<BoardItem, { kind: 'voice' }>;
+      return <VoiceBubble item={v} url={urls[v.path]} transcribing={false} editable={false} onTranscript={() => undefined} />;
+    }
     case 'day':
       return <div className="h-full rounded-sm bg-[#e9e2d6] shadow-lg" />;
     default:
       return null;
   }
-}
-
-function isDark(hex: string) {
-  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
-  if (!m) return false;
-  const [r, g, b] = m.slice(1).map((h) => parseInt(h, 16));
-  return 0.299 * r + 0.587 * g + 0.114 * b < 110;
 }
