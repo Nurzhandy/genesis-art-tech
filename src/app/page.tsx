@@ -33,6 +33,7 @@ export default function Home() {
               <div className="hero-rise" style={{ animationDelay: '1.2s' }}><TellTodayButton /></div>
               <div className="hero-rise flex flex-wrap items-center gap-x-6 gap-y-2 text-lg" style={{ animationDelay: '1.45s' }}>
                 <Link href="/diary/demo" className="underline decoration-foreground/30 underline-offset-4 hover:decoration-foreground">Полистать демо-дневник</Link>
+                <Link href="/thoughts" className="text-muted underline-offset-4 hover:text-foreground hover:underline">Мысли</Link>
                 <a href="#features" className="text-muted underline-offset-4 hover:text-foreground hover:underline">Что ещё умеет</a>
               </div>
             </div>

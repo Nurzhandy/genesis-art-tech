@@ -3,6 +3,7 @@
 // Каждые несколько секунд небо перетекает в цвета следующего дня — осень, ночь в офисе, дождь, лето…
 import { useEffect, useMemo, useState } from 'react';
 import { demoDays } from './demoDays';
+import { SecretGame } from './SecretGame';
 
 export function HeroAurora({ children }: { children: React.ReactNode }) {
   const days = useMemo(() => demoDays(), []);
@@ -27,6 +28,7 @@ export function HeroAurora({ children }: { children: React.ReactNode }) {
       })}
       <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-transparent to-background" />
       {children}
+      <SecretGame />
       <p className="pointer-events-none absolute bottom-4 right-4 font-hand text-xl text-foreground/60 transition-opacity" aria-live="off">
         цвета дня: {days[i]?.title}
       </p>
