@@ -1,6 +1,6 @@
 'use client';
 // Живое небо за всеми страницами: мягкие цветные облака из палитр настоящих дней дневника,
-// медленно перетекают от дня к дню. На главной своё, яркое небо (HeroAurora), на странице дня — цвета этого дня.
+// медленно перетекают от дня к дню. На главной, странице дня и подарке его нет: там свой фон.
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { demoDays } from '@/components/home/demoDays';

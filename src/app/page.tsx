@@ -6,9 +6,6 @@ import { KineticTitle } from '@/components/home/KineticTitle';
 import { MemoryMachine } from '@/components/home/MemoryMachine';
 import { MoodMarquee } from '@/components/home/MoodMarquee';
 import { Desk } from '@/components/shelf/Desk';
-import { FeatureBento } from '@/components/home/FeatureBento';
-import { HeroAurora } from '@/components/home/HeroAurora';
-import { TellTodayButton } from '@/components/home/TellTodayButton';
 import { EntryIntro } from '@/components/fx/EntryIntro';
 
 const STEPS = [
@@ -22,37 +19,35 @@ export default function Home() {
     <PageFade>
       <main className="flex flex-1 flex-col">
         <EntryIntro />
-        <HeroAurora>
-          <section id="tell" className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-16 pt-12 sm:pt-20 lg:grid-cols-[1fr_minmax(0,520px)]">
-            <div className="flex flex-col items-start gap-7">
-              <KineticTitle lines={['Сохраните,', 'как ощущался день']} className="text-5xl font-semibold leading-[0.95] sm:text-7xl" />
-              <p className="hero-rise max-w-lg text-xl leading-relaxed" style={{ animationDelay: '0.9s' }}>
-                Расскажите о дне голосом или текстом, добавьте фото и песню — и он станет живой страницей
-                в цветах, погоде и ритме того дня. Через год откроете — и снова почувствуете.
-              </p>
-              <div className="hero-rise" style={{ animationDelay: '1.2s' }}><TellTodayButton /></div>
-              <div className="hero-rise flex flex-wrap items-center gap-x-6 gap-y-2 text-lg" style={{ animationDelay: '1.45s' }}>
-                <Link href="/diary/demo" className="underline decoration-foreground/30 underline-offset-4 hover:decoration-foreground">Полистать демо-дневник</Link>
-                <Link href="/video" className="text-muted underline-offset-4 hover:text-foreground hover:underline">Видео из фото</Link>
-                <Link href="/thoughts" className="text-muted underline-offset-4 hover:text-foreground hover:underline">Мысли</Link>
-                <a href="#features" className="text-muted underline-offset-4 hover:text-foreground hover:underline">Что ещё умеет</a>
-              </div>
-            </div>
-            <div className="hero-card flex justify-center" style={{ animationDelay: '0.6s' }}>
-              <MemoryMachine />
-            </div>
-          </section>
-        </HeroAurora>
-
-        <FeatureBento />
-
         <CursorLight className="overflow-hidden">
-          <section className="mx-auto w-full max-w-6xl px-4 pt-10">
-            <h2 className="reveal text-5xl font-semibold leading-tight">Ваш стол</h2>
-            <p className="reveal mt-2 max-w-xl text-xl leading-relaxed text-muted">Заводите дневники для разных сфер жизни: воспоминания, поездки, работа, люди.</p>
+          <section className="mx-auto flex w-full max-w-6xl flex-wrap items-end justify-between gap-6 px-4 pb-8 pt-12 sm:pt-16">
+            <div className="flex flex-col gap-4">
+              <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted" style={{ animation: 'pop-in 0.6s ease-out both' }}>Make the Invisible Visible</p>
+              <KineticTitle lines={['Дневник атмосферы']} className="text-5xl font-semibold leading-[0.95] sm:text-7xl" />
+            </div>
+            <p className="max-w-sm text-lg leading-relaxed text-muted" style={{ animation: 'pop-in 0.8s ease-out 0.8s both' }}>
+              Заводите дневники для разных сфер жизни. День — запись, фото и песня — становится живой страницей,
+              а дальше вы украшаете её сами.
+            </p>
           </section>
           <Desk />
         </CursorLight>
+
+        <section className="mx-auto mt-24 grid w-full max-w-6xl items-center gap-12 px-4 pb-10 xl:grid-cols-[1fr_minmax(0,600px)]">
+          <div className="reveal flex flex-col items-start gap-5">
+            <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">как это работает</p>
+            <h2 className="text-5xl font-semibold leading-tight">Фото помнят, как выглядел день. Дневник помнит, как он ощущался.</h2>
+            <p className="max-w-md text-xl leading-relaxed text-muted">
+              Запись, фото и песня становятся страницей в цветах, погоде и ритме того дня — по правилам, которые можно объяснить.
+            </p>
+            <Link href="/diary/demo" data-magnetic className="rounded-full border border-foreground/30 px-8 py-3.5 font-mono text-sm uppercase tracking-[0.15em] transition-colors hover:bg-foreground hover:text-background">
+              Демо-дневник
+            </Link>
+          </div>
+          <div className="flex justify-center">
+            <MemoryMachine />
+          </div>
+        </section>
 
         <MoodMarquee />
 
@@ -79,7 +74,7 @@ export default function Home() {
 
         <section className="reveal mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 pb-24 text-center">
           <p className="font-hand text-4xl">Каким был ваш день?</p>
-          <TellTodayButton />
+          <a href="#desk" data-magnetic className="rounded-full bg-foreground px-8 py-3.5 font-mono text-sm uppercase tracking-[0.15em] text-background">К столу ↑</a>
         </section>
       </main>
     </PageFade>
