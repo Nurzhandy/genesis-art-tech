@@ -16,8 +16,9 @@ export function NewDiaryDialog({ open, onClose, onCreated }: { open: boolean; on
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user, loading } = useAuth();
-  // Дневник заводится только в аккаунте (план 21.11, часть A); без ключей Supabase — как раньше.
-  const needLogin = useAuthAvailable() && !loading && !user;
+  // Доступ для всех (21.11): дневник можно завести и без аккаунта — он на этом устройстве.
+  // Аккаунт только предлагаем: с ним дневник откроется на любом устройстве.
+  const offerAccount = useAuthAvailable() && !loading && !user;
 
   useEffect(() => {
     const d = ref.current;
@@ -41,20 +42,6 @@ export function NewDiaryDialog({ open, onClose, onCreated }: { open: boolean; on
   return (
     <dialog ref={ref} onClose={onClose} onClick={(e) => { if (e.target === ref.current) onClose(); }}
       className="m-auto w-[min(92vw,520px)] rounded-md bg-background p-0 text-foreground shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm open:animate-[pop-in_0.35s_ease-out]">
-      {needLogin ? (
-        <div className="flex flex-col gap-5 p-6">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.25em] text-muted">новый дневник</p>
-            <h2 className="mt-1 text-3xl font-semibold">Сначала заведите аккаунт</h2>
-            <p className="mt-2 text-lg text-muted">Так дневники будут с вами на любом устройстве — на ноутбуке и в телефоне.</p>
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            <button type="button" onClick={onClose} className="font-mono text-xs uppercase tracking-wider text-muted hover:text-foreground">отмена</button>
-            <Link href={AUTH_ROUTES.login} className="rounded-full border border-foreground/30 px-5 py-2.5 font-mono text-xs uppercase tracking-wider hover:bg-foreground hover:text-background">войти</Link>
-            <Link href={AUTH_ROUTES.signup} className="rounded-full bg-foreground px-5 py-2.5 font-mono text-xs uppercase tracking-wider text-background">зарегистрироваться</Link>
-          </div>
-        </div>
-      ) : (
       <form onSubmit={submit} className="flex flex-col gap-6 p-6">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-muted">новый дневник</p>
@@ -75,6 +62,11 @@ export function NewDiaryDialog({ open, onClose, onCreated }: { open: boolean; on
             className="border-b border-foreground/30 bg-transparent py-1 text-2xl outline-none placeholder:text-muted/60 focus:border-foreground" />
         </label>
         {error && <p className="text-sm text-red-700 dark:text-red-400">{error}</p>}
+        {offerAccount && (
+          <p className="text-sm text-muted">
+            Дневник будет на этом устройстве. <Link href={AUTH_ROUTES.signup} className="underline underline-offset-4 hover:text-foreground">Заведите аккаунт</Link>, чтобы открывать его и с телефона.
+          </p>
+        )}
         <div className="flex items-center justify-end gap-3">
           <button type="button" onClick={onClose} className="font-mono text-xs uppercase tracking-wider text-muted hover:text-foreground">отмена</button>
           <button type="submit" disabled={busy} data-magnetic
@@ -83,7 +75,6 @@ export function NewDiaryDialog({ open, onClose, onCreated }: { open: boolean; on
           </button>
         </div>
       </form>
-      )}
     </dialog>
   );
 }

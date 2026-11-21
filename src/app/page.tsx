@@ -1,27 +1,33 @@
-// Лендинг (план 21.11, C1): показ продукта для гостя. Стол с дневниками живёт на /home (часть B),
-// вошедший человек уходит туда сразу. Здесь ничего нельзя сломать: только демо и путь к регистрации.
+// Лендинг (21.11): открыт для всех. «Начать» работает без регистрации — дневник заводится на устройстве,
+// аккаунт нужен только чтобы открыть его на другом устройстве. Приёмы подсмотрены у дневников-ориентиров:
+// «как вы сегодня?» и вопрос дня (Stoic, How We Feel), чередование «картинка — текст» и «в этот день»
+// (Day One), честный список обещаний (mymind). Вошедший человек сразу уходит на /home.
 import Link from 'next/link';
-import { CursorLight } from '@/components/fx/CursorLight';
 import { PageFade } from '@/components/fx/PageFade';
 import { EntryIntro } from '@/components/fx/EntryIntro';
 import { DiaryStrip } from '@/components/home/DiaryStrip';
-import { KineticTitle } from '@/components/home/KineticTitle';
 import { LandingNav, LandingRedirect } from '@/components/home/LandingAuth';
-import { MemoryMachine } from '@/components/home/MemoryMachine';
 import { MoodMarquee } from '@/components/home/MoodMarquee';
-// Адреса из контракта auth (часть A). Константы из 'use client'-файла в серверный компонент не попадают.
-const SIGNUP = '/signup';
+import { LandingHero } from '@/components/landing/LandingHero';
+import { BoardDemo, OnThisDayDemo, SongDemo, VoiceDemo } from '@/components/landing/Showcase';
+import { StartButton } from '@/components/landing/StartButton';
 
-const STEPS = [
-  { n: '01', title: 'Положите день на доску', text: 'Заметки, фото, песня, голосовое, капля настроения, рисунок и стикеры — в любом порядке. Ничего не обязательно: хватит и одной строчки.' },
-  { n: '02', title: 'Система читает день', text: 'Цвета и свет фото, темп песни, погода того дня, ваши слова и чувство. Каждое решение записывается с причиной.' },
-  { n: '03', title: 'Нажмите «Собрать день»', text: 'Всё слетается в живую страницу под вашу песню: мазки Моне, геометрия Кандинского, плёнка или коллаж. Её можно украсить, пересобрать и подарить.' },
+const ROWS = [
+  { kicker: 'доска дня', title: 'Положите день на стол — как получится', text: 'Заметка, фото, песня, голосовое, капля настроения, рисунок и стикеры. В любом порядке, ничего не обязательно: хватит одной строчки. Потом — «Собрать день».', demo: <BoardDemo /> },
+  { kicker: 'музыка', title: 'Песня задаёт ритм страницы', text: 'Темп песни становится ритмом кадров, её год — носителем: пластинка, кассета, CD. Медленный вечер и нервная ночь выглядят по-разному — сами собой.', demo: <SongDemo /> },
+  { kicker: 'память', title: 'В этот день — год назад', text: 'Дневник сам напоминает, что было в этот день раньше. Цвета, песня, погода — и вы снова там. Можно запечатать день капсулой, чтобы открыть через год.', demo: <OnThisDayDemo /> },
+  { kicker: 'голос', title: 'Нет сил писать? Расскажите', text: 'Пару минут голосом, как другу. Запись станет заметкой, а через год день расскажет вашим же голосом.', demo: <VoiceDemo /> },
 ];
 
-const ON_BOARD = ['✎ заметки', '▣ фото', '◉ песня', '🎙 голосовое', '● настроение', '〰 рисунок', '✦ стикеры'];
+const PROMISES = [
+  ['Без регистрации', 'Начните за секунду. Аккаунт — только если захотите открыть дневник и с телефона.'],
+  ['Без ленты и лайков', 'Никто не оценивает ваши дни, нет счётчиков и соревнований. Это место только для вас.'],
+  ['Без оценки состояния', 'Настроение записи подбирает цвета страницы, а не ставит вам диагнозы.'],
+  ['Всё можно забрать', 'Любой день скачивается папкой или удаляется. Что видит AI — написано прямо в форме.'],
+];
 
-const primaryBtn = 'rounded-full bg-foreground px-8 py-3.5 text-center font-mono text-sm uppercase tracking-[0.15em] text-background transition hover:opacity-90';
-const ghostBtn = 'rounded-full border border-foreground/30 px-8 py-3.5 text-center font-mono text-sm uppercase tracking-[0.15em] transition-colors hover:bg-foreground hover:text-background';
+const primaryBtn = 'rounded-full bg-foreground px-8 py-4 text-center font-mono text-sm uppercase tracking-[0.15em] text-background shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-60';
+const ghostBtn = 'rounded-full border border-foreground/30 px-8 py-4 text-center font-mono text-sm uppercase tracking-[0.15em] transition-colors hover:bg-foreground hover:text-background';
 
 export default function Landing() {
   return (
@@ -29,69 +35,67 @@ export default function Landing() {
       <LandingRedirect />
       <main className="flex flex-1 flex-col overflow-x-clip">
         <EntryIntro />
-        <header className="sticky top-0 z-30 border-b border-foreground/5 bg-background/80 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-foreground/5 bg-background/75 backdrop-blur-md">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3">
             <Link href="/" className="font-hand text-2xl leading-none sm:text-3xl">Дневник атмосферы</Link>
-            <LandingNav />
+            <div className="flex items-center gap-1 sm:gap-2">
+              <a href="#how" className="hidden rounded-full px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-muted transition-colors hover:text-foreground md:inline-block">Как это работает</a>
+              <LandingNav />
+            </div>
           </div>
         </header>
 
-        <CursorLight className="overflow-hidden">
-          <section className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-16 pt-12 sm:pt-20 xl:grid-cols-[1fr_minmax(0,560px)]">
-            <div className="flex flex-col items-start gap-6">
-              <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted" style={{ animation: 'pop-in 0.6s ease-out both' }}>Make the Invisible Visible</p>
-              <KineticTitle lines={['Сохраните,', 'как ощущался день']} className="text-5xl font-semibold leading-[0.95] sm:text-7xl" />
-              <p className="max-w-md text-xl leading-relaxed text-muted" style={{ animation: 'pop-in 0.8s ease-out 0.8s both' }}>
-                День — запись, фото, песня и голос — становится живой страницей в цветах, погоде и ритме того дня.
-              </p>
-              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row" style={{ animation: 'pop-in 0.8s ease-out 1s both' }}>
-                <Link href={SIGNUP} data-magnetic className={primaryBtn}>Начать</Link>
-                <Link href="/diary/demo" className={ghostBtn}>Смотреть демо</Link>
-              </div>
-            </div>
-            <div className="flex justify-center">
-              <MemoryMachine />
-            </div>
-          </section>
-        </CursorLight>
+        <LandingHero />
 
         <MoodMarquee />
 
-        <section className="mx-auto w-full max-w-6xl px-4 py-20">
-          <div className="reveal mb-10 flex flex-col gap-4">
-            <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">как это работает</p>
-            <h2 className="max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl">Фото помнят, как выглядел день. Дневник помнит, как он ощущался.</h2>
-            <ul className="flex flex-wrap gap-2" aria-label="Что можно положить на доску дня">
-              {ON_BOARD.map((x) => <li key={x} className="rounded-full bg-foreground/5 px-3 py-1.5 font-mono text-xs">{x}</li>)}
-            </ul>
-          </div>
-          <div className="grid gap-10 sm:grid-cols-3">
-            {STEPS.map((s) => (
-              <div key={s.n} className="reveal border-t border-foreground/15 pt-5">
-                <p className="font-mono text-xs text-muted">{s.n}</p>
-                <h3 className="mt-2 text-3xl font-semibold leading-tight">{s.title}</h3>
-                <p className="mt-3 text-lg leading-relaxed text-muted">{s.text}</p>
+        {/* Чередование «картинка — текст», каждая картинка оживает при прокрутке */}
+        <section id="how" className="mx-auto flex w-full max-w-6xl scroll-mt-20 flex-col gap-24 px-4 py-24">
+          {ROWS.map((r, i) => (
+            <div key={r.kicker} className="grid items-center gap-10 md:grid-cols-2">
+              <div className={`reveal flex flex-col gap-4 ${i % 2 ? 'md:order-2' : ''}`}>
+                <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">{String(i + 1).padStart(2, '0')} · {r.kicker}</p>
+                <h2 className="text-4xl font-semibold leading-tight sm:text-5xl">{r.title}</h2>
+                <p className="max-w-md text-xl leading-relaxed text-muted">{r.text}</p>
               </div>
-            ))}
-          </div>
+              <div className={`flex justify-center ${i % 2 ? 'md:order-1' : ''}`}>{r.demo}</div>
+            </div>
+          ))}
         </section>
 
-        <section className="mx-auto w-full max-w-6xl px-4 pb-20">
+        <section className="mx-auto w-full max-w-6xl px-4 pb-24">
           <div className="reveal mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.25em] text-muted">примеры</p>
               <h2 className="text-4xl font-semibold leading-tight sm:text-5xl">Один дневник — разные дни</h2>
             </div>
-            <Link href="/diary/demo" className="font-mono text-xs uppercase tracking-[0.2em] text-muted underline-offset-4 hover:text-foreground hover:underline">весь демо-дневник →</Link>
+            <Link href="/diary/demo" className="font-mono text-xs uppercase tracking-[0.2em] text-muted underline-offset-4 hover:text-foreground hover:underline">полистать демо-дневник →</Link>
           </div>
           <DiaryStrip />
         </section>
 
-        <section className="reveal mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 pb-24 text-center">
-          <p className="font-hand text-4xl sm:text-5xl">Каким был ваш день?</p>
-          <p className="max-w-md text-lg text-muted">Заведите дневник за минуту — он будет с вами на любом устройстве.</p>
+        {/* Честный список обещаний (как у mymind): что здесь не будет происходить */}
+        <section className="mx-auto w-full max-w-6xl px-4 pb-24">
+          <div className="rounded-3xl bg-foreground/[0.04] p-6 ring-1 ring-foreground/10 sm:p-10">
+            <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">наши обещания</p>
+            <h2 className="mt-2 max-w-2xl text-4xl font-semibold leading-tight">Это ваш дневник, а не соцсеть</h2>
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {PROMISES.map(([t, d], i) => (
+                <div key={t} className="reveal flex flex-col gap-2" style={{ animationDelay: `${i * 80}ms` }}>
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-foreground text-background">✓</span>
+                  <h3 className="text-xl font-semibold">{t}</h3>
+                  <p className="text-base leading-relaxed text-muted">{d}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="reveal mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 pb-28 text-center">
+          <p className="font-hand text-5xl sm:text-6xl">Каким был ваш день?</p>
+          <p className="max-w-md text-lg text-muted">Одна строчка, одно фото или одна песня — уже день. Начните сейчас, без регистрации.</p>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-            <Link href={SIGNUP} data-magnetic className={primaryBtn}>Начать бесплатно</Link>
+            <StartButton className={primaryBtn}>Начать бесплатно</StartButton>
             <Link href="/diary/demo" className={ghostBtn}>Смотреть демо</Link>
           </div>
         </section>
