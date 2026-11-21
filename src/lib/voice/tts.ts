@@ -98,8 +98,26 @@ async function synthesizeGemini(text: string, preset: VoicePreset, key: string):
       response_format: { type: 'audio', mime_type: 'audio/wav' },
       generation_config: { speech_config: [{ voice: geminiVoice(preset.voice), language: 'ru-RU' }] },
     }, { signal });
-    const audio = res.output_audio;
-    if (!audio?.data) return null;
+    const audio = findAudio(res as unknown as AudioResponse);
+    if (!audio) return null;
     return toSpeechAudio(audio.data, audio.mime_type ?? 'audio/wav');
   }, { budgetMs: 52_000, perTryMs: 45_000 });
+}
+
+interface AudioPart { type?: string; data?: string; mime_type?: string }
+
+/**
+ * Где лежит звук в ответе Interactions API: на деле — в steps[].content[] (type 'audio'),
+ * в примере документации — в output_audio. Смотрим оба места.
+ */
+interface AudioResponse { output_audio?: AudioPart | null; steps?: { content?: unknown }[] | null }
+
+export function findAudio(res: AudioResponse): { data: string; mime_type?: string } | null {
+  if (res.output_audio?.data) return { data: res.output_audio.data, mime_type: res.output_audio.mime_type };
+  for (const step of res.steps ?? []) {
+    const parts = Array.isArray(step.content) ? (step.content as AudioPart[]) : [];
+    const part = parts.find((c) => c.type === 'audio' && c.data);
+    if (part?.data) return { data: part.data, mime_type: part.mime_type };
+  }
+  return null;
 }

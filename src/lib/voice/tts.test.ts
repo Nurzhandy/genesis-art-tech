@@ -47,3 +47,12 @@ describe('Gemini TTS', () => {
     expect(await synthesize('день', preset('nova', 1))).toBeNull();
   });
 });
+
+describe('findAudio', () => {
+  it('звук из steps[].content (как реально отвечает Gemini) и из output_audio (как в документации)', async () => {
+    const { findAudio } = await import('./tts');
+    expect(findAudio({ steps: [{ content: [{ type: 'audio', data: 'AAA', mime_type: 'audio/wav' }] }] })).toEqual({ data: 'AAA', mime_type: 'audio/wav' });
+    expect(findAudio({ output_audio: { data: 'BBB', mime_type: 'audio/wav' } })?.data).toBe('BBB');
+    expect(findAudio({ steps: [{ content: [{ type: 'text' }] }] })).toBeNull();
+  });
+});
