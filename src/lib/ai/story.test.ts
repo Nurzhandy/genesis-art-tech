@@ -49,7 +49,7 @@ describe('storyToEntry', () => {
   });
 
   it('только аудио и модель недоступна → понятная ошибка', async () => {
-    await expect(storyToEntry({ audio: 'AAAA', mime: 'audio/mp4' }, null)).rejects.toThrow('запишите его ещё раз');
+    await expect(storyToEntry({ audio: 'AAAA', mime: 'audio/mp4' }, null)).rejects.toThrow('GEMINI_API_KEY');
   });
 
   it('вход: нужна запись или расшифровка, тип только audio/*', () => {

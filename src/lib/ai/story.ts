@@ -79,5 +79,6 @@ export async function storyToEntry(input: StoryInput, llm: LlmLike | null): Prom
   }
   const fallback = local();
   if (fallback) return fallback;
+  if (!llm && input.audio) throw new Error('Голосовое разбирает AI, а его ключ (GEMINI_API_KEY) на этом компьютере не подключён. На сайте это работает; здесь расскажите голосом в Chrome с микрофоном или напишите текстом.');
   throw new Error('Не получилось разобрать рассказ: запишите его ещё раз или напишите текстом');
 }

@@ -21,6 +21,16 @@ const recognitionCtor = (): RecognitionCtor | null => {
   const w = window as unknown as { SpeechRecognition?: RecognitionCtor; webkitSpeechRecognition?: RecognitionCtor };
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 };
+/** Понятная причина, почему микрофон не включился, и что сделать. */
+export function micError(e: unknown): string {
+  const name = (e as { name?: string })?.name ?? '';
+  if (typeof window !== 'undefined' && !window.isSecureContext) return 'Микрофон работает только на защищённом адресе (https или localhost). Откройте сайт по https.';
+  if (name === 'NotAllowedError' || name === 'SecurityError') return 'Браузер запретил микрофон для этой страницы.\nНажмите на значок замка или камеры слева от адреса → «Микрофон: разрешить» и нажмите кнопку ещё раз. Во встроенном браузере приложения микрофона может не быть — откройте сайт в Chrome, Edge или Safari, или загрузите голосовое ниже.';
+  if (name === 'NotFoundError' || name === 'OverconstrainedError') return 'Микрофон не найден. Подключите наушники с микрофоном или загрузите голосовое из телефона ниже.';
+  if (name === 'NotReadableError' || name === 'AbortError') return 'Микрофон занят другой программой (Zoom, Discord, Teams). Закройте её и нажмите ещё раз.';
+  return 'Не получилось включить микрофон. Попробуйте ещё раз или загрузите голосовое ниже.';
+}
+
 const canRecord = () => typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 const noop = () => () => undefined;
 
@@ -79,7 +89,7 @@ export function StoryRecorder({ onUse, hasText, highlight = false }: { onUse: (o
     let stream: MediaStream | null = null;
     if (canRecord()) {
       try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); }
-      catch { setState({ kind: 'error', message: 'Нет доступа к микрофону. Разрешите его в настройках браузера и нажмите ещё раз.' }); return; }
+      catch (e) { setState({ kind: 'error', message: micError(e) }); return; }
     }
 
     // 1. Сама запись — её услышит модель и её можно оставить в папке дня.
@@ -166,17 +176,35 @@ export function StoryRecorder({ onUse, hasText, highlight = false }: { onUse: (o
     const blob = await stopRecorder();
     cleanup.current();
     cleanup.current = () => undefined;
+    await process(blob, transcript.current);
+  }
+
+  /** Запись голоса (с микрофона или файлом) → запись дневника. */
+  async function process(blob: Blob | null, said: string) {
     setState({ kind: 'thinking' });
     if (blob) voice.current = { blob, ext: recordingExt(blob.type) };
     try {
       const r = await api.story({
         ...(blob ? { audio: await toBase64(blob), mime: blob.type || 'audio/webm' } : {}),
-        ...(transcript.current ? { transcript: transcript.current } : {}),
+        ...(said ? { transcript: said } : {}),
       });
       setState({ kind: 'review', entry: r.entry, said: cleanTranscript(r.transcript) || r.entry, details: r.details, place: r.place, song: r.song, songUrl: r.songUrl, source: r.source });
     } catch (e) {
       setState({ kind: 'error', message: e instanceof Error ? e.message : 'Не получилось разобрать рассказ' });
     }
+  }
+
+  // Без микрофона: голосовое из телефона, WhatsApp или Telegram — так же становится записью дня.
+  async function pickVoiceFile(f: File | undefined) {
+    if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { setState({ kind: 'error', message: 'Файл больше 8 МБ — возьмите голосовое покороче (до ~3 минут).' }); return; }
+    transcript.current = '';
+    voice.current = null;
+    // Тип по расширению, если браузер не знает (или считает голосовое «видео»): сервер принимает только audio/*.
+    const byExt = /\.(m4a|mp4|aac)$/i.test(f.name) ? 'audio/mp4' : /\.(ogg|oga|opus)$/i.test(f.name) ? 'audio/ogg'
+      : /\.mp3$/i.test(f.name) ? 'audio/mpeg' : /\.wav$/i.test(f.name) ? 'audio/wav' : 'audio/webm';
+    const type = f.type.startsWith('audio/') ? f.type : byExt;
+    await process(new Blob([f], { type }), '');
   }
 
   async function cancel() {
@@ -266,7 +294,13 @@ export function StoryRecorder({ onUse, hasText, highlight = false }: { onUse: (o
       {recording && (
         <span aria-hidden className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-[color:var(--story-ink)]" style={{ transform: `scaleX(${state.sec / MAX_STORY_SEC})` }} />
       )}
-      {state.kind === 'error' && <p className="mt-3 text-sm text-red-700 dark:text-red-400">{state.message}</p>}
+      {state.kind === 'error' && <p className="mt-3 whitespace-pre-line text-sm text-red-700 dark:text-red-400">{state.message}</p>}
+      {!recording && !thinking && (
+        <label className="mt-3 inline-flex cursor-pointer items-center gap-2 text-sm text-muted underline-offset-4 hover:text-foreground hover:underline">
+          <input type="file" accept="audio/*,.m4a,.mp3,.ogg,.oga,.opus,.webm,.wav" className="sr-only" onChange={(e) => { void pickVoiceFile(e.target.files?.[0]); e.target.value = ''; }} />
+          Нет микрофона? Загрузите голосовое из телефона, WhatsApp или Telegram
+        </label>
+      )}
     </section>
   );
 }
