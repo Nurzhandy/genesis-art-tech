@@ -137,7 +137,12 @@ export function Archive({ diaryId, isDemo, songs = [], title }: { diaryId: strin
       {days && days.length === 0 && (
         <div className="py-16 text-center">
           <p className="font-hand text-4xl">{q ? 'Ничего не нашлось' : 'Здесь пока пусто'}</p>
-          {!q && !isDemo && <Link href={`/diary/${diaryId}/new`} className="mt-4 inline-block underline">Запишите первый день</Link>}
+          {!q && (
+            <p className="mx-auto mt-3 max-w-md text-lg text-muted">
+              В архив попадают собранные дни: положите на доску заметки, фото или голосовое и нажмите «Собрать день».
+            </p>
+          )}
+          {!q && !isDemo && <Link href={`/diary/${diaryId}/board`} className="mt-5 inline-block rounded-full bg-foreground px-6 py-3 font-mono text-xs uppercase tracking-[0.15em] text-background">Открыть доску дневника</Link>}
         </div>
       )}
 

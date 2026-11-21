@@ -1,6 +1,6 @@
 // Доска дня (план 21.11, человек 3): чистая геометрия для «Собрать день», анимации сборки и доски
 // только для просмотра. Работает с любым элементом доски, включая будущие виды (например, «настроение»).
-import type { BoardItem } from '@/lib/board/board';
+import { noteHeight, type BoardItem } from '@/lib/board/board';
 import { MAX_PHOTOS, readingOrder } from '@/lib/board/collect';
 
 /** Любой элемент доски: известные виды из BoardSchema и новые из контракта. */
@@ -24,7 +24,7 @@ export function itemBox(it: AnyItem): Box {
     return { x: Math.min(it.x, x2), y: Math.min(it.y, y2), w: Math.abs(x2 - it.x), h: Math.abs(y2 - it.y) };
   }
   switch (it.kind) {
-    case 'note': return { x: it.x, y: it.y, w: num(r.w, 220), h: 90 };
+    case 'note': { const w = num(r.w, 220); return { x: it.x, y: it.y, w, h: noteHeight(typeof r.text === 'string' ? r.text : '', w) }; }
     case 'photo': { const w = num(r.w, 240); return { x: it.x, y: it.y, w, h: w * num(r.ratio, 1) + 40 }; }
     case 'song': { const s = num(r.size, 160); return { x: it.x, y: it.y, w: s, h: s + 40 }; }
     case 'day': { const w = num(r.w, 260); return { x: it.x, y: it.y, w, h: (w * 16) / 9 + 50 }; }

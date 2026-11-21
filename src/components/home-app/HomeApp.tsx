@@ -14,6 +14,7 @@ import { Desk } from '@/components/shelf/Desk';
 import { KineticTitle } from '@/components/home/KineticTitle';
 import { BoardPreview } from '@/components/dayboard/BoardPreview';
 import { QuickDay } from './QuickDay';
+import { ArchiveButton } from './ArchiveButton';
 import { useHomeData, type HomeDay } from './useHomeData';
 
 const noop = () => () => undefined;
@@ -52,7 +53,7 @@ export function HomeApp() {
           <p className="max-w-md text-2xl leading-snug text-muted">
             {empty ? 'Заведите первый дневник — и запишите в него сегодняшний день.' : 'Каким был сегодняшний день? Положите на доску всё, что запомнилось.'}
           </p>
-          {data && <QuickDay diaries={data.diaries} />}
+          {data && <div className="flex flex-wrap items-center gap-3"><QuickDay diaries={data.diaries} /><ArchiveButton diaries={data.diaries} /></div>}
         </div>
       </section>
 

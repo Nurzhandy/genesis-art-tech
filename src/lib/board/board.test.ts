@@ -25,3 +25,14 @@ describe('свободная доска', () => {
     expect(placeMissingDays(b, [D1, D2])).toBe(b);
   });
 });
+
+describe('noteHeight', () => {
+  it('короткая заметка — не меньше 90, длинная растёт, перенос строки добавляет строку', async () => {
+    const { noteHeight } = await import('./board');
+    expect(noteHeight('', 240)).toBe(90);
+    const short = noteHeight('мысль', 240), long = noteHeight('очень длинная мысль '.repeat(20), 240);
+    expect(long).toBeGreaterThan(short * 3);
+    expect(noteHeight('а\nб\nв\nг', 240)).toBeGreaterThan(noteHeight('абвг', 240));
+    expect(noteHeight('слово '.repeat(40), 480)).toBeLessThan(noteHeight('слово '.repeat(40), 240));
+  });
+});

@@ -7,7 +7,8 @@ import { api, type SignedUpload } from '@/lib/client/api';
 import { processPhoto, type ProcessedPhoto } from '@/lib/client/imageProcess';
 import { STICKER_SHAPES, type StickerShape } from '@/lib/decor/decor';
 import { SHAPE_NAMES } from '@/lib/decor/shapes';
-import type { Board, BoardItem } from '@/lib/board/board';
+import { noteHeight, type Board, type BoardItem } from '@/lib/board/board';
+import { AutoTextarea } from './AutoTextarea';
 import { StickerIcon } from '../decor/StickerIcon';
 import { cleanTranscript } from '@/lib/ai/cleanTranscript';
 import { toBase64, VoiceBubble, voiceFromFile, VoiceMic, type Recording } from './VoiceNote';
@@ -450,8 +451,8 @@ export function BoardCanvas({ load, save, upload, editable, opened = false, head
                 onDoubleClick={(e) => { e.stopPropagation(); if (editable) setEditing(it.id); }}>
                 <span className="absolute -top-2 left-1/2 h-4 w-14 -translate-x-1/2 rotate-[-3deg] bg-[#e8d9a8]/80" aria-hidden />
                 {editing === it.id
-                  ? <textarea autoFocus value={it.text} onChange={(e) => update(it.id, { text: e.target.value })} onBlur={() => { setEditing(null); if (!it.text.trim()) remove(it.id); }}
-                      onPointerDown={(e) => e.stopPropagation()} rows={Math.max(2, it.text.split('\n').length)} placeholder="мысль, инсайт, воспоминание…"
+                  ? <AutoTextarea autoFocus value={it.text} onChange={(e) => update(it.id, { text: e.target.value })} onBlur={() => { setEditing(null); if (!it.text.trim()) remove(it.id); }}
+                      onPointerDown={(e) => e.stopPropagation()} rows={2} placeholder="мысль, инсайт, воспоминание…"
                       className="w-full resize-none bg-transparent font-hand text-2xl leading-snug outline-none placeholder:opacity-40" />
                   : <p className="whitespace-pre-wrap font-hand text-2xl leading-snug">{it.text || ' '}</p>}
                 {handle}
@@ -580,7 +581,7 @@ export function bounds(it: BoardItem, measure: (it: BoardItem) => { w: number; h
 /** Размер элемента на доске (для рамки выделения, «показать всё»). */
 export function size(it: BoardItem): { w: number; h: number } {
   switch (it.kind) {
-    case 'note': return { w: it.w, h: 90 };
+    case 'note': return { w: it.w, h: noteHeight(it.text, it.w) };
     case 'photo': return { w: it.w, h: it.w * it.ratio + 40 };
     case 'sticker': return { w: it.size, h: it.size };
     case 'song': return { w: it.size, h: it.size + 40 };

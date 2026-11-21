@@ -14,6 +14,12 @@ export const VOICE_BARS = 48;
 export const MAX_VOICE_SEC = 180;
 export const VOICE_EXT = ['webm', 'ogg', 'm4a', 'mp4', 'mp3', 'wav'] as const;
 export type VoiceExt = (typeof VOICE_EXT)[number];
+/** Высота заметки на доске по её тексту (рукописный шрифт ~24 px, строка ~33 px, поля 24 px): заметка растёт вместе с текстом. */
+export function noteHeight(text: string, w: number): number {
+  const perLine = Math.max(8, Math.floor((w - 32) / 9));   // ~9 px на букву в рукописном шрифте (замерено на доске)
+  const lines = text.split('\n').reduce((n, p) => n + Math.max(1, Math.ceil(p.length / perLine)), 0);
+  return Math.max(90, 24 + lines * 33);
+}
 /** Расширение файла для загрузки на доску: голосовое — из белого списка, всё остальное — фото (jpg). */
 export const boardFileExt = (ext: string | null): VoiceExt | 'jpg' => ((VOICE_EXT as readonly string[]).includes(ext ?? '') ? (ext as VoiceExt) : 'jpg');
 /** Пути файлов доски (фото и голосовые), которым нужны подписанные ссылки на чтение. */

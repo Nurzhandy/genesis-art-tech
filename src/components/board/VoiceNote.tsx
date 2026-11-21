@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { MAX_VOICE_SEC, VOICE_BARS, type BoardItem, type VoiceExt } from '@/lib/board/board';
 import { pickRecordingType, recordingExt } from '@/lib/voice/ownVoice';
 import { micError, recognitionCtor, type Recognition } from '../StoryRecorder';
+import { AutoTextarea } from './AutoTextarea';
 
 export interface Recording { blob: Blob; ext: VoiceExt; sec: number; peaks: number[]; said: string }
 type VoiceItem = Extract<BoardItem, { kind: 'voice' }>;
@@ -385,9 +386,9 @@ export function VoiceBubble({ item, url, transcribing, editable, onTranscript }:
 
       {/* Расшифровка — это и есть «слова дня» для сборки; её можно поправить. */}
       {editing
-        ? <textarea autoFocus value={draft} onChange={(e) => setDraft(e.target.value)} onPointerDown={(e) => e.stopPropagation()}
+        ? <AutoTextarea autoFocus value={draft} onChange={(e) => setDraft(e.target.value)} onPointerDown={(e) => e.stopPropagation()}
             onBlur={() => { setEditing(false); if (draft.trim() !== (item.transcript ?? '')) onTranscript(draft.trim()); }}
-            rows={Math.max(2, Math.ceil(draft.length / 36))} className="mt-2 w-full resize-none rounded-lg bg-[#fbf8f1] px-3 py-2 font-hand text-xl leading-snug shadow-inner outline-none" />
+            rows={2} className="mt-2 w-full resize-none rounded-lg bg-[#fbf8f1] px-3 py-2 font-hand text-xl leading-snug shadow-inner outline-none" />
         : transcribing
           ? <p className="mt-2 px-1 font-mono text-[11px] text-muted"><span className="story-dots mr-2 align-middle" />расшифровываю…</p>
           : item.transcript
