@@ -50,8 +50,14 @@ export interface EngineOptions {
   today?: string;
 }
 
+/** Слои страницы дня снизу вверх — для «Как собран этот день». */
+export const DAY_LAYERS = ['paper', 'technique', 'photo', 'atmosphere', 'objects', 'words', 'decor', 'grain'] as const;
+export type DayLayer = (typeof DAY_LAYERS)[number];
+
 export interface Engine {
   renderAt(t: number): void;
+  /** Каждый слой страницы в момент t — на своём прозрачном холсте того же размера. */
+  renderLayers(t: number): { id: DayLayer; canvas: HTMLCanvasElement }[];
   play(fromT?: number): void;
   pause(): void;
   destroy(): void;
@@ -174,60 +180,76 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
   let offset = 0;
   let frame = 0;
 
-  function draw(t: number, realtime: boolean) {
+  // Слои страницы (по порядку снизу вверх): «Как собран этот день» рисует каждый на своём прозрачном холсте.
+  // only — какие слои рисовать (по умолчанию все), g — куда (по умолчанию основной холст).
+  function draw(t: number, realtime: boolean, g: CanvasRenderingContext2D = ctx, only?: ReadonlySet<DayLayer>) {
+    const on = (l: DayLayer) => !only || only.has(l);
+    const prevCtx = rc.ctx;
+    rc.ctx = g;
+    try { drawInto(t, realtime, g, on); } finally { rc.ctx = prevCtx; }
+  }
+
+  function drawInto(t: number, realtime: boolean, g: CanvasRenderingContext2D, on: (l: DayLayer) => boolean) {
     const pt = photoTime(t, style.motion, photos.length);
-    ctx.setTransform(k, 0, 0, k, 0, 0);
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.drawImage(paper, 0, 0);
+    g.setTransform(k, 0, 0, k, 0, 0);
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'source-over';
+    if (on('paper')) g.drawImage(paper, 0, 0);
     const rh = rhythm(pt);
     if (drawing) {
       // Режим «Рисунок»: сцена дня вместо техники; фото — полароидом внутри.
-      drawing.draw(ctx, t, pt.index, realtime && !reduced ? rh.beat : 0);
+      if (on('technique')) drawing.draw(g, t, pt.index, realtime && !reduced ? rh.beat : 0);
     } else {
-      primary.drawPhoto(rc, pt, { realtime });
-      primary.drawOverlay(rc, pt, 1);
-      if (secondary) secondary.drawOverlay(rc, pt, secondaryAlpha);
+      if (on('technique')) {
+        primary.drawPhoto(rc, pt, { realtime });
+        primary.drawOverlay(rc, pt, 1);
+        if (secondary) secondary.drawOverlay(rc, pt, secondaryAlpha);
+      }
       // Фото главное: поверх техники — настоящее фото, чёткое, с наездом камеры (техника остаётся фоном и рамкой).
       // V2: бас — кадр дышит (на постере и при «меньше движения» — без дыхания).
       const breath = realtime && !reduced && vis ? vis.rhythm.breath * (rh.bass * 2 - 1) : 0;
-      photoFirst.draw(ctx, pt, opts.info.date, { breath, desat: age.desat });
+      if (on('photo')) photoFirst.draw(g, pt, opts.info.date, { breath, desat: age.desat });
     }
     // Страница собирается на глазах (B5): фото проявляется из бумаги, затем марка, подпись, песня.
     const asm = assemblyAt(t, style.motion, realtime);
-    if (asm.photo < 1) {
+    if (asm.photo < 1 && on('paper') && on('photo')) {
       const z = rc.zone, pad = 24;
-      ctx.save();
-      ctx.globalAlpha = 1 - asm.photo;
-      ctx.drawImage(paper, z.x - pad, z.y - pad, z.w + pad * 2, z.h + pad * 2, z.x - pad, z.y - pad, z.w + pad * 2, z.h + pad * 2);
-      ctx.restore();
+      g.save();
+      g.globalAlpha = 1 - asm.photo;
+      g.drawImage(paper, z.x - pad, z.y - pad, z.w + pad * 2, z.h + pad * 2, z.x - pad, z.y - pad, z.w + pad * 2, z.h + pad * 2);
+      g.restore();
     }
     // V2: верх спектра — частицы атмосферы мерцают.
-    ctx.save(); ctx.globalAlpha = realtime && !reduced ? 0.7 + 0.3 * rh.high : 1;
-    atmosphere.draw(rc, pt);   // слой 3.5: между оверлеем и текстом
-    ctx.restore();
+    g.save(); g.globalAlpha = realtime && !reduced ? 0.7 + 0.3 * rh.high : 1;
+    if (on('atmosphere')) atmosphere.draw(rc, pt);   // слой 3.5: между оверлеем и текстом
+    g.restore();
     // V2: удар — короткая вспышка цвета дня.
-    if (realtime && !reduced && vis && rh.beat > 0.05) {
-      ctx.save(); ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = vis.rhythm.flash * rh.beat;
-      ctx.fillStyle = style.palette.accents[0] ?? '#ffffff'; ctx.fillRect(0, 0, W, H); ctx.restore();
+    if (realtime && !reduced && vis && rh.beat > 0.05 && on('paper') && on('grain')) {
+      g.save(); g.globalCompositeOperation = 'soft-light'; g.globalAlpha = vis.rhythm.flash * rh.beat;
+      g.fillStyle = style.palette.accents[0] ?? '#ffffff'; g.fillRect(0, 0, W, H); g.restore();
     }
     if (opts.noText) {
-      drawDecor(ctx, opts.info.decor, style.palette, fonts, 1, false);
-      drawGrain(ctx, grain, W, H, agedStyle, frame++);
-      drawVignette(ctx, W, H, 0.12 + 0.2 * style.texture.grain + age.vignette);
+      if (on('decor')) drawDecor(g, opts.info.decor, style.palette, fonts, 1, false);
+      if (on('grain')) { drawGrain(g, grain, W, H, agedStyle, frame++); drawVignette(g, W, H, 0.12 + 0.2 * style.texture.grain + age.vignette); }
       return;
     }
-    ctx.save(); ctx.globalAlpha = asm.stamps;
-    drawStamps(ctx, W, H, style, fonts);   // марка сезона, штемпель и бирки (план 20.11, B3)
-    ctx.restore();
-    ctx.save(); ctx.globalAlpha = asm.song;
-    drawSongObject(ctx, W, H, style, fonts, opts.info.songLabel, t, energy(pt));   // песня как предмет (S2)
-    ctx.restore();
-    drawConstants(ctx, W, H, style, opts.info, fonts, asm.caption);
-    drawNotes(ctx, notes, notePlaces, style, fonts, pt, photos.length, !realtime);
-    drawDecor(ctx, opts.info.decor, style.palette, fonts, asm.caption);   // украшения человека (спека 2026-11-20)
-    drawGrain(ctx, grain, W, H, agedStyle, frame++);
-    drawVignette(ctx, W, H, 0.12 + 0.2 * style.texture.grain + age.vignette);
+    if (on('objects')) {
+    g.save(); g.globalAlpha = asm.stamps;
+    drawStamps(g, W, H, style, fonts);   // марка сезона, штемпель и бирки (план 20.11, B3)
+    g.restore();
+    g.save(); g.globalAlpha = asm.song;
+    drawSongObject(g, W, H, style, fonts, opts.info.songLabel, t, energy(pt));   // песня как предмет (S2)
+    g.restore();
+    }
+    if (on('words')) {
+      drawConstants(g, W, H, style, opts.info, fonts, asm.caption);
+      drawNotes(g, notes, notePlaces, style, fonts, pt, photos.length, !realtime);
+    }
+    if (on('decor')) drawDecor(g, opts.info.decor, style.palette, fonts, asm.caption);   // украшения человека (спека 2026-11-20)
+    if (on('grain')) {
+      drawGrain(g, grain, W, H, agedStyle, frame++);
+      drawVignette(g, W, H, 0.12 + 0.2 * style.texture.grain + age.vignette);
+    }
   }
 
   const loop = () => {
@@ -239,6 +261,16 @@ export async function createEngine(canvas: HTMLCanvasElement, opts: EngineOption
     canvas,
     interval: intervalSec(style.motion),
     renderAt(t) { draw(t, false); },
+    renderLayers(t) {
+      // В режиме «Рисунок» фото — внутри сцены, отдельного слоя фото нет; без украшений нет и их слоя.
+      const ids = DAY_LAYERS.filter((id) => !(id === 'photo' && drawing) && !(id === 'decor' && !opts.info.decor?.items?.length) && !(opts.noText && (id === 'objects' || id === 'words')));
+      return ids.map((id) => {
+        const c = document.createElement('canvas');
+        c.width = canvas.width; c.height = canvas.height;
+        draw(t, false, c.getContext('2d')!, new Set([id]));
+        return { id, canvas: c };
+      });
+    },
     play(fromT) {
       cancelAnimationFrame(raf);
       if (fromT !== undefined) offset = fromT;

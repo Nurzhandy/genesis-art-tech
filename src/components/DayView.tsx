@@ -20,6 +20,7 @@ import { ritualFor } from '@/lib/ritual';
 import { MoodTuner } from './MoodTuner';
 import { VoiceButton } from './VoiceButton';
 import { WhyPanel } from './WhyPanel';
+import { DayLayers } from './DayLayers';
 import { DayBoardSection } from './dayboard/DayBoardSection';
 import { isBoardDraft } from '@/lib/client/dayBoard';
 
@@ -29,6 +30,7 @@ export function DayView({ dayId, from = null }: { dayId: string; from?: string |
   const [retrying, setRetrying] = useState(false);
   const [override, setOverride] = useState<MoodOverride | null | undefined>(undefined);
   const [decorating, setDecorating] = useState(false);
+  const [layersOpen, setLayersOpen] = useState(false);
   // Холст пересобирается не на каждый шаг ползунка, а после паузы 300 мс.
   const [settled, setSettled] = useState<MoodOverride | null | undefined>(undefined);
   useEffect(() => {
@@ -127,6 +129,14 @@ export function DayView({ dayId, from = null }: { dayId: string; from?: string |
       ) : (
         <div className="flex flex-col gap-3">
           <MemoryPlayer key={`${day.moodOverride?.warmth ?? 0}:${day.moodOverride?.energy ?? 0}:${day.decor?.items.length ?? 0}`} day={day} styleOverride={preview} ritual={ritualFor(day, from)} />
+          {(preview ?? day.style) && (
+            // «Как собран этот день»: постер раскладывается на слои с причиной каждого — виден всем, и гостю тоже.
+            <button type="button" data-magnetic onClick={() => setLayersOpen(true)}
+              className="mx-auto flex items-center gap-2.5 rounded-full bg-foreground px-6 py-3 text-lg text-background shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground">
+              <span aria-hidden className="text-xl leading-none">◇</span> Как собран этот день
+            </button>
+          )}
+          {layersOpen && (preview ?? day.style) && <DayLayers day={day} style={(preview ?? day.style)!} onClose={() => setLayersOpen(false)} />}
           {mine && day.style && (
             // Свободная страница (спека 2026-11-20): человек дополняет собранное системой своими стикерами, текстом и рисунком.
             <button type="button" data-magnetic onClick={() => setDecorating(true)}
