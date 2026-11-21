@@ -4,7 +4,7 @@ import { isSealed, serverToday } from '@/lib/capsule';
 import { handle, HttpError } from '@/lib/http';
 import { dayFiles, dayFolder, putFile, signRead } from '@/lib/storage';
 import { pickVoice } from '@/lib/voice/pickVoice';
-import { synthesize } from '@/lib/voice/tts';
+import { synthesize, type SpeechAudio } from '@/lib/voice/tts';
 
 export const maxDuration = 60;
 
@@ -18,15 +18,15 @@ export const POST = handle(async (_req: NextRequest, ctx: RouteContext<'/api/day
     const urls = await signRead([day.voice.path]);
     if (urls[day.voice.path]) return Response.json({ url: urls[day.voice.path], preset: day.voice.preset });
   }
-  let audio: Buffer | null = null;
+  let audio: SpeechAudio | null = null;
   try {
     audio = await synthesize(day.text, preset);
   } catch (e) {
     console.error('voice: TTS недоступен, озвучка в браузере', e instanceof Error ? e.message : e);
   }
   if (!audio) return Response.json({ url: null, preset });
-  const path = dayFiles(dayFolder(day.diaryId, day.date, day.slug, day.id)).voice;
-  await putFile(path, audio, 'audio/mpeg');
+  const path = dayFiles(dayFolder(day.diaryId, day.date, day.slug, day.id)).voiceFile(audio.ext);
+  await putFile(path, audio.data, audio.contentType);
   await updateDay(day.id, { voice: { path, preset } });
   const urls = await signRead([path]);
   return Response.json({ url: urls[path] ?? null, preset });

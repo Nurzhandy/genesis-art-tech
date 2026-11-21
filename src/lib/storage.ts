@@ -14,6 +14,8 @@ export function dayFiles(folder: string) {
     audio: (ext: string) => `${folder}/song.${ext}`,
     poster: `${folder}/memory.jpg`,
     voice: `${folder}/voice.mp3`,
+    /** Озвучка системы: mp3 от OpenAI или wav от Gemini. */
+    voiceFile: (ext: 'mp3' | 'wav') => `${folder}/voice.${ext}`,
     ownVoice: (ext: string) => `${folder}/voice-own.${ext}`,
     text: `${folder}/text.md`,
     json: (name: 'analysis' | 'style' | 'song') => `${folder}/${name}.json`,

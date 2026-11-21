@@ -6,7 +6,7 @@
 | Supabase (Postgres + Storage + Auth) | дневники, дни, доски, приватные папки дней; вход по почте и паролю, дневники аккаунта на любом устройстве |
 | Vercel | хостинг |
 | Gemini API (`gemini-3.8-flash`, ответ JSON по схеме), Google Gen AI SDK | анализ текста и фото дня, название папки, подпись, оценка песни (темп, лад, жанр, год); «Рассказать день» — устный рассказ (аудио) → запись дневника словами автора |
-| OpenAI TTS `gpt-4o-mini-tts` (опционально) / Web Speech API | озвучка записи голосом по правилам системы |
+| Gemini TTS (`gemini-3.8-flash-tts`) или OpenAI TTS `gpt-4o-mini-tts`; запасной — Web Speech API | озвучка записи голосом, который выбирают правила системы под настроение дня |
 | Web Speech API (`SpeechRecognition`, ru-RU) | диктовка записи голосом в форме, если браузер поддерживает |
 | Open-Meteo (Geocoding, Archive, Forecast) | погода того дня по городу записи, без ключа |
 | OpenStreetMap Nominatim (reverse geocoding) | место дня по GPS-меткам фото |
