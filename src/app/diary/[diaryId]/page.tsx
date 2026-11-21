@@ -12,7 +12,7 @@ export default async function DiaryPage({ params, searchParams }: PageProps<'/di
   return (
     <PageFade>
       <main className="mx-auto w-full max-w-6xl px-4 py-10">
-        <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-muted hover:text-foreground">← стол</Link>
+        <Link href="/home" className="font-mono text-xs uppercase tracking-[0.2em] text-muted hover:text-foreground">← стол</Link>
         <DiaryTitle diaryId={diaryId} title={meta?.title ?? (isDemo ? 'Демо-дневник' : 'Мой дневник')} kind={meta?.kind ?? 'memories'} isDemo={isDemo} />
         <Archive diaryId={diaryId} isDemo={isDemo} title={meta?.title} songs={typeof song === 'string' ? [song] : song ?? []} />
       </main>

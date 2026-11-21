@@ -31,7 +31,7 @@ export function Board({ diaryId, title, cover, opened }: { diaryId: string; titl
       save={(board) => api.saveBoard(diaryId, board)}
       upload={(ext) => api.boardUpload(diaryId, ext)}
       header={<>
-        <Link href="/" className="rounded-full bg-background/80 px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-muted shadow-sm backdrop-blur hover:text-foreground">← стол</Link>
+        <Link href="/home" className="rounded-full bg-background/80 px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-muted shadow-sm backdrop-blur hover:text-foreground">← стол</Link>
         <div className="flex min-w-0 items-center gap-2 rounded-full bg-background/80 px-3 py-1.5 shadow-sm backdrop-blur">
           <span className="h-3 w-3 shrink-0 rounded-sm" style={{ background: cover }} />
           <h1 className="max-w-[40vw] truncate text-lg font-semibold">{title}</h1>

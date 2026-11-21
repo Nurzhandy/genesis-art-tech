@@ -22,7 +22,7 @@ export function DiaryBook({ diaryId, title, cover, kindLabel, opened }: { diaryI
     <main className="flex min-h-screen flex-1 flex-col bg-[#14110d] text-[#efe7da]"
       style={{ backgroundImage: `radial-gradient(ellipse at 50% 40%, color-mix(in srgb, ${cover} 22%, transparent), transparent 70%)` }}>
       <header className="mx-auto flex w-full max-w-[1500px] flex-wrap items-center gap-4 px-4 py-4">
-        <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-[#efe7da]/60 hover:text-[#efe7da]">← стол</Link>
+        <Link href="/home" className="font-mono text-xs uppercase tracking-[0.2em] text-[#efe7da]/60 hover:text-[#efe7da]">← стол</Link>
         <div className="flex min-w-0 items-baseline gap-3">
           <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[#efe7da]/50">{kindLabel}</span>
           <h1 className="truncate text-2xl font-semibold">{title}</h1>
