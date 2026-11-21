@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { geminiSpeechPrompt, geminiVoice, pcmToWav, synthesize, toSpeechAudio } from './tts';
+import { GEMINI_TTS_MODELS, GEMINI_VOICES, geminiSpeechStyle, geminiVoice, pcmToWav, synthesize, toSpeechAudio } from './tts';
 
 const preset = (voice: string, speed: number) => ({ voice, speed, instructions: 'Тихо и бережно.', because: '' });
 
@@ -12,11 +12,16 @@ describe('Gemini TTS', () => {
     expect(geminiVoice('что-то')).toBe(geminiVoice('nova'));
   });
 
-  it('запрос несёт интонацию и темп пресета и сам текст', () => {
-    const p = geminiSpeechPrompt('Гуляли по парку.', preset('sage', 0.9));
-    expect(p).toContain('Тихо и бережно.');
-    expect(p).toContain('медленнее');
-    expect(p.endsWith('Гуляли по парку.')).toBe(true);
+  it('стиль озвучки несёт интонацию и темп пресета', () => {
+    const st = geminiSpeechStyle(preset('sage', 0.9));
+    expect(st).toContain('Тихо и бережно.');
+    expect(st).toContain('медленнее');
+  });
+
+  it('голоса и модели — из официального списка Gemini TTS', () => {
+    const official = ['Zephyr', 'Puck', 'Charon', 'Kore', 'Fenrir', 'Leda', 'Orus', 'Aoede', 'Callirrhoe', 'Autonoe', 'Enceladus', 'Iapetus', 'Umbriel', 'Algieba', 'Despina', 'Erinome', 'Algenib', 'Rasalgethi', 'Laomedeia', 'Achernar', 'Alnilam', 'Schedar', 'Gacrux', 'Pulcherrima', 'Achird', 'Zubenelgenubi', 'Vindemiatrix', 'Sadachbia', 'Sadaltager', 'Sulafat'];
+    for (const v of Object.values(GEMINI_VOICES)) expect(official).toContain(v);
+    expect(GEMINI_TTS_MODELS[0]).toBe('gemini-3.8-flash-tts');
   });
 
   it('PCM заворачивается в корректный WAV с частотой из mimeType', () => {
@@ -31,7 +36,8 @@ describe('Gemini TTS', () => {
     expect(pcmToWav(pcm, 16000).readUInt32LE(28)).toBe(32000);
   });
 
-  it('готовый mp3 отдаётся как есть', () => {
+  it('готовый WAV и mp3 отдаются как есть', () => {
+    expect(toSpeechAudio(Buffer.from('RIFF').toString('base64'), 'audio/wav').ext).toBe('wav');
     expect(toSpeechAudio(Buffer.from('ID3').toString('base64'), 'audio/mpeg').ext).toBe('mp3');
   });
 

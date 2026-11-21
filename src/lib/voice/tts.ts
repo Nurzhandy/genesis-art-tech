@@ -50,13 +50,13 @@ export const GEMINI_VOICES: Record<string, string> = {
 };
 export const geminiVoice = (voice: string) => GEMINI_VOICES[voice] ?? 'Callirrhoe';
 
-/** Запрос к модели: как читать (из пресета) и сам текст записи — без пересказа и добавлений. */
-export function geminiSpeechPrompt(text: string, preset: VoicePreset): string {
+/** Как читать — стиль озвучки из пресета (интонация и темп); сам текст записи идёт отдельно, слово в слово. */
+export function geminiSpeechStyle(preset: VoicePreset): string {
   const pace = preset.speed < 0.95 ? 'Темп медленнее обычного.' : preset.speed > 1.05 ? 'Темп чуть быстрее обычного.' : 'Обычный темп.';
-  return `${preset.instructions} ${pace} Прочитай по-русски запись из личного дневника, слово в слово, ничего не добавляя:\n\n${trimForSpeech(text)}`;
+  return `${preset.instructions} ${pace} Это запись из личного дневника.`;
 }
 
-/** Gemini отдаёт «сырой» звук PCM 16 бит (audio/L16;rate=24000) — заворачиваем его в обычный WAV. */
+/** Сырой PCM 16 бит (audio/l16, 24 кГц) — заворачиваем в обычный WAV. Модели 3.8 обычно сразу отдают WAV. */
 export function pcmToWav(pcm: Buffer, sampleRate = 24000, channels = 1, bits = 16): Buffer {
   const header = Buffer.alloc(44);
   const byteRate = (sampleRate * channels * bits) / 8;
@@ -86,21 +86,20 @@ export function toSpeechAudio(base64: string, mimeType = ''): SpeechAudio {
   return { data: pcmToWav(raw, rate), ext: 'wav', contentType: 'audio/wav' };
 }
 
+// Запрос — как в официальной документации Gemini TTS (Interactions API): голос из готовых 30, стиль — аннотацией,
+// ответ — целый WAV 24 кГц моно; русский язык модели поддерживают.
 async function synthesizeGemini(text: string, preset: VoicePreset, key: string): Promise<SpeechAudio | null> {
-  const ai = new GoogleGenAI({ apiKey: key });
-  const prompt = geminiSpeechPrompt(text, preset);
+  const ai = new GoogleGenAI({ apiKey: key, httpOptions: { apiVersion: 'v1beta' } });
+  const style = geminiSpeechStyle(preset);
   return withModelFallback(GEMINI_TTS_MODELS, async (model, signal) => {
-    const res = await ai.models.generateContent({
+    const res = await ai.interactions.create({
       model,
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: geminiVoice(preset.voice) } } },
-        abortSignal: signal,
-      },
-    });
-    const part = res.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
-    if (!part?.inlineData?.data) return null;
-    return toSpeechAudio(part.inlineData.data, part.inlineData.mimeType);
+      input: [{ type: 'user_input', content: [{ type: 'text', text: trimForSpeech(text), annotations: [{ type: 'speech_metadata', style }] }] }],
+      response_format: { type: 'audio', mime_type: 'audio/wav' },
+      generation_config: { speech_config: [{ voice: geminiVoice(preset.voice), language: 'ru-RU' }] },
+    }, { signal });
+    const audio = res.output_audio;
+    if (!audio?.data) return null;
+    return toSpeechAudio(audio.data, audio.mime_type ?? 'audio/wav');
   }, { budgetMs: 52_000, perTryMs: 45_000 });
 }
