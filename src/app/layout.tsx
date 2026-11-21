@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Caveat, Cormorant_Garamond, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Micro } from "@/components/fx/Micro";
+import { AmbientSky } from "@/components/fx/AmbientSky";
 
 // Постоянные шрифты дневника (docs/plan/00-overview.md, раздел 5)
 const serif = Cormorant_Garamond({
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <div className="scroll-thread" aria-hidden />
         <Micro />
+        <AmbientSky />
         {children}
       </body>
     </html>
