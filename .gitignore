@@ -44,3 +44,6 @@ next-env.d.ts
 # local copy of the spec (tracked under docs/spec)
 /genesis hackhathon - art tech.pdf
 .superpowers/
+
+# локальный режим без Supabase
+/.local-data

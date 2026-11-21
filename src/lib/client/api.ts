@@ -45,6 +45,12 @@ export const api = {
   requestUploads: (dayId: string, files: UploadFile[]) =>
     call<{ uploads: SignedUpload[] }>(`/api/days/${dayId}/uploads`, { method: 'POST', headers: owner(), body: JSON.stringify({ files }) }),
   async uploadFile(u: SignedUpload, blob: Blob) {
+    // Локальный режим (нет ключей Supabase): сервер выдал ссылку на свой маршрут — кладём файл туда.
+    if (u.signedUrl.startsWith('/api/local/')) {
+      const res = await fetch(u.signedUrl, { method: 'PUT', body: blob, headers: { 'content-type': blob.type || 'application/octet-stream' } });
+      if (!res.ok) throw new Error('Не удалось загрузить файл');
+      return;
+    }
     const { error } = await anon().storage.from('days').uploadToSignedUrl(u.path, u.token, blob, { contentType: blob.type || undefined });
     if (error) throw new Error('Не удалось загрузить файл: ' + error.message);
   },
