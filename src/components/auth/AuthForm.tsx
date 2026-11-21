@@ -76,7 +76,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next: string }) {
 
         {offline && (
           <p className="rounded-md border border-foreground/15 px-4 py-3 text-base text-muted">
-            На этом компьютере не подключены ключи Supabase, поэтому входа нет. Дневники работают на этом устройстве без аккаунта — <Link href="/" className="underline underline-offset-4">вернуться к столу</Link>.
+            На этом компьютере не подключены ключи Supabase, поэтому входа нет. Дневники работают на этом устройстве без аккаунта — <Link href={AUTH_ROUTES.home} className="underline underline-offset-4">перейти к столу</Link>.
           </p>
         )}
 
