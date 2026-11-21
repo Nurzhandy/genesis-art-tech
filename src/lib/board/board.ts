@@ -18,6 +18,8 @@ export const BoardItemSchema = z.discriminatedUnion('kind', [
   z.object({ ...base, kind: z.literal('day'), dayId: z.string().uuid(), w: z.number().min(120).max(900) }),
   z.object({ ...base, kind: z.literal('arrow'), x2: Num, y2: Num, color: Color, width: z.number().min(1).max(20) }),
   z.object({ ...base, kind: z.literal('frame'), w: z.number().min(100).max(10000), h: z.number().min(100).max(10000), title: z.string().max(80), color: Color }),
+  // Настроение дня (план 21.11, доска дня): капля с 1–3 чувствами из трекера эмоций (слова из src/lib/feelings.ts).
+  z.object({ ...base, kind: z.literal('mood'), feelings: z.array(z.string().trim().min(1).max(40)).min(1).max(3), size: z.number().min(60).max(600) }),
 ]);
 export const BoardSchema = z.object({ v: z.literal(1), items: z.array(BoardItemSchema).max(400) });
 

@@ -345,6 +345,8 @@ export function Board({ diaryId, title, cover, opened }: { diaryId: string; titl
                 {handle}
               </div>
             );
+            // Капля настроения (доска дня) — рисует человек 2; пока не показываем.
+            if (it.kind === 'mood') return null;
             // Карточка дня — собирает наша система.
             const d = days.get(it.dayId);
             const img = d?.posterUrl ?? d?.photos[0]?.thumbUrl;
@@ -459,6 +461,7 @@ function size(it: BoardItem): { w: number; h: number } {
     case 'song': return { w: it.size, h: it.size + 40 };
     case 'day': return { w: it.w, h: (it.w * 16) / 9 + 50 };
     case 'frame': return { w: it.w, h: it.h };
+    case 'mood': return { w: it.size, h: it.size };
     case 'arrow': return { w: Math.abs(it.x2 - it.x), h: Math.abs(it.y2 - it.y) };
     case 'stroke': {
       const xs = it.points.filter((_, i) => i % 2 === 0), ys = it.points.filter((_, i) => i % 2 === 1);
