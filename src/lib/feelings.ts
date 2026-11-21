@@ -28,13 +28,27 @@ export const FEELINGS: Feeling[] = [
 
 export const findFeeling = (word: string | null | undefined) => FEELINGS.find((f) => f.word === word) ?? null;
 
+export const MAX_FEELINGS = 3;
+/** «усталость, восторг» → чувства из словаря (до трёх, без повторов). */
+export function parseFeelings(v: string | null | undefined): Feeling[] {
+  const out: Feeling[] = [];
+  for (const w of (v ?? '').split(',').map((x) => x.trim())) {
+    const f = findFeeling(w);
+    if (f && !out.includes(f)) out.push(f);
+  }
+  return out.slice(0, MAX_FEELINGS);
+}
+
 /**
- * Слово человека важнее догадки модели: настроение записи сдвигается к чувству на 60%,
- * само слово становится первым в «словах настроения».
+ * Слова человека важнее догадки модели. Можно несколько чувств сразу («усталость» и «восторг»):
+ * настроение записи сдвигается к их среднему на 60%, сами слова становятся первыми в «словах настроения».
  */
 export function applyFeeling(a: DayAnalysis, word: string | null | undefined): DayAnalysis {
-  const f = findFeeling(word);
-  if (!f) return a;
+  const list = parseFeelings(word);
+  if (!list.length) return a;
+  const avg = (k: 'valence' | 'arousal') => list.reduce((s, x) => s + x[k], 0) / list.length;
+  const has = (z: Zone) => list.some((x) => x.zone === z);
+  const f = { valence: avg('valence'), arousal: avg('arousal') };
   const mix = (from: number, to: number) => Math.round((from * 0.4 + to * 0.6) * 100) / 100;
   return {
     ...a,
@@ -42,9 +56,9 @@ export function applyFeeling(a: DayAnalysis, word: string | null | undefined): D
       ...a.mood,
       valence: mix(a.mood.valence, f.valence),
       arousal: mix(a.mood.arousal, f.arousal),
-      tension: f.zone === 'tense' ? Math.max(a.mood.tension, 0.6) : f.zone === 'calm' ? Math.min(a.mood.tension, 0.3) : a.mood.tension,
-      nostalgia: f.word === 'ностальгия' || f.word === 'светлая грусть' ? Math.max(a.mood.nostalgia, 0.6) : a.mood.nostalgia,
+      tension: has('tense') ? Math.max(a.mood.tension, 0.6) : has('calm') && !has('tense') ? Math.min(a.mood.tension, 0.3) : a.mood.tension,
+      nostalgia: list.some((x) => x.word === 'ностальгия' || x.word === 'светлая грусть') ? Math.max(a.mood.nostalgia, 0.6) : a.mood.nostalgia,
     },
-    moodWords: [f.word, ...a.moodWords.filter((w) => w !== f.word)].slice(0, 5),
+    moodWords: [...list.map((x) => x.word), ...a.moodWords.filter((w) => !list.some((x) => x.word === w))].slice(0, 5),
   };
 }

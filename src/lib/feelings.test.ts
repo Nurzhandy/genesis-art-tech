@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fallbackAnalysis } from './ai/fallback';
-import { applyFeeling, FEELINGS, ZONES } from './feelings';
+import { applyFeeling, FEELINGS, parseFeelings, ZONES } from './feelings';
 import { buildStyle } from './style/buildStyle';
 import { FIXTURES } from './fixtures';
 
@@ -31,5 +31,17 @@ describe('трекер эмоций', () => {
     const tired = buildStyle({ ...input, analysis: applyFeeling(input.analysis, 'усталость'), feeling: 'усталость' });
     expect(joy.motion.beatsPerPhoto).toBeLessThanOrEqual(tired.motion.beatsPerPhoto);
     expect(joy.reasons.find((r) => r.param === 'feeling')?.because).toContain('восторг');
+  });
+});
+
+describe('несколько чувств сразу', () => {
+  it('«усталость, восторг» — смесь: энергия между ними, оба слова первыми', () => {
+    const mixed = applyFeeling(base, 'усталость, восторг');
+    expect(mixed.moodWords.slice(0, 2)).toEqual(['усталость', 'восторг']);
+    expect(mixed.mood.arousal).toBeGreaterThan(applyFeeling(base, 'усталость').mood.arousal);
+    expect(mixed.mood.arousal).toBeLessThan(applyFeeling(base, 'восторг').mood.arousal);
+  });
+  it('не больше трёх и без повторов, неизвестные слова пропускаются', () => {
+    expect(parseFeelings('грусть, грусть, нечто, уют, азарт, тоска').map((f) => f.word)).toEqual(['грусть', 'уют', 'азарт']);
   });
 });

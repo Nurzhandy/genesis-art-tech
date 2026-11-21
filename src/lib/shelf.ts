@@ -2,7 +2,7 @@
 // Логина нет: ключ дневника = его id, а полка — список этих ключей на устройстве.
 import { z } from 'zod';
 
-export type DiaryKind = 'memories' | 'travel' | 'work' | 'insights' | 'custom';
+export type DiaryKind = 'memories' | 'travel' | 'work' | 'insights' | 'love' | 'firsts' | 'gratitude' | 'dreams' | 'family' | 'custom';
 
 export interface DiaryMeta {
   id: string; title: string; kind: DiaryKind; createdAt: string;
@@ -15,6 +15,11 @@ export const DIARY_KINDS: Record<DiaryKind, { label: string; icon: string; cover
   travel: { label: 'путешествия', icon: '✈', cover: '#2f6f73', prompt: 'Где вы были? Дорога, город, запахи, люди, что удивило в пути…', defaultTitle: 'Путешествия' },
   work: { label: 'работа и учёба', icon: '▤', cover: '#3d4b6b', prompt: 'Что было сегодня в работе или учёбе: задача, команда, сдача, что получилось…', defaultTitle: 'Работа' },
   insights: { label: 'инсайты и идеи', icon: '✺', cover: '#8a6d1f', prompt: 'Какая мысль сегодня не отпускает? Где она пришла, что вокруг звучало и было видно…', defaultTitle: 'Инсайты' },
+  love: { label: 'любимые люди', icon: '♥', cover: '#b0304a', prompt: 'С кем вы были? Что он или она сказали, как смеялись, во что были одеты, чем пахло рядом…', defaultTitle: 'Мои люди' },
+  firsts: { label: 'первые разы', icon: '✧', cover: '#6a4bc4', prompt: 'Что случилось впервые? Как билось сердце, что было вокруг, какая песня играла…', defaultTitle: 'Первые разы' },
+  gratitude: { label: 'благодарности', icon: '❋', cover: '#2e8b57', prompt: 'За что сегодня хочется сказать спасибо? Кому, где это было, какая мелочь согрела…', defaultTitle: 'Спасибо' },
+  dreams: { label: 'сны', icon: '☾', cover: '#24305e', prompt: 'Что приснилось? Цвета, места, люди, странные детали — пока не забылось…', defaultTitle: 'Сны' },
+  family: { label: 'семья', icon: '⌂', cover: '#a8651f', prompt: 'Что было дома или с родными? Разговоры, еда, запахи, старые шутки…', defaultTitle: 'Семья' },
   custom: { label: 'свой', icon: '❀', cover: '#7a4a6a', prompt: 'Расскажите о дне так, как хочется…', defaultTitle: 'Новый дневник' },
 };
 
@@ -25,10 +30,15 @@ export const KIND_QUESTIONS: Record<DiaryKind, string[]> = {
   travel: ['Где вы были сегодня?', 'Что удивило в дороге?', 'Как звучал этот город?', ...COMMON_QUESTIONS],
   work: ['Что сегодня получилось?', 'Кто был в команде?', 'Что звучало в наушниках?', 'Какой был свет за окном?', 'Что хочется запомнить из этого дня?'],
   insights: ['Какая мысль не отпускает?', 'Где она пришла?', 'Что звучало в этот момент?', 'Что было перед глазами?', 'Кому хочется её рассказать?'],
+  love: ['С кем вы были сегодня?', 'Что он или она сказали?', 'Над чем смеялись?', 'Что хочется запомнить в этом человеке?', ...COMMON_QUESTIONS],
+  firsts: ['Что сегодня случилось впервые?', 'Как билось сердце?', 'Что было вокруг?', 'Какая песня играла?', 'Кто был рядом в этот момент?'],
+  gratitude: ['За что сегодня спасибо?', 'Кому хочется сказать спасибо?', 'Какая мелочь согрела?', 'Что было бы без этого?', 'Какой был свет и погода?'],
+  dreams: ['Что приснилось?', 'Какие там были цвета?', 'Кто там был?', 'Что было самым странным?', 'Что вы почувствовали, когда проснулись?'],
+  family: ['Что было сегодня дома?', 'О чём говорили?', 'Что ели?', 'Какая старая шутка снова прозвучала?', 'Чем пахло на кухне?'],
   custom: ['Каким был ваш день?', ...COMMON_QUESTIONS],
 };
 
-export const DiaryKindSchema = z.enum(['memories', 'travel', 'work', 'insights', 'custom']);
+export const DiaryKindSchema = z.enum(['memories', 'travel', 'work', 'insights', 'love', 'firsts', 'gratitude', 'dreams', 'family', 'custom']);
 export const NewDiaryInput = z.object({ title: z.string().trim().min(1).max(60), kind: DiaryKindSchema });
 export const RenameDiaryInput = z.object({ title: z.string().trim().min(1).max(60) });
 

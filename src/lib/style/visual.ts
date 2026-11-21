@@ -2,7 +2,7 @@
 // Каждое решение — с причиной для «Почему так». Рисование — в src/render (photoFirst, engine, glass).
 import type { StyleInput, StyleReason } from '@/lib/types';
 import { clamp01, round, signals } from './signals';
-import { findFeeling, ZONES } from '@/lib/feelings';
+import { parseFeelings, ZONES } from '@/lib/feelings';
 
 export interface VisualParams {
   /** V8: людей на фото прописываем чётко, фон уходит в технику (доля фото в фоне). */
@@ -66,8 +66,8 @@ export function buildVisual(input: StyleInput): { visual: VisualParams; reasons:
   if (ms !== null && ms > 0.5) reasons.push({ param: 'wind', because: `Ветер ${round(ms, 1)} м/с ${compass(deg)} → мазки и осадки сносит по ветру, сила ${Math.round(wind.strength * 100)}%` });
 
   // Трекер эмоций: слово человека — первая строка «Почему так».
-  const f = findFeeling(input.feeling);
-  if (f) reasons.unshift({ param: 'feeling', because: `Вы отметили «${f.word}» (${ZONES[f.zone].title.toLowerCase()}: ${ZONES[f.zone].hint}) → настроение записи сдвинуто к нему на 60%: радость ${round(a.mood.valence, 2)}, энергия ${round(a.mood.arousal, 2)}` });
+  const fs = parseFeelings(input.feeling);
+  if (fs.length) reasons.unshift({ param: 'feeling', because: `Вы отметили ${fs.map((f) => `«${f.word}» (${ZONES[f.zone].title.toLowerCase()})`).join(' и ')} → настроение записи сдвинуто к ${fs.length > 1 ? 'их смеси' : 'нему'} на 60%: радость ${round(a.mood.valence, 2)}, энергия ${round(a.mood.arousal, 2)}` });
   return { visual: { portrait, rhythm, light, wind }, reasons };
 }
 

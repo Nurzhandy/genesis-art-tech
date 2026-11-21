@@ -68,6 +68,68 @@ export function exifDateTime(buf: ArrayBuffer): string | null {
   return null;
 }
 
+// ── Место съёмки (GPS) — и у JPEG, и у HEIC с айфона ──
+const TAG_GPS_IFD = 0x8825;
+
+/** Начало TIFF-блока EXIF: у JPEG — в APP1, у HEIC — после «Exif\0\0» внутри контейнера. */
+function findTiff(v: DataView): { tiff: number; le: boolean } | null {
+  const bytes = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
+  for (let i = 0; i + 14 < bytes.length; i++) {
+    // «Exif\0\0» и сразу заголовок TIFF «II*\0» или «MM\0*»
+    if (bytes[i] === 0x45 && bytes[i + 1] === 0x78 && bytes[i + 2] === 0x69 && bytes[i + 3] === 0x66 && bytes[i + 4] === 0 && bytes[i + 5] === 0) {
+      const t = i + 6;
+      const ii = bytes[t] === 0x49 && bytes[t + 1] === 0x49 && bytes[t + 2] === 0x2a;
+      const mm = bytes[t] === 0x4d && bytes[t + 1] === 0x4d && bytes[t + 3] === 0x2a;
+      if (ii || mm) return { tiff: t, le: ii };
+    }
+  }
+  return null;
+}
+
+function rationals(v: DataView, tiff: number, e: { type: number; count: number; at: number }, le: boolean): number[] {
+  if (e.type !== 5) return [];
+  const start = tiff + v.getUint32(e.at, le);
+  const out: number[] = [];
+  for (let i = 0; i < e.count && start + i * 8 + 8 <= v.byteLength; i++) {
+    const den = v.getUint32(start + i * 8 + 4, le);
+    out.push(den ? v.getUint32(start + i * 8, le) / den : 0);
+  }
+  return out;
+}
+
+/** Координаты съёмки из EXIF (JPEG или HEIC) или null. */
+export function exifGps(buf: ArrayBuffer): { lat: number; lon: number } | null {
+  const v = new DataView(buf);
+  const found = findTiff(v);
+  if (!found) return null;
+  const { tiff, le } = found;
+  if (tiff + 8 > v.byteLength) return null;
+  const ifd0 = readIfd(v, tiff, v.getUint32(tiff + 4, le), le);
+  const ptr = ifd0.get(TAG_GPS_IFD);
+  if (!ptr) return null;
+  const gps = readIfd(v, tiff, v.getUint32(ptr.at, le), le);
+  const ref = (tag: number) => { const e = gps.get(tag); return e ? String.fromCharCode(v.getUint8(e.at)) : ''; };
+  const dms = (tag: number) => { const e = gps.get(tag); const r = e ? rationals(v, tiff, e, le) : []; return r.length === 3 ? r[0] + r[1] / 60 + r[2] / 3600 : null; };
+  const lat = dms(2), lon = dms(4);
+  if (lat === null || lon === null || (lat === 0 && lon === 0)) return null;
+  return { lat: Math.round((ref(1) === 'S' ? -lat : lat) * 1e5) / 1e5, lon: Math.round((ref(3) === 'W' ? -lon : lon) * 1e5) / 1e5 };
+}
+
+/** Время съёмки HEIC (у айфона): тот же EXIF, только внутри контейнера HEIF. */
+export function heicDateTime(buf: ArrayBuffer): string | null {
+  const v = new DataView(buf);
+  const found = findTiff(v);
+  if (!found) return null;
+  const { tiff, le } = found;
+  const ifd0 = readIfd(v, tiff, v.getUint32(tiff + 4, le), le);
+  const exifPtr = ifd0.get(TAG_EXIF_IFD);
+  const orig = exifPtr ? readIfd(v, tiff, v.getUint32(exifPtr.at, le), le).get(TAG_DATETIME_ORIGINAL) : undefined;
+  const iso = orig && exifToIso(ascii(v, tiff, orig, le) ?? '');
+  if (iso) return iso;
+  const dt = ifd0.get(TAG_DATETIME);
+  return dt ? exifToIso(ascii(v, tiff, dt, le) ?? '') : null;
+}
+
 /** Подсказка формы: если все фото сняты в один день — этот день. */
 export function commonShotDate(takenAt: (string | null | undefined)[]): string | null {
   const dates = takenAt.map((t) => t?.slice(0, 10));

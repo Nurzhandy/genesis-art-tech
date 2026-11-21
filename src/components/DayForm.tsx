@@ -54,13 +54,28 @@ export function DayForm({ diaryId, prompt, questions, startWithStory = false }: 
   const offerDraft = !text && savedDraft && savedDraft.trim() ? savedDraft : null;
   // Город для погоды того дня (план 20.11, A1) — запоминаем на устройстве.
   // Трекер эмоций: одно слово-чувство человека.
-  const [feeling, setFeeling] = useState<string | null>(null);
+  const [feeling, setFeeling] = useState<string[]>([]);
   const [place, setPlace] = useState(() => { try { return localStorage.getItem(PLACE_KEY) ?? ''; } catch { return ''; } });
   // Капсула времени (A5).
   const [sealOn, setSealOn] = useState(false);
   const [sealedUntil, setSealedUntil] = useState(() => addDays(today(), 365));
   // Дата съёмки из EXIF (A2): все фото в один день, а в форме другой — предлагаем поставить его.
   const shotDate = commonShotDate(photos.map((p) => p.takenAt));
+  // Место съёмки из GPS фото (айфон пишет координаты): «Павлодар, Иртыш».
+  const gps = photos.find((p) => p.gps)?.gps ?? null;
+  const gpsKey = gps ? `${gps.lat},${gps.lon}` : '';
+  const [photoPlace, setPhotoPlace] = useState<string | null>(null);
+  useEffect(() => {
+    if (!gpsKey) return;
+    let alive = true;
+    const [lat, lon] = gpsKey.split(',');
+    fetch(`/api/place?lat=${lat}&lon=${lon}`).then((r) => r.json()).then((b: { place?: string | null }) => {
+      if (!alive || !b.place) return;
+      setPhotoPlace(b.place);
+      setPlace((cur) => cur.trim() ? cur : b.place!);
+    }).catch(() => undefined);
+    return () => { alive = false; };
+  }, [gpsKey]);
   const suggestDate = shotDate && shotDate !== date && shotDate <= today() ? shotDate : null;
 
   async function fillSample() {
@@ -118,7 +133,7 @@ ${o.entry}` : o.entry).slice(0, 5000));
       try { if (city) localStorage.setItem(PLACE_KEY, city); else localStorage.removeItem(PLACE_KEY); } catch { /* не критично */ }
       const { dayId } = await api.createDay(diaryId, {
         date, text: text.trim(), photoCount: photos.length, song: newSong,
-        ...(city ? { place: city } : {}), ...(sealOn ? { sealedUntil } : {}), ...(feeling ? { feeling } : {}),
+        ...(city ? { place: city } : {}), ...(sealOn ? { sealedUntil } : {}), ...(feeling.length ? { feeling: feeling.join(', ') } : {}),
       });
 
       const files: UploadFile[] = photos.flatMap((_, i) => [
@@ -184,6 +199,12 @@ ${o.entry}` : o.entry).slice(0, 5000));
         <input id="place" value={place} onChange={(e) => setPlace(e.target.value)} maxLength={80} autoComplete="address-level2"
           placeholder="Астана"
           className="w-full max-w-xs border-b border-foreground/30 bg-transparent py-1 text-lg outline-none placeholder:text-muted/60 focus:border-foreground" />
+        {photoPlace && place.trim() !== photoPlace && (
+          <button type="button" onClick={() => setPlace(photoPlace)} className="mt-1 block text-left text-sm text-muted underline decoration-dotted underline-offset-4 hover:text-foreground">
+            Фото сняты здесь: {photoPlace} — подставить?
+          </button>
+        )}
+        {photoPlace && place.trim() === photoPlace && <p className="mt-1 text-sm text-muted">📍 Место взято из фото.</p>}
         <p className="mt-1 text-sm text-muted">Узнаем погоду того дня: дождь, снег или мороз будут видны в воспоминании.</p>
       </section>
 
