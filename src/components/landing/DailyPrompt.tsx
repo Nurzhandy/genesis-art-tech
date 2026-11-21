@@ -26,7 +26,7 @@ export function DailyPrompt() {
   const label = today ? new Date(today).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : '';
   return (
     <div className="flex items-center gap-3 text-muted">
-      <span className="font-mono text-[10px] uppercase tracking-[0.2em]">вопрос дня{label ? ` · ${label}` : ''}</span>
+      <span className="text-lg">Вопрос дня{label ? `, ${label}` : ''}</span>
       <span className="h-px w-6 bg-foreground/20" />
       <span key={step} className="font-hand text-2xl leading-none text-foreground" style={{ animation: 'pop-in 0.6s ease-out both' }}>
         {PROMPTS[(start + step) % PROMPTS.length]}

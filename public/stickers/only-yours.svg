@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <!-- Стикер для листа «Наши обещания»: круглая марка «только ваш», который можно отклеить. -->
+  <defs>
+    <radialGradient id="g" cx="40%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#f3c969"/>
+      <stop offset="1" stop-color="#c8892b"/>
+    </radialGradient>
+    <path id="arc" d="M 200 200 m -128 0 a 128 128 0 1 1 256 0 a 128 128 0 1 1 -256 0"/>
+  </defs>
+  <circle cx="200" cy="200" r="190" fill="#fbf3e2"/>
+  <circle cx="200" cy="200" r="172" fill="url(#g)"/>
+  <circle cx="200" cy="200" r="150" fill="none" stroke="#7a3b2e" stroke-width="3" stroke-dasharray="6 9"/>
+  <text font-family="Georgia, 'Times New Roman', serif" font-size="34" letter-spacing="6" fill="#4a2414">
+    <textPath href="#arc" startOffset="2%">ТОЛЬКО ВАШ · ТОЛЬКО ВАШ · ТОЛЬКО ВАШ ·</textPath>
+  </text>
+  <path d="M200 140 C 175 105, 125 120, 130 160 C 135 195, 175 215, 200 245 C 225 215, 265 195, 270 160 C 275 120, 225 105, 200 140 Z" fill="#7a3b2e"/>
+  <circle cx="176" cy="150" r="9" fill="#fbf3e2" opacity="0.7"/>
+</svg>

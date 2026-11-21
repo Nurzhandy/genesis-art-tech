@@ -18,10 +18,23 @@ export function PageAtmosphere({ style }: { style: StyleParams }) {
   // Цвета страницы: фон — бумага дня, текст — его чернила (контраст обеспечивает движок палитры).
   useEffect(() => {
     const root = document.documentElement.style;
-    root.setProperty('--background', bg);
-    root.setProperty('--foreground', ink);
-    root.setProperty('--muted', `color-mix(in srgb, ${ink} 62%, ${bg})`);
-    return () => VARS.forEach((v) => root.removeProperty(v));
+    // Тёмная тема — фотолаборатория: комната тёмная с оттенком дня, сам день (постер) — светлый отпечаток.
+    // Светлая — как раньше: страница перетекает в бумагу дня.
+    const dark = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => {
+      if (dark.matches) {
+        root.setProperty('--background', `color-mix(in srgb, ${bg} 9%, #100d0a)`);
+        root.setProperty('--foreground', '#efe6d8');
+        root.setProperty('--muted', `color-mix(in srgb, ${bg} 35%, #9a8f82)`);
+      } else {
+        root.setProperty('--background', bg);
+        root.setProperty('--foreground', ink);
+        root.setProperty('--muted', `color-mix(in srgb, ${ink} 62%, ${bg})`);
+      }
+    };
+    apply();
+    dark.addEventListener('change', apply);
+    return () => { dark.removeEventListener('change', apply); VARS.forEach((v) => root.removeProperty(v)); };
   }, [bg, ink]);
 
   useEffect(() => {
@@ -60,5 +73,7 @@ export function PageAtmosphere({ style }: { style: StyleParams }) {
   if (style.atmosphere.kind === 'none') return null;
   // Дождь и огни плотные — за текстом они должны быть тише, чем в кадре.
   const opacity = style.atmosphere.kind === 'rain' || style.atmosphere.kind === 'lights' ? 0.32 : 0.55;
-  return <canvas ref={ref} aria-hidden className="pointer-events-none fixed inset-0 -z-10 h-full w-full" style={{ opacity, transition: 'opacity 2s ease' }} />;
+  // Частицы живут по краям экрана: середина, где постер и текст, остаётся чистой и читаемой.
+  const mask = 'radial-gradient(ellipse 62% 75% at 50% 45%, transparent 55%, #000 88%)';
+  return <canvas ref={ref} aria-hidden className="pointer-events-none fixed inset-0 -z-10 h-full w-full" style={{ opacity, transition: 'opacity 2s ease', maskImage: mask, WebkitMaskImage: mask }} />;
 }

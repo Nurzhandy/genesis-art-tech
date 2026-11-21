@@ -31,9 +31,6 @@ export function LandingHero() {
 
       <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-20 pt-10 sm:pt-16 xl:grid-cols-[1fr_minmax(0,520px)]">
         <div className="flex min-w-0 flex-col items-start gap-6">
-          <p className="rounded-full bg-background/60 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.25em] text-muted ring-1 ring-foreground/10 backdrop-blur" style={{ animation: 'pop-in 0.6s ease-out both' }}>
-            бесплатно · без регистрации · только ваш
-          </p>
           <KineticTitle lines={['Сохраните,', 'как ощущался день']} className="text-5xl font-semibold leading-[0.95] sm:text-7xl" />
           <p className="max-w-lg text-xl leading-relaxed text-muted" style={{ animation: 'pop-in 0.8s ease-out 0.7s both' }}>
             Заметки, фото, песня и голос складываются в живую страницу — в цветах, погоде и ритме того дня.

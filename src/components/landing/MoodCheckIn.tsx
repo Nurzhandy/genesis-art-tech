@@ -29,7 +29,7 @@ export function MoodCheckIn({ onTint }: { onTint?: (color: string | null) => voi
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {ORDER.map((z) => (
           <div key={z} className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-muted">
+            <span className="flex items-center gap-1.5 text-base text-muted">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: ZONES[z].color }} />{ZONES[z].title}
             </span>
             {PICKS[z].map((w) => {
@@ -49,8 +49,8 @@ export function MoodCheckIn({ onTint }: { onTint?: (color: string | null) => voi
         <p key={pick?.word ?? 'none'} className="text-base leading-snug text-muted" style={{ animation: 'pop-in 0.4s ease-out both' }}>
           {pick ? REPLY[pick.zone] : 'Выберите слово — без регистрации, просто попробовать.'}
         </p>
-        <StartButton feeling={pick?.word} className="shrink-0 rounded-full bg-foreground px-6 py-3 font-mono text-xs uppercase tracking-[0.15em] text-background transition hover:opacity-90 disabled:opacity-60">
-          {pick ? `Записать «${pick.word}» →` : 'Начать запись →'}
+        <StartButton feeling={pick?.word} className="shrink-0 rounded-full bg-foreground px-6 py-3 text-lg text-background transition hover:opacity-90 disabled:opacity-60">
+          {pick ? `Записать «${pick.word}»` : 'Начать запись'}
         </StartButton>
       </div>
     </div>

@@ -14,7 +14,7 @@ export function LandingRedirect() {
   return null;
 }
 
-const pill = 'rounded-full px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] transition-colors';
+const pill = 'rounded-full px-4 py-2 text-lg transition-colors';
 
 export function LandingNav() {
   const { user } = useAuth();

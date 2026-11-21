@@ -153,12 +153,27 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
           <FogGlass source={liveCanvas} seed={style.seed} rain={style.atmosphere?.kind === 'rain' || (day.weather?.precipitationMm ?? 0) >= 1} />
         )}
         <button type="button" onClick={start} aria-hidden={open} tabIndex={open ? -1 : 0}
-          className="absolute inset-0 flex flex-col items-center justify-center gap-6 rounded-sm px-8 text-center shadow-2xl ring-1 ring-black/10"
+          className="group absolute inset-0 flex flex-col items-center justify-center gap-6 overflow-hidden rounded-sm px-8 text-center shadow-2xl ring-1 ring-black/10"
           style={{ background: style.palette.bg, color: style.palette.ink, opacity: open ? 0 : 1, pointerEvents: open ? 'none' : 'auto', transition: 'opacity 1.5s ease' }}>
-          <span className="font-mono text-xs uppercase tracking-[0.3em] opacity-70">{day.date.split('-').reverse().join('.')}</span>
-          <span className="text-4xl font-semibold leading-tight">{day.title}</span>
-          <span className="rounded-full border px-6 py-3 font-mono text-sm uppercase tracking-[0.15em]" style={{ borderColor: style.palette.ink }}>▶ Открыть день</span>
-          {songLabel(day) && <span className="font-hand text-2xl opacity-80">♪ {songLabel(day)}</span>}
+          {day.posterUrl ? (
+            // Готовый постер дня сразу виден — первым кадром никогда не бывает пустая карточка.
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={day.posterUrl} alt="" className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.5s] group-hover:scale-[1.02]" />
+              <span className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" aria-hidden />
+              <span className="relative mt-auto mb-6 flex items-center gap-3 rounded-full bg-black/55 py-2.5 pl-2.5 pr-5 text-lg text-white backdrop-blur-sm transition group-hover:bg-black/70">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-sm text-black">▶</span>
+                Оживить день{songLabel(day) ? ' со звуком' : ''}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="font-mono text-xs uppercase tracking-[0.3em] opacity-70">{day.date.split('-').reverse().join('.')}</span>
+              <span className="text-4xl font-semibold leading-tight">{day.title}</span>
+              <span className="rounded-full border px-6 py-3 text-lg" style={{ borderColor: style.palette.ink }}>▶ Открыть день</span>
+              {songLabel(day) && <span className="font-hand text-2xl opacity-80">♪ {songLabel(day)}</span>}
+            </>
+          )}
         </button>
         {/* Письмо в конверте (план 20.11, C3): для «В этот день» и открывшихся капсул. */}
         {!open && ritual === 'envelope' && <EnvelopeRitual day={day} style={style} onOpen={start} />}
