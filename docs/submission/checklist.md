@@ -5,7 +5,7 @@
 | Материал (ТЗ, раздел 09) | Что сдаём | Статус |
 |---|---|---|
 | Ссылка на прототип | https://genesis-art-tech.vercel.app + инструкция [jury-guide.md](jury-guide.md) | готово |
-| Видео до 3 минут | по сценарию [video-script.md](video-script.md), ссылкой на Google Drive (доступ «все, у кого есть ссылка») | снять |
+| Видео до 3 минут | `dnevnik-atmosfery.mp4` (2:50, 1920×1080, звук пересобран из чистых превью песен) — в релизе [demo-video](https://github.com/Nurzhandy/genesis-art-tech/releases/tag/demo-video); на Google Drive с доступом «все, у кого есть ссылка» | загрузить на Drive |
 | Примеры дней (3–7) | 7 дней с названиями папок и ссылками — [examples.md](examples.md), лента — [feed-7-days.jpg](feed-7-days.jpg) | готово |
 | Описание до 1 страницы | [description.md](description.md) | готово |
 | Художественные приёмы | [techniques.md](techniques.md) | готово |
@@ -25,3 +25,18 @@
 | Свой вклад, указаны библиотеки и AI | [tools.md](tools.md) |
 | Проверка по инструкции или видео | [jury-guide.md](jury-guide.md) + видео |
 | Плюс: озвучка под атмосферу | Gemini TTS, голос по правилам (5 пресетов), свой голос |
+
+## Последние шаги перед отправкой
+
+1. **Скачать видео** из релиза [demo-video](https://github.com/Nurzhandy/genesis-art-tech/releases/tag/demo-video): файл `dnevnik-atmosfery.mp4` (≈90 МБ).
+2. **Google Drive:** drive.google.com → «Создать» → «Загрузить файлы» → `dnevnik-atmosfery.mp4`. Дождаться, пока Drive обработает видео (пока идёт обработка, оно не проигрывается — 5–15 минут).
+3. **Доступ:** правой кнопкой по файлу → «Открыть доступ» → «Общий доступ»: «Все, у кого есть ссылка», роль «Читатель» → «Копировать ссылку». Проверить ссылку в окне инкогнито: видео должно открываться без входа в аккаунт.
+4. **Репозиторий публичным:** GitHub → Settings → General → внизу «Danger Zone» → «Change visibility» → Public. Проверить в инкогнито, что https://github.com/Nurzhandy/genesis-art-tech открывается.
+5. **Форма сдачи:**
+   - прототип: https://genesis-art-tech.vercel.app
+   - видео: ссылка с Google Drive (шаг 3)
+   - код: https://github.com/Nurzhandy/genesis-art-tech
+   - описание: [description.md](description.md), приёмы: [techniques.md](techniques.md), инструменты: [tools.md](tools.md)
+   - примеры дней: [examples.md](examples.md) и [feed-7-days.jpg](feed-7-days.jpg)
+   - инструкция для жюри: [jury-guide.md](jury-guide.md)
+6. Отправить до **23:59 по Астане**.
