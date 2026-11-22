@@ -473,7 +473,7 @@ export function BoardCanvas({ load, save, upload, editable, opened = false, head
               <div key={it.id} {...common} className={`${common.className} group/song`}>
                 <button type="button" onClick={() => playSong(it)} onPointerDown={(e) => { if (tool !== 'select') e.stopPropagation(); }}
                   title={it.preview ? 'Нажмите — заиграет' : 'Открыть песню'}
-                  className="relative block h-full w-full rounded-full shadow-xl"
+                  className="relative block aspect-square w-full rounded-full shadow-xl"
                   style={{ background: 'repeating-radial-gradient(circle, #151515 0 2px, #262626 2px 4px)', animation: playing === it.id ? 'vinyl-spin 2.4s linear infinite' : undefined }}>
                   <span className="absolute inset-[30%] overflow-hidden rounded-full bg-[#c8892b]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
