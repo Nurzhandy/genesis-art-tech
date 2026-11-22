@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { DayForm } from '@/components/DayForm';
+import { StartDayBoard } from '@/components/dayboard/StartDayBoard';
 import { PageFade } from '@/components/fx/PageFade';
 import { diaryMetas } from '@/lib/diaries';
 import { isUuid } from '@/lib/db';
@@ -12,6 +13,10 @@ export default async function NewDayPage({ params, searchParams }: PageProps<'/d
   // Пришли с доски дня (план 21.11, C2): «назад» — на ту же доску, форма дописывает этот черновик.
   const draft = typeof sp.draft === 'string' && isUuid(sp.draft) ? sp.draft : undefined;
   const [meta] = await diaryMetas([diaryId]).catch(() => []);
+  // Новый день по умолчанию — доска дня. Простая форма: с доски («простая форма» → ?draft=…),
+  // для рассказа голосом (?story=1), по прямой ссылке ?form=1 или запасным путём, если доска не открылась.
+  const boardFirst = !draft && !story && sp.form !== '1';
+  const form = <DayForm diaryId={diaryId} prompt={DIARY_KINDS[meta?.kind ?? 'memories'].prompt} questions={KIND_QUESTIONS[meta?.kind ?? 'memories']} startWithStory={story} draftId={draft} />;
   return (
     <PageFade>
       <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:py-16">
@@ -19,7 +24,7 @@ export default async function NewDayPage({ params, searchParams }: PageProps<'/d
           ← {draft ? 'доска дня' : meta?.title ?? 'дневник'}
         </Link>
         <h1 className="mb-10 mt-6 text-5xl font-semibold leading-tight">Запись дня</h1>
-        <DayForm diaryId={diaryId} prompt={DIARY_KINDS[meta?.kind ?? 'memories'].prompt} questions={KIND_QUESTIONS[meta?.kind ?? 'memories']} startWithStory={story} draftId={draft} />
+        {boardFirst ? <StartDayBoard diaryId={diaryId}>{form}</StartDayBoard> : form}
       </main>
     </PageFade>
   );
