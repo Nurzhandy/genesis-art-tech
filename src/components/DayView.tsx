@@ -33,6 +33,13 @@ export function DayView({ dayId, from = null }: { dayId: string; from?: string |
   const [decorating, setDecorating] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
   const [entered, setEntered] = useState(false);
+  // Есть ли у дня доска, на которой его собирали (старые дни из формы — без доски).
+  const [hasBoard, setHasBoard] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    api.dayBoard(dayId).then((r) => alive && setHasBoard(r.board.items.length > 0), () => undefined);
+    return () => { alive = false; };
+  }, [dayId]);
   // Холст пересобирается не на каждый шаг ползунка, а после паузы 300 мс.
   const [settled, setSettled] = useState<MoodOverride | null | undefined>(undefined);
   useEffect(() => {
@@ -165,6 +172,13 @@ export function DayView({ dayId, from = null }: { dayId: string; from?: string |
             <Link href={`/diary/${day.diaryId}?${songKeys(day.song).map((k) => `song=${encodeURIComponent(k)}`).join('&')}`} title="Все дни с этой песней"
               className="mt-2 inline-block font-hand text-2xl underline decoration-foreground/20 decoration-dotted underline-offset-4 hover:decoration-foreground">
               ♪ {songLabel(day)} <span className="font-mono text-[11px] text-muted no-underline">· все дни этой песни</span>
+            </Link>
+          )}
+          {/* Доска, на которой этот день собирали: заметки, фото, песня, капля настроения. */}
+          {(hasBoard || mine) && (
+            <Link href={`/day/${day.id}/board`}
+              className="mt-4 flex w-fit items-center gap-2.5 rounded-full border border-foreground/30 px-5 py-2.5 text-lg transition hover:bg-foreground hover:text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground">
+              <span aria-hidden className="text-xl leading-none">▦</span> {hasBoard ? 'Доска этого дня' : 'Разложить день на доске'}
             </Link>
           )}
         </header>
