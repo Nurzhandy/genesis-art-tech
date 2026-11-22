@@ -81,8 +81,17 @@ export function YearMosaic({ grid, days }: { grid: YearCell[][]; days: DayRecord
           g.globalAlpha = 1;
           return;
         }
+        // Записанный день светится своим цветом: даже когда дней мало, они сразу видны на пустом годе.
+        g.save();
+        g.shadowColor = cell.color ?? '#e0b84d';
+        g.shadowBlur = 18;
         g.fillStyle = cell.color ?? '#b9ad9c';
         g.fillRect(x, y, CW, CH);
+        g.restore();
+        g.save();
+        g.strokeStyle = fg; g.globalAlpha = 0.55; g.lineWidth = 1.5;
+        g.strokeRect(x + 0.75, y + 0.75, CW - 1.5, CH - 1.5);
+        g.restore();
         if (showPosters) {
           const day = byIdRef.current.get(cell.dayId);
           const src = day?.posterUrl ?? day?.photos[0]?.thumbUrl;

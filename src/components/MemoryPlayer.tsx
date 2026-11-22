@@ -96,7 +96,8 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
       const a = audioRef.current ?? new Audio();
       audioRef.current = a;
       a.crossOrigin = 'anonymous';
-      a.src = day.songUrl;
+      // Песня уже грузится с открытия страницы (превью Deezer идёт через сервер 4–20 с) — не начинаем заново.
+      if (a.getAttribute('src') !== day.songUrl) a.src = day.songUrl;
       a.loop = true;
       a.volume = 0;
       try { const r = createRhythmMeter(a); rhythmMeter.current = r; meter.current = () => r().level; } catch { meter.current = null; rhythmMeter.current = null; }
@@ -105,6 +106,15 @@ export function MemoryPlayer({ day, styleOverride, savePoster = true, ritual = '
     }
   }
 
+  // Песню начинаем загружать сразу, ещё до «Оживить день»: тогда она звучит с первой секунды, а не через 10–20 с.
+  useEffect(() => {
+    if (!day.songUrl || audioRef.current) return;
+    const a = new Audio();
+    a.crossOrigin = 'anonymous';
+    a.preload = 'auto';
+    a.src = day.songUrl;
+    audioRef.current = a;
+  }, [day.songUrl]);
   useEffect(() => () => { audioRef.current?.pause(); scapeRef.current?.stop(); }, []);
 
   function toggleSong() {
