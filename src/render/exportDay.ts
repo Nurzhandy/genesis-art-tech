@@ -48,56 +48,143 @@ export function pickVideoType(isSupported: (t: string) => boolean): { mime: stri
 export const canRecordVideo = () =>
   typeof MediaRecorder !== 'undefined' && typeof HTMLCanvasElement !== 'undefined' && 'captureStream' in HTMLCanvasElement.prototype;
 
+/** Звуковая дорожка видео: песня дня и, если есть, озвучка записи поверх неё. */
+interface Soundtrack { stream: MediaStream; start(): void; stop(): void; hasMusic: boolean; hasVoice: boolean }
+
+const VOICE_AT = 2.5;      // озвучка вступает на 2,5 с
+const MUSIC_UNDER_VOICE = 0.28;
+
+/** Ждём, пока аудио сможет играть (или ошибку/таймаут — тогда без него). */
+function ready(el: HTMLAudioElement, ms = 15_000): Promise<boolean> {
+  return new Promise((res) => {
+    if (el.readyState >= 3) return res(true);
+    const t = setTimeout(() => res(false), ms);
+    el.addEventListener('canplay', () => { clearTimeout(t); res(true); }, { once: true });
+    el.addEventListener('error', () => { clearTimeout(t); res(false); }, { once: true });
+  });
+}
+
 /**
- * Видео дня: холст в реальном времени (30 кадров/с) и звук песни, если он идёт через наш <audio>
- * (свой файл или превью Deezer). У песен-ссылок Spotify/YouTube звука в видео нет — это их плеер.
+ * Готовим звук сразу по нажатию кнопки: после долгой подготовки кадров браузер считает, что нажатия уже не было,
+ * и молча не даёт включить звук. В колонки ничего не идёт — только в запись.
  */
-export async function recordVideo(day: DayRecord, songLabel: string, seconds: number, onProgress: (p: number) => void, signal?: AbortSignal): Promise<{ blob: Blob; ext: string; withSound: boolean }> {
+function prepareSoundtrack(day: DayRecord, seconds: number): Soundtrack {
+  const actx = new AudioContext();
+  void actx.resume();
+  const dest = actx.createMediaStreamDestination();
+  const make = (src: string) => {
+    const el = new Audio();
+    el.crossOrigin = 'anonymous';
+    el.preload = 'auto';
+    el.src = src;
+    const gain = actx.createGain();
+    gain.gain.value = 0;
+    actx.createMediaElementSource(el).connect(gain).connect(dest);
+    return { el, gain };
+  };
+  const music = day.songUrl ? make(day.songUrl) : null;
+  if (music) music.el.loop = true;
+  const voice = day.voice?.url ? make(day.voice.url) : null;
+  const track = { stream: dest.stream, hasMusic: !!music, hasVoice: !!voice } as Soundtrack;
+  const timers: ReturnType<typeof setTimeout>[] = [];
+
+  track.start = () => {
+    void actx.resume();
+    const t0 = actx.currentTime;
+    if (music) {
+      music.el.currentTime = 0;
+      void music.el.play().catch(() => undefined);
+      const g = music.gain.gain;
+      // Музыка нарастает за 1,5 с и стихает к концу ролика.
+      g.setValueAtTime(0, t0);
+      g.linearRampToValueAtTime(1, t0 + 1.5);
+      g.setValueAtTime(1, t0 + Math.max(1.6, seconds - 2));
+      g.linearRampToValueAtTime(0, t0 + seconds - 0.2);
+    }
+    if (voice) {
+      voice.gain.gain.value = 1;
+      timers.push(setTimeout(() => {
+        void voice.el.play().catch(() => undefined);
+        // Пока звучит голос, музыка тише; голос закончился — музыка возвращается.
+        if (music) {
+          const g = music.gain.gain, now = actx.currentTime;
+          g.cancelScheduledValues(now);
+          g.setValueAtTime(g.value, now);
+          g.linearRampToValueAtTime(MUSIC_UNDER_VOICE, now + 0.6);
+          voice.el.onended = () => {
+            const n = actx.currentTime;
+            const fadeAt = t0 + seconds - 2;
+            g.cancelScheduledValues(n);
+            g.setValueAtTime(g.value, n);
+            if (n < fadeAt - 1) { g.linearRampToValueAtTime(1, n + 1.2); g.setValueAtTime(1, fadeAt); }
+            g.linearRampToValueAtTime(0, t0 + seconds - 0.2);
+          };
+          // Ролик кончается раньше голоса — музыка всё равно стихает к концу.
+          g.setValueAtTime(MUSIC_UNDER_VOICE, Math.max(now + 0.7, t0 + seconds - 2));
+          g.linearRampToValueAtTime(0, t0 + seconds - 0.2);
+          voice.gain.gain.setValueAtTime(1, Math.max(now, t0 + seconds - 1.2));
+          voice.gain.gain.linearRampToValueAtTime(0, t0 + seconds - 0.2);
+        }
+      }, VOICE_AT * 1000));
+    }
+  };
+  track.stop = () => {
+    timers.forEach(clearTimeout);
+    music?.el.pause(); voice?.el.pause();
+    void actx.close();
+  };
+  // Загрузку начинаем сразу, пока готовятся кадры.
+  (track as Soundtrack & { loading: Promise<[boolean, boolean]> }).loading = Promise.all([
+    music ? ready(music.el) : Promise.resolve(false),
+    voice ? ready(voice.el) : Promise.resolve(false),
+  ]);
+  return track;
+}
+
+/** Битрейт видео 1080×1920: зерно, мазки и частицы плохо сжимаются — при 4 Мбит/с картинка «мылится». */
+export const VIDEO_BITRATE = 14_000_000;
+
+/**
+ * Видео дня: холст в реальном времени (30 кадров/с), песня дня с плавным началом и концом
+ * и озвучка записи поверх музыки (музыка под голосом стихает). Песни-ссылки Spotify/YouTube без превью
+ * играют только в плеере сервиса — их звука в видео нет.
+ */
+export async function recordVideo(day: DayRecord, songLabel: string, seconds: number, onProgress: (p: number) => void, signal?: AbortSignal): Promise<{ blob: Blob; ext: string; withSound: boolean; withVoice: boolean }> {
   const type = pickVideoType((t) => MediaRecorder.isTypeSupported(t));
   if (!type || !canRecordVideo()) throw new Error('Этот браузер не умеет записывать видео — попробуйте Chrome или Safari');
-  const engine = await exportEngine(day, songLabel, false);
-  const stream = engine.canvas.captureStream(30);
+  // Звук — до любого ожидания, пока действует нажатие на кнопку.
+  const sound = day.songUrl || day.voice?.url ? prepareSoundtrack(day, seconds) : null;
+  let engine: Engine | null = null;
+  try {
+    engine = await exportEngine(day, songLabel, false);
+    const loaded = sound ? await (sound as Soundtrack & { loading: Promise<[boolean, boolean]> }).loading : [false, false];
+    const stream = engine.canvas.captureStream(30);
+    if (sound && (loaded[0] || loaded[1])) sound.stream.getAudioTracks().forEach((t) => stream.addTrack(t));
 
-  let audio: HTMLAudioElement | null = null;
-  let actx: AudioContext | null = null;
-  if (day.songUrl) {
-    try {
-      audio = new Audio();
-      audio.crossOrigin = 'anonymous';
-      audio.src = day.songUrl;
-      audio.loop = true;
-      actx = new AudioContext();
-      const dest = actx.createMediaStreamDestination();
-      actx.createMediaElementSource(audio).connect(dest);   // в колонки не идёт: запись тихая для человека
-      dest.stream.getAudioTracks().forEach((t) => stream.addTrack(t));
-      await audio.play();
-    } catch {
-      audio?.pause(); audio = null;
-    }
+    const rec = new MediaRecorder(stream, { mimeType: type.mime, videoBitsPerSecond: VIDEO_BITRATE, audioBitsPerSecond: 192_000 });
+    const chunks: Blob[] = [];
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    const done = new Promise<void>((res) => { rec.onstop = () => res(); });
+
+    engine.play(0);
+    rec.start(1000);
+    if (sound && (loaded[0] || loaded[1])) sound.start();
+    const started = performance.now();
+    await new Promise<void>((res, rej) => {
+      const tick = setInterval(() => {
+        const p = (performance.now() - started) / 1000 / seconds;
+        onProgress(Math.min(1, p));
+        if (signal?.aborted) { clearInterval(tick); rej(new DOMException('Запись остановлена', 'AbortError')); }
+        else if (p >= 1) { clearInterval(tick); res(); }
+      }, 200);
+    }).finally(() => {
+      rec.stop();
+      stream.getTracks().forEach((t) => t.stop());
+    });
+    await done;
+    return { blob: new Blob(chunks, { type: type.mime.split(';')[0] }), ext: type.ext, withSound: loaded[0], withVoice: loaded[1] };
+  } finally {
+    engine?.destroy();
+    sound?.stop();
   }
-
-  const rec = new MediaRecorder(stream, { mimeType: type.mime, videoBitsPerSecond: 4_000_000 });
-  const chunks: Blob[] = [];
-  rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
-  const done = new Promise<void>((res) => { rec.onstop = () => res(); });
-
-  rec.start(1000);
-  engine.play(0);
-  const started = performance.now();
-  await new Promise<void>((res, rej) => {
-    const tick = setInterval(() => {
-      const p = (performance.now() - started) / 1000 / seconds;
-      onProgress(Math.min(1, p));
-      if (signal?.aborted) { clearInterval(tick); rej(new DOMException('Запись остановлена', 'AbortError')); }
-      else if (p >= 1) { clearInterval(tick); res(); }
-    }, 200);
-  }).finally(() => {
-    rec.stop();
-    engine.destroy();
-    audio?.pause();
-    void actx?.close();
-    stream.getTracks().forEach((t) => t.stop());
-  });
-  await done;
-  return { blob: new Blob(chunks, { type: type.mime.split(';')[0] }), ext: type.ext, withSound: !!audio };
 }

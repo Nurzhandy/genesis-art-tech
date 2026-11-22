@@ -29,7 +29,7 @@ export function LandingNav() {
         <Link href={AUTH_ROUTES.home} className={`${pill} bg-foreground text-background hover:opacity-90`}>Мой стол</Link>
       ) : (
         <StartButton className={`${pill} bg-foreground text-background hover:opacity-90 disabled:opacity-60`}>
-          <span className="sm:hidden">Начать</span><span className="hidden sm:inline">Начать бесплатно</span>
+          Начать
         </StartButton>
       )}
     </nav>

@@ -112,7 +112,7 @@ export default function Landing() {
           <p data-motion="finale" className="font-hand text-5xl sm:text-6xl">Каким был ваш день?</p>
           <p className="max-w-md text-lg text-muted">Одна строчка, одно фото или одна песня — уже день. Начните сейчас, без регистрации.</p>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-            <StartButton className={primaryBtn}>Начать бесплатно</StartButton>
+            <StartButton className={primaryBtn}>Начать</StartButton>
             <Link href="/diary/demo" className={ghostBtn}>Смотреть демо</Link>
           </div>
         </section>

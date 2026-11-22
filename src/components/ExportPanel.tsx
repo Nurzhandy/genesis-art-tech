@@ -32,9 +32,9 @@ export function ExportPanel({ day }: { day: DayRecord }) {
     setBusy(`v${sec}`); setProgress(0); setError(null); setNote(null);
     abort.current = new AbortController();
     try {
-      const { blob, ext, withSound } = await recordVideo(day, label, sec, setProgress, abort.current.signal);
+      const { blob, ext, withSound, withVoice } = await recordVideo(day, label, sec, setProgress, abort.current.signal);
       download(blob, exportName(day, `видео ${sec} с`, ext));
-      setNote(withSound ? null : embedOnly
+      setNote(withSound ? (withVoice ? 'Видео с песней и голосом дня.' : 'Видео с песней дня.') : embedOnly
         ? 'Видео без звука: песня по ссылке играет в плеере сервиса, и записать её нельзя. Добавьте песню в видео в любом редакторе.'
         : 'Видео без звука: песню не получилось подключить.');
     } catch (e) {
