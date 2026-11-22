@@ -12,10 +12,11 @@ import { ThemeFilms } from './ThemeFilms';
 import { BookView } from './BookView';
 import { songLabel } from './MemoryPlayer';
 import { DayCard, StaleLinksContext } from './DayCard';
+import { CorridorView } from './CorridorView';
 import { DiaryKey } from './DiaryKey';
 
-type View = 'grid' | 'book' | 'atlas' | 'films' | 'feed' | 'calendar';
-const VIEWS: [View, string][] = [['grid', 'сетка'], ['book', 'книга'], ['atlas', 'атлас'], ['films', 'фильмы'], ['feed', 'лента'], ['calendar', 'календарь']];
+type View = 'grid' | 'corridor' | 'book' | 'atlas' | 'films' | 'feed' | 'calendar';
+const VIEWS: [View, string][] = [['grid', 'сетка'], ['corridor', 'коридор'], ['book', 'книга'], ['atlas', 'атлас'], ['films', 'фильмы'], ['feed', 'лента'], ['calendar', 'календарь']];
 const WEEK = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'];
 const VIEW_KEY = 'atmosphere-archive-view';
 
@@ -117,7 +118,7 @@ export function Archive({ diaryId, isDemo, songs = [], title }: { diaryId: strin
       <div className="mb-8 flex flex-wrap items-center gap-3">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Найти день: «какао», «офис», «снег»…" aria-label="Поиск по дням"
           className="min-w-0 flex-1 basis-56 border-b border-foreground/30 bg-transparent py-2 text-lg outline-none placeholder:text-muted/70 focus:border-foreground" />
-        <div className="inline-flex rounded-full border border-foreground/20 p-0.5 font-mono text-xs" role="tablist">
+        <div className="inline-flex max-w-full flex-wrap rounded-3xl border border-foreground/20 p-0.5 font-mono text-xs sm:rounded-full" role="tablist">
           {VIEWS.map(([v, label]) => (
             <button key={v} role="tab" aria-selected={view === v} onClick={() => pickView(v)}
               className={`rounded-full px-3 py-1 ${view === v ? 'bg-foreground text-background' : 'text-muted hover:text-foreground'}`}>{label}</button>
@@ -172,6 +173,7 @@ export function Archive({ diaryId, isDemo, songs = [], title }: { diaryId: strin
 
       {days && days.length > 0 && view === 'calendar' && <Calendar days={days} />}
 
+      {days && days.length > 0 && view === 'corridor' && <CorridorView days={days} />}
       {days && days.length > 0 && view === 'book' && <BookView days={days.filter((d) => !d.sealed)} title={title ?? (isDemo ? 'Демо-дневник' : 'Мой дневник')} />}
       {days && days.length > 0 && view === 'atlas' && <AtlasView days={days.filter((d) => !d.sealed)} />}
       {days && days.length > 0 && view === 'films' && <ThemeFilms days={days} />}
