@@ -47,3 +47,6 @@ next-env.d.ts
 
 # локальный режим без Supabase
 /.local-data
+
+# демо-видео и сырьё записи (scripts/record-demo.ts)
+/video/
